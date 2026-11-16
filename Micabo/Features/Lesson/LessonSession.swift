@@ -202,6 +202,16 @@ final class LessonSession {
         // « Knowunity ») : rouvrir une étape déjà faite ne fait pas gonfler le compteur.
         if !progress.done.contains(circle.id) {
             XPStore.shared.award(.circleCompleted)
+            Analytics.track(.lessonStepDone, [
+                "kind": .text(circle.kind.analyticsName),
+                "title": .name(course.title),
+            ])
+            if case .final = circle.kind, progress.finishedAt == nil {
+                Analytics.track(.lessonFinished, [
+                    "title": .name(course.title),
+                    "subject": .name(course.subject ?? ""),
+                ])
+            }
         }
         course.updateProgress { progress in
             progress.done.insert(circle.id)
@@ -252,6 +262,11 @@ final class LessonSession {
         StudyStreak.record()
         // L'effort compte : une mauvaise réponse rapporte un peu (`XPRules`).
         XPStore.shared.award(right ? .correctAnswer : .wrongAnswer)
+        Analytics.track(.questionAnswered, [
+            "kind": .text(question.kind.rawValue),
+            "right": .flag(right),
+            "difficulty": .number(Double(question.difficulty)),
+        ])
         course.updateProgress { progress in
             if right { progress.noteRight(question.id) } else { progress.noteMissed(question.id) }
         }
@@ -264,12 +279,21 @@ final class LessonSession {
 
     func recordQuiz(_ circleID: String, right: Int, total: Int, in context: ModelContext) {
         course.updateProgress { $0.quizScores[circleID] = [right, total] }
+        Analytics.track(.quizFinished, [
+            "right": .number(Double(right)),
+            "total": .number(Double(total)),
+            "title": .name(course.title),
+        ])
         try? context.save()
         progress = course.progress
     }
 
     func markOpened(in context: ModelContext) {
         course.lastOpenedAt = Date()
+        Analytics.track(.lessonOpened, [
+            "title": .name(course.title),
+            "subject": .name(course.subject ?? ""),
+        ])
         try? context.save()
     }
 }

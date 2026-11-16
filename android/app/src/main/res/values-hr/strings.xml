@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">I još</string>
     <string name="ios_onb16_time_max">Vrlo intenzivno</string>
     <string name="ios_onb16_welcome_cta">Da, krenimo</string>
+    <string name="ios_onb18_q_gender">A **ti** si…?</string>
+    <string name="ios_onb18_say_gender">Da ti se ispravno obraćam.</string>
+    <string name="ios_onb18_gender_male">Muškarac</string>
+    <string name="ios_onb18_gender_female">Žena</string>
+    <string name="ios_onb18_gender_other">Drugo</string>
     <string name="ios_onb16_welcome_say">Bok, ja sam Mika, tvoj novi asistent za učenje. Postavit ću ti nekoliko pitanja da pripremim tvoj plan. Može?</string>
     <string name="ios_onb17_offer_say">Čekaj, %1$s! Imam za tebe **bolju cijenu**.</string>
     <string name="ios_onb17_offer_sayAnon">Čekaj! Imam za tebe **bolju cijenu**.</string>

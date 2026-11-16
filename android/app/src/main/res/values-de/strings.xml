@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Außerdem</string>
     <string name="ios_onb16_time_max">Sehr intensiv</string>
     <string name="ios_onb16_welcome_cta">Ja, los geht\'s</string>
+    <string name="ios_onb18_q_gender">Und **du** bist …?</string>
+    <string name="ios_onb18_say_gender">Damit ich dich richtig anspreche.</string>
+    <string name="ios_onb18_gender_male">Ein Mann</string>
+    <string name="ios_onb18_gender_female">Eine Frau</string>
+    <string name="ios_onb18_gender_other">Anderes</string>
     <string name="ios_onb16_welcome_say">Hi, ich bin Mika, dein neuer Lernassistent. Ich stelle dir ein paar Fragen, um deinen Plan vorzubereiten. Bist du einverstanden?</string>
     <string name="ios_onb17_offer_say">Warte, %1$s! Ich habe einen **besseren Preis** für dich.</string>
     <string name="ios_onb17_offer_sayAnon">Warte! Ich habe einen **besseren Preis** für dich.</string>

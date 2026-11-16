@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">En ook</string>
     <string name="ios_onb16_time_max">Heel intensief</string>
     <string name="ios_onb16_welcome_cta">Ja, we beginnen</string>
+    <string name="ios_onb18_q_gender">En **jij** bent…?</string>
+    <string name="ios_onb18_say_gender">Zodat ik je goed aanspreek.</string>
+    <string name="ios_onb18_gender_male">Een man</string>
+    <string name="ios_onb18_gender_female">Een vrouw</string>
+    <string name="ios_onb18_gender_other">Anders</string>
     <string name="ios_onb16_welcome_say">Hoi, ik ben Mika, je nieuwe assistent om te leren. Ik stel je een paar vragen om je traject voor te bereiden. Is dat goed?</string>
     <string name="ios_onb17_offer_say">Wacht, %1$s! Ik heb een **betere prijs** voor je.</string>
     <string name="ios_onb17_offer_sayAnon">Wacht! Ik heb een **betere prijs** voor je.</string>

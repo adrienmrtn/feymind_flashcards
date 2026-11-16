@@ -156,8 +156,16 @@ actor AnalyticsQueue {
             defaults.set(true, forKey: Key.installed)
             enqueue(name: AnalyticsEvent.appInstalled.rawValue, props: [:], at: Date())
         }
-        enqueue(name: AnalyticsEvent.appOpened.rawValue, props: [:], at: Date())
+        enqueue(name: AnalyticsEvent.appOpened.rawValue, props: Self.openingProps(), at: Date())
         defaults.set(Date().timeIntervalSince1970, forKey: Key.lastSeen)
+    }
+
+    /// Ce que porte chaque ouverture : la langue choisie dans l'app (la colonne `locale`,
+    /// elle, est celle du téléphone) et le genre donné à l'accueil, s'il l'a été.
+    private static func openingProps() -> [String: AnalyticsValue] {
+        var props: [String: AnalyticsValue] = ["ui_language": .text(UiLocale.resolved().rawValue)]
+        if let gender = OnboardingPreferences.gender { props["gender"] = .text(gender) }
+        return props
     }
 
     func account(changedTo newValue: UUID?) {
@@ -185,7 +193,7 @@ actor AnalyticsQueue {
             )
         }
         defaults.set(Date().timeIntervalSince1970, forKey: Key.lastSeen)
-        enqueue(name: AnalyticsEvent.appOpened.rawValue, props: [:], at: Date())
+        enqueue(name: AnalyticsEvent.appOpened.rawValue, props: Self.openingProps(), at: Date())
     }
 
     func flushForBackground() {

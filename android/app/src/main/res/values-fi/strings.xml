@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Lisäksi</string>
     <string name="ios_onb16_time_max">Hyvin tehokas</string>
     <string name="ios_onb16_welcome_cta">Kyllä, aloitetaan</string>
+    <string name="ios_onb18_q_gender">Ja **sinä** olet…?</string>
+    <string name="ios_onb18_say_gender">Jotta puhuttelen sinua oikein.</string>
+    <string name="ios_onb18_gender_male">Mies</string>
+    <string name="ios_onb18_gender_female">Nainen</string>
+    <string name="ios_onb18_gender_other">Muu</string>
     <string name="ios_onb16_welcome_say">Hei, olen Mika, uusi opiskeluavustajasi. Kysyn sinulta muutaman kysymyksen, jotta voin valmistella suunnitelmasi. Sopiiko?</string>
     <string name="ios_onb17_offer_say">Odota, %1$s! Minulla on sinulle **parempi hinta**.</string>
     <string name="ios_onb17_offer_sayAnon">Odota! Minulla on sinulle **parempi hinta**.</string>

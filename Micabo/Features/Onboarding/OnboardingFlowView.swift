@@ -98,6 +98,7 @@ struct OnboardingFlowView: View {
 
     private func finish() {
         Analytics.track(.onboardingFinished)
+        Analytics.track(.onboardingProfile, model.analyticsProfile)
         // Avant le drapeau : dès qu'il est posé, une synchro peut relire le profil du
         // serveur, et ce sont les réponses qu'on vient de donner qui doivent gagner.
         CloudSync.noteOnboardingAnswers()
@@ -170,7 +171,7 @@ struct OnboardingTopBar: View {
             }
             if step.isSkippable {
                 Button {
-                    model.skipAverages()
+                    if step == .gender { model.skipGender() } else { model.skipAverages() }
                 } label: {
                     Text(i18n.t("common.skip"))
                         .font(V3Font.label)
@@ -210,6 +211,7 @@ struct OnboardingStepScreen: View {
         case .hookLogo: StoriesStepView()
         case .welcome: WelcomeStepView()
         case .name: NameStepView()
+        case .gender: GenderStepView()
         case .country: CountryStepView()
         case .level: LevelStepView()
         case .schoolType: SchoolTypeStepView()

@@ -169,7 +169,11 @@ final class LessonGeneration {
                 XPStore.shared.award(.lessonCreated)
                 guard !Task.isCancelled else { return }
                 Haptics.success()
-                Analytics.track(.courseImported, properties)
+                // Le nom du cours, et lui seul : ni le texte importé ni les cartes.
+                var imported = properties
+                imported["title"] = .name(course.title)
+                imported["subject"] = .name(course.subject ?? "")
+                Analytics.track(.courseImported, imported)
                 self?.finish(with: course)
             } catch _ where Task.isCancelled {
                 // Abandonnée par l'élève : ni vibration, ni message, ni échec compté.

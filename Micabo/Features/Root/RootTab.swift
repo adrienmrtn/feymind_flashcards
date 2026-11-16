@@ -28,6 +28,17 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
     /// leçon.
     static let tabs: [RootTab] = [.today, .decks, .calendar, .focus, .profile]
 
+    /// Le nom de l'onglet dans les statistiques : ce qu'il affiche, pas son nom de cas.
+    var analyticsName: String {
+        switch self {
+        case .decks: "lessons"
+        case .today: "home"
+        case .calendar: "calendar"
+        case .focus: "focus"
+        case .profile: "profile"
+        }
+    }
+
     func label(t: (String) -> String) -> String {
         switch self {
         case .decks: t("lesson.tab.lessons")
@@ -83,7 +94,12 @@ enum RootTab: Int, CaseIterable, Identifiable, Hashable {
 /// Onglet actif, partagé pour permettre un basculement programmatique.
 @Observable
 final class TabRouter {
-    var selection: RootTab = .today
+    var selection: RootTab = .today {
+        didSet {
+            guard selection != oldValue else { return }
+            Analytics.track(.tabViewed, ["tab": .text(selection.analyticsName)])
+        }
+    }
     /// Profondeur de navigation par onglet.
     private var navigationDepth: [RootTab: Int] = [:]
 

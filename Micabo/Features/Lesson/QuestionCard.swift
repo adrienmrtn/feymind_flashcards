@@ -316,6 +316,11 @@ struct TrueFalseButtons: View {
 /// **Remettre dans l'ordre** : on touche les éléments dans l'ordre voulu ; ils montent dans
 /// la réponse, numérotés. Un appui sur un élément placé le renvoie. « Valider » quand tout est
 /// placé ; on voit ensuite chaque place, juste ou fausse.
+///
+/// **Deux appuis rapides sur le même élément ne le placent qu'une fois.** Le second appui
+/// arrivait avant que l'élément ait quitté la réserve : il entrait deux fois dans la réponse,
+/// qui dépassait alors le nombre de places, et la plage des places vides (`placed.count..<n`)
+/// se retrouvait à l'envers — l'app se fermait.
 struct OrderBuilder: View {
     let question: QuizQuestion
     let tone: LessonTone
@@ -364,7 +369,7 @@ struct OrderBuilder: View {
                     .buttonStyle(MicaboPressableButtonStyle(feedback: .none))
                     .disabled(answered != nil)
                 }
-                ForEach(placed.count..<question.choices.count, id: \.self) { slot in
+                ForEach(min(placed.count, question.choices.count)..<question.choices.count, id: \.self) { slot in
                     RoundedRectangle(cornerRadius: MicaboRadius.md, style: .continuous)
                         .strokeBorder(MicaboColor.stroke, style: StrokeStyle(lineWidth: 2, dash: [6, 5]))
                         .frame(height: 54)
@@ -381,6 +386,7 @@ struct OrderBuilder: View {
                 MicaboFlowLayout(spacing: 10, lineSpacing: 10) {
                     ForEach(pool.filter { !placed.contains($0) }, id: \.self) { item in
                         Button {
+                            guard Self.canPlace(item, in: placed, of: question.choices.count) else { return }
                             Haptics.selection()
                             withAnimation(LearnMotion.standard) { placed.append(item) }
                         } label: {
@@ -409,6 +415,11 @@ struct OrderBuilder: View {
             // Relue après coup, la question montre l'ordre juste.
             if answered != nil, placed.isEmpty, reveals { placed = Array(question.choices.indices) }
         }
+    }
+
+    /// Un élément se place s'il existe, s'il n'est pas déjà placé, et s'il reste une place.
+    static func canPlace(_ item: Int, in placed: [Int], of count: Int) -> Bool {
+        (0..<count).contains(item) && !placed.contains(item) && placed.count < count
     }
 
     private func numberColor(position: Int, item: Int) -> Color {

@@ -121,6 +121,8 @@ fun OnboardingScreen() {
             override val trialDays: Int get() = trialAnswer?.takeIf { it > 0 } ?: 3
             override fun track(event: String, props: Map<String, Any>) = app.analytics.track(event, props)
             override fun pickLanguage(code: String) {
+                val from = com.micabo.app.i18n.AppLocale.resolved(app.prefs.profile.value.language).code
+                if (from != code) app.analytics.track("language_changed", mapOf("from" to from, "to" to code))
                 app.prefs.update { it.copy(language = code) }
                 (context as? android.app.Activity)?.recreate()
             }
@@ -182,6 +184,8 @@ fun finishOnboarding(app: com.micabo.app.MicaboApplication, navigator: com.micab
     FirstLesson.save(app, model.firstLessonSubject, model.firstLessonChoice == com.micabo.app.onboarding.FirstLessonChoice.IMPORT)
     app.prefs.onboardingLessonPending = app.lessons.lessons.value.values.none { it.usesFreeLesson }
     app.analytics.track("onboarding_finished", mapOf("tier" to (model.tier ?: "other"), "worries" to model.worries.size, "daily" to model.minutesPerDay))
+    // Toutes les réponses en une ligne, avec la langue choisie dans l'app. Jamais le prénom.
+    app.analytics.track("onboarding_profile", model.analyticsProfile(com.micabo.app.i18n.AppLocale.resolved(app.prefs.profile.value.language).code))
     if (app.billing.enabled && !app.billing.isPro.value) navigator.push(Screen.Paywall("onboarding"))
 }
 
@@ -207,12 +211,12 @@ fun OnboardingFlow(model: OnboardingModel, host: OnboardingHost) {
                 Spacer(Modifier.width(14.dp))
                 ChapterGauge(step.chapter, step.chapterFraction, OnboardingStep.CHAPTER_COUNT, Modifier.weight(1f))
                 Spacer(Modifier.width(8.dp))
-                if (step == OnboardingStep.currentAverage) {
+                if (step.isSkippable) {
                     androidx.compose.material3.Text(
                         com.micabo.app.i18n.t("common.skip"),
                         style = com.micabo.app.ui.theme.text(17.sp, androidx.compose.ui.text.font.FontWeight.SemiBold),
                         color = colors.inkSecondary,
-                        modifier = Modifier.clickable(onClick = model::skipAverages).padding(horizontal = 6.dp, vertical = 12.dp),
+                        modifier = Modifier.clickable(onClick = { if (step == OnboardingStep.gender) model.skipGender() else model.skipAverages() }).padding(horizontal = 6.dp, vertical = 12.dp),
                     )
                 }
             }
@@ -238,6 +242,7 @@ fun StepScreen(step: OnboardingStep, model: OnboardingModel, host: OnboardingHos
         OnboardingStep.hookLogo -> StoriesStep(model, host)
         OnboardingStep.welcome -> WelcomeStep(model)
         OnboardingStep.yourName -> NameStep(model)
+        OnboardingStep.gender -> GenderStep(model)
         OnboardingStep.country -> CountryStep(model)
         OnboardingStep.level -> LevelStep(model)
         OnboardingStep.schoolType -> SchoolTypeStep(model)

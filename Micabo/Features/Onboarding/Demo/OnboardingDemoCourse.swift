@@ -277,6 +277,8 @@ enum OnboardingDemoCatalog {
             "deck": .flag(true),
             "generated": .flag(false),
             "cards": .number(Double(demo.cards.count)),
+            "title": .name(demo.title),
+            "subject": .name(demo.subject),
         ])
         return course
     }

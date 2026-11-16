@@ -31,6 +31,8 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     case welcome
     /// « Comment je t'appelle ? » Obligatoire : tout ce qui suit s'adresse à quelqu'un.
     case name
+    /// **« Et toi, tu es… ? »** : un homme, une femme, autre. Facultative (« Passer »).
+    case gender
     case country
     /// Le palier large, pour les pays dont on ne connaît pas les filières.
     case level
@@ -198,7 +200,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// Le chapitre de l'écran, de 0 à `chapterCount - 1`.
     var chapter: Int {
         switch self {
-        case .hookLogo, .welcome, .name, .country, .level, .schoolType, .year, .exam, .subjects:
+        case .hookLogo, .welcome, .name, .gender, .country, .level, .schoolType, .year, .exam, .subjects:
             0
         case .studyIntro, .hardestSubject, .goal, .worries, .studyHours, .studyMethod, .solutionMap:
             1
@@ -266,7 +268,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
             .chapter
         case .solutionMap, .planBuilding, .profileSummary, .storyClose:
             .moment
-        case .name, .country, .level, .schoolType, .year, .exam, .subjects, .hardestSubject,
+        case .name, .gender, .country, .level, .schoolType, .year, .exam, .subjects, .hardestSubject,
              .goal, .worries, .studyHours, .studyMethod, .currentAverage, .targetAverage,
              .dailyTime, .firstLesson:
             .question
@@ -286,7 +288,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// (`OnbPickButton`).
     var isSingleChoice: Bool {
         switch self {
-        case .country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod:
+        case .gender, .country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod:
             true
         default:
             false
@@ -326,9 +328,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         }
     }
 
-    /// **L'écran dont la réponse est facultative** : la moyenne d'aujourd'hui.
+    /// **Les écrans dont la réponse est facultative** (« Passer », en haut à droite) : le
+    /// genre, et la moyenne d'aujourd'hui.
     var isSkippable: Bool {
-        self == .currentAverage
+        self == .gender || self == .currentAverage
     }
 
     /// Position de l'étape dans le parcours entier, entre 0 et 1.

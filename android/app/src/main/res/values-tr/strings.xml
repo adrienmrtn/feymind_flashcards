@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Ve ayrıca</string>
     <string name="ios_onb16_time_max">Çok yoğun</string>
     <string name="ios_onb16_welcome_cta">Evet, başlayalım</string>
+    <string name="ios_onb18_q_gender">Peki **sen**…?</string>
+    <string name="ios_onb18_say_gender">Sana doğru hitap edebilmem için.</string>
+    <string name="ios_onb18_gender_male">Erkek</string>
+    <string name="ios_onb18_gender_female">Kadın</string>
+    <string name="ios_onb18_gender_other">Diğer</string>
     <string name="ios_onb16_welcome_say">Selam, ben Mika, ders çalışmak için yeni asistanın. Yolculuğunu hazırlamak için sana birkaç soru soracağım, olur mu?</string>
     <string name="ios_onb17_offer_say">Bekle, %1$s! Sana **özel bir fiyatım** var.</string>
     <string name="ios_onb17_offer_sayAnon">Bekle! Sana **özel bir fiyatım** var.</string>

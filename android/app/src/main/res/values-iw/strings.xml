@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">ועוד</string>
     <string name="ios_onb16_time_max">אינטנסיבי מאוד</string>
     <string name="ios_onb16_welcome_cta">כן, יוצאים לדרך</string>
+    <string name="ios_onb18_q_gender">איך **לפנות** אליך?</string>
+    <string name="ios_onb18_say_gender">כדי שאפנה אליך נכון.</string>
+    <string name="ios_onb18_gender_male">גבר</string>
+    <string name="ios_onb18_gender_female">אישה</string>
+    <string name="ios_onb18_gender_other">אחר</string>
     <string name="ios_onb16_welcome_say">היי, אני Mika, העוזר החדש שלכם ללמידה. אשאל אתכם כמה שאלות כדי להכין את המסלול שלכם. מתאים לכם?</string>
     <string name="ios_onb17_offer_say">רגע, %1$s! יש לי בשבילכם **מחיר מיוחד**.</string>
     <string name="ios_onb17_offer_sayAnon">רגע! יש לי בשבילכם **מחיר מיוחד**.</string>

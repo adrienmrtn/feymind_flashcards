@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">そのほか</string>
     <string name="ios_onb16_time_max">とてもハード</string>
     <string name="ios_onb16_welcome_cta">うん、始めよう</string>
+    <string name="ios_onb18_q_gender">**あなた**は…？</string>
+    <string name="ios_onb18_say_gender">正しく呼びかけるために教えてね。</string>
+    <string name="ios_onb18_gender_male">男性</string>
+    <string name="ios_onb18_gender_female">女性</string>
+    <string name="ios_onb18_gender_other">その他</string>
     <string name="ios_onb16_welcome_say">やあ、Mikaだよ。きみの新しい勉強アシスタントなんだ。きみのプランを準備するために、いくつか質問させてね。いいかな？</string>
     <string name="ios_onb17_offer_say">待って、%1$s！**特別価格**があるよ。</string>
     <string name="ios_onb17_offer_sayAnon">待って！**特別価格**があるよ。</string>

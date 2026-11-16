@@ -134,7 +134,15 @@ fun CreatingScreen(request: LessonRequest) {
                     app.exams.save(Exam(name = app.lessons.lesson(id)?.title.orEmpty(), date = date, lessonIds = listOf(id)))
                 }
                 haptics.success()
-                app.analytics.track("course_imported", properties)
+                // Le nom du cours, et lui seul : ni le texte importé ni les thèmes.
+                val made = app.lessons.lesson(id)
+                app.analytics.track(
+                    "course_imported",
+                    properties + mapOf(
+                        "title" to made?.title?.trim()?.take(120)?.ifEmpty { null },
+                        "subject" to made?.subject?.trim()?.take(120)?.ifEmpty { null },
+                    ),
+                )
                 app.composer.reset()
                 navigator.replace(Screen.LessonPath(id))
             } catch (cancel: CancellationException) {

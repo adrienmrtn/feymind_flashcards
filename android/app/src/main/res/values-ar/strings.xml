@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">وأيضًا</string>
     <string name="ios_onb16_time_max">مكثّف جدًا</string>
     <string name="ios_onb16_welcome_cta">نعم، لنبدأ</string>
+    <string name="ios_onb18_q_gender">و**أنت**…؟</string>
+    <string name="ios_onb18_say_gender">لأخاطبك بالطريقة الصحيحة.</string>
+    <string name="ios_onb18_gender_male">رجل</string>
+    <string name="ios_onb18_gender_female">امرأة</string>
+    <string name="ios_onb18_gender_other">آخر</string>
     <string name="ios_onb16_welcome_say">مرحبًا، أنا Mika، مساعدك الجديد للدراسة. سأطرح عليك بعض الأسئلة لأجهّز مسارك، هل توافق؟</string>
     <string name="ios_onb17_offer_say">انتظر، %1$s! عندي لك **سعر أفضل**.</string>
     <string name="ios_onb17_offer_sayAnon">انتظر! عندي لك **سعر أفضل**.</string>

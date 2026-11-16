@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Και επίσης</string>
     <string name="ios_onb16_time_max">Πολύ έντονο</string>
     <string name="ios_onb16_welcome_cta">Ναι, πάμε</string>
+    <string name="ios_onb18_q_gender">Κι **εσύ** είσαι…;</string>
+    <string name="ios_onb18_say_gender">Για να σου απευθύνομαι σωστά.</string>
+    <string name="ios_onb18_gender_male">Άνδρας</string>
+    <string name="ios_onb18_gender_female">Γυναίκα</string>
+    <string name="ios_onb18_gender_other">Άλλο</string>
     <string name="ios_onb16_welcome_say">Γεια, είμαι ο Mika, ο νέος σου βοηθός για το διάβασμα. Θα σου κάνω μερικές ερωτήσεις για να ετοιμάσω το πλάνο σου. Εντάξει;</string>
     <string name="ios_onb17_offer_say">Περίμενε, %1$s! Έχω **καλύτερη τιμή** για σένα.</string>
     <string name="ios_onb17_offer_sayAnon">Περίμενε! Έχω **καλύτερη τιμή** για σένα.</string>

@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">E poi</string>
     <string name="ios_onb16_time_max">Molto intenso</string>
     <string name="ios_onb16_welcome_cta">Sì, andiamo</string>
+    <string name="ios_onb18_q_gender">E **tu** sei…?</string>
+    <string name="ios_onb18_say_gender">Per rivolgermi a te nel modo giusto.</string>
+    <string name="ios_onb18_gender_male">Un uomo</string>
+    <string name="ios_onb18_gender_female">Una donna</string>
+    <string name="ios_onb18_gender_other">Altro</string>
     <string name="ios_onb16_welcome_say">Ciao, sono Mika, il tuo nuovo assistente per studiare. Ti farò qualche domanda per preparare il tuo percorso, ti va?</string>
     <string name="ios_onb17_offer_say">Aspetta, %1$s! Ho un **prezzo** speciale per te.</string>
     <string name="ios_onb17_offer_sayAnon">Aspetta! Ho un **prezzo** speciale per te.</string>

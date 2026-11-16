@@ -167,6 +167,7 @@ class OnboardingLogicTest {
         model.chooseTrack(first.schoolTrack!!)
         model.chooseYear(first.schoolYear!!)
         model.subjects.addAll(first.subjects)
+        model.chooseGender(StudentGender.female)
         model.dailyMinutes = 45
         model.place(OnboardingStep.dailyTime)
         model.advance()
@@ -176,6 +177,7 @@ class OnboardingLogicTest {
         assertEquals("fr", again.country)
         assertEquals("fr.terminale", again.schoolYear?.id)
         assertEquals(45, again.dailyMinutes)
+        assertEquals(StudentGender.female, again.gender)
     }
 
     // MARK: Les écrans sautés
@@ -245,6 +247,71 @@ class OnboardingLogicTest {
         assertNull(model.currentScore)
         model.goBack()
         assertEquals(OnboardingStep.currentAverage, model.step)
+    }
+
+    // MARK: Le genre et les statistiques
+
+    @Test
+    fun theGenderComesRightAfterTheName() {
+        assertEquals(OnboardingStep.gender, OnboardingStep.yourName.next)
+        assertEquals(OnboardingStep.country, OnboardingStep.gender.next)
+        assertEquals("gender", OnboardingStep.gender.analyticsName)
+        assertEquals(listOf(OnboardingStep.gender, OnboardingStep.currentAverage), OnboardingStep.entries.filter { it.isSkippable })
+        assertEquals(listOf("male", "female", "other"), StudentGender.entries.map { it.name })
+    }
+
+    @Test
+    fun choosingOrSkippingTheGenderIsTracked() {
+        val events = mutableListOf<Pair<String, Map<String, Any>>>()
+        val model = OnboardingModel(track = { name, props -> events += name to props }, deviceLanguages = listOf("fr-FR"), deviceRegion = "FR")
+        model.place(OnboardingStep.gender)
+        model.chooseGender(StudentGender.male)
+        assertEquals(OnboardingStep.gender, model.step)
+        assertEquals("onboarding_answer" to mapOf<String, Any>("field" to "gender", "value" to "male"), events.last())
+        model.skipGender()
+        assertNull(model.gender)
+        assertEquals(OnboardingStep.country, model.step)
+        assertTrue(("onboarding_answer" to mapOf<String, Any>("field" to "gender", "value" to "passer")) in events)
+        assertEquals("passer", model.analyticsProfile("fr")["gender"])
+    }
+
+    @Test
+    fun leavingTheSubjectsSendsThemSorted() {
+        val events = mutableListOf<Pair<String, Map<String, Any>>>()
+        val model = OnboardingModel(track = { name, props -> events += name to props }, deviceLanguages = listOf("fr-FR"), deviceRegion = "FR")
+        model.subjects.addAll(listOf("Philosophie", "Mathématiques"))
+        model.place(OnboardingStep.subjects)
+        model.advance()
+        assertTrue(("onboarding_answer" to mapOf<String, Any>("field" to "subjects", "value" to "Mathématiques,Philosophie")) in events)
+    }
+
+    @Test
+    fun aLongListIsSentInChunksOfWholeNames() {
+        val names = (1..30).map { "Matière numéro %02d".format(it) }
+        val chunks = OnboardingModel.analyticsList("subjects", names)
+        assertEquals(setOf("subjects", "subjects_2", "subjects_3"), chunks.keys)
+        assertTrue(chunks.values.all { (it as String).length <= 120 })
+        assertEquals(names.take(6).joinToString(","), chunks["subjects"])
+        assertEquals(60, (OnboardingModel.analyticsList("value", listOf("x".repeat(200)))["value"] as String).length)
+        assertTrue(OnboardingModel.analyticsList("value", emptyList()).isEmpty())
+    }
+
+    @Test
+    fun theProfileCarriesEveryAnswerButTheName() {
+        val profile = OnboardingModel.lina(OnboardingStep.trialOffer).analyticsProfile("fr")
+        assertFalse(profile.values.any { it == "Lina" })
+        assertEquals("fr", profile["ui_language"])
+        assertEquals("fr", profile["country"])
+        assertEquals("fr.terminale", profile["year"])
+        assertEquals("fr.bac", profile["exam"])
+        assertEquals("Histoire-Géographie,Mathématiques,Philosophie,Physique-Chimie", profile["subjects"])
+        assertEquals(4, profile["subject_count"])
+        assertEquals("forgetting,examStress", profile["worries"])
+        assertEquals(45, profile["daily_minutes"])
+        assertEquals("later", profile["first_lesson"])
+        assertEquals(false, profile["skipped_averages"])
+        assertTrue(profile.values.all { it is String || it is Int || it is Boolean })
+        assertTrue(profile.values.all { it !is String || it.length <= 120 })
     }
 
     @Test

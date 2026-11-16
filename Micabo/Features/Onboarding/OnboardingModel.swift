@@ -196,6 +196,14 @@ final class OnboardingModel {
         return subjects
     }
 
+    /// **« Et toi, tu es… ? »** : un homme, une femme, autre. Facultatif.
+    var gender: StudentGender? {
+        didSet {
+            guard let gender, gender != oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "gender", "value": .text(gender.rawValue)])
+        }
+    }
+
     /// **Le temps de révision d'aujourd'hui, par semaine** (lot 12).
     var weeklyStudy: WeeklyStudy? {
         didSet {
@@ -536,6 +544,11 @@ final class OnboardingModel {
             return true
         }
         persist()
+        if step == .subjects, !subjects.isEmpty {
+            var answer: [String: AnalyticsValue] = ["field": "subjects"]
+            for (key, value) in Self.analyticsList("value", subjects.sorted()) { answer[key] = value }
+            Analytics.track(.onboardingAnswer, answer)
+        }
         var next = step.next
         // Les écrans sans réponse possible se sautent plutôt que de s'afficher vides.
         while let candidate = next, isSkipped(candidate) {
@@ -544,6 +557,85 @@ final class OnboardingModel {
         guard let next else { return false }
         move(to: next, forward: true)
         return true
+    }
+
+    /// **Toutes les réponses, à plat**, pour `onboarding_profile`. Des identifiants et des
+    /// nombres ; les seuls textes libres sont des noms (matières, école), raccourcis. Le
+    /// prénom n'y est pas, et n'y sera pas.
+    var analyticsProfile: [String: AnalyticsValue] {
+        var profile: [String: AnalyticsValue] = [
+            "ui_language": .text(UiLocale.resolved().rawValue),
+            "country": .text(country.rawValue),
+            "gender": .text(gender?.rawValue ?? "passer"),
+            "committed": .flag(hasCommitted),
+            "has_account": .flag(hasAccount),
+            "skipped_averages": .flag(didSkipAverages),
+        ]
+        func putText(_ key: String, _ value: String?) {
+            if let value = value?.nilIfBlank { profile[key] = .name(value) }
+        }
+        func putNumber(_ key: String, _ value: Int?) {
+            if let value { profile[key] = .number(Double(value)) }
+        }
+        putText("custom_country", customCountry?.code)
+        putText("stage", stage?.id)
+        putText("level", level?.rawValue)
+        putText("track", track?.id)
+        putText("year", year?.id)
+        putText("exam", examChoice?.id)
+        if let examDate, examChoice?.hasDate == true {
+            profile["exam_date"] = .text(examDate.formatted(.iso8601.year().month().day()))
+        }
+        if !subjects.isEmpty {
+            for (key, value) in Self.analyticsList("subjects", subjects.sorted()) { profile[key] = value }
+            profile["subject_count"] = .number(Double(subjects.count))
+        }
+        putText("hardest_subject", hardestSubject)
+        putText("goal", mainGoal?.rawValue)
+        if !answeredWorries.isEmpty {
+            profile["worries"] = .text(answeredWorries.map(\.rawValue).joined(separator: ","))
+        }
+        putText("weekly_study", weeklyStudy?.rawValue)
+        putText("study_method", studyMethod?.rawValue)
+        putNumber("current_score", currentScore)
+        putNumber("target_score", targetScore)
+        putNumber("daily_minutes", dailyMinutes)
+        putNumber("study_hour", studyHour)
+        putText("institution", OnboardingPreferences.institutionName)
+        switch firstLessonChoice {
+        case .topic: profile["first_lesson"] = "topic"
+        case .importSource: profile["first_lesson"] = "import"
+        case nil: profile["first_lesson"] = "later"
+        }
+        return profile
+    }
+
+    /// **Une liste de noms, en morceaux.** Une valeur d'analyse est coupée à 120 signes
+    /// (`AnalyticsValue.encode`) : dix matières n'y tiennent pas. La liste part donc sous
+    /// `key`, puis `key_2`, `key_3`, chaque morceau fait de noms entiers séparés par des
+    /// virgules ; les vues SQL les recollent. Au-delà de trois morceaux, la suite est omise.
+    static func analyticsList(_ key: String, _ names: [String]) -> [String: AnalyticsValue] {
+        var chunks: [String] = []
+        for name in names.map({ String($0.prefix(60)) }) {
+            if let last = chunks.last, last.count + 1 + name.count <= 120 {
+                chunks[chunks.count - 1] = last + "," + name
+            } else {
+                chunks.append(name)
+            }
+        }
+        var result: [String: AnalyticsValue] = [:]
+        for (index, chunk) in chunks.prefix(3).enumerated() {
+            result[index == 0 ? key : "\(key)_\(index + 1)"] = .text(chunk)
+        }
+        return result
+    }
+
+    /// **« Passer » le genre** : rien n'est gardé, et le parcours continue.
+    func skipGender() {
+        guard step == .gender, !isTransitioning else { return }
+        gender = nil
+        Analytics.track(.onboardingAnswer, ["field": "gender", "value": "passer"])
+        advance()
     }
 
     /// **« Passer » la moyenne** : ni la moyenne d'aujourd'hui ni celle visée ne sont
@@ -642,6 +734,7 @@ final class OnboardingModel {
         OnboardingPreferences.examID = examChoice?.id
         OnboardingPreferences.examDate = examChoice?.hasDate == true ? examDate : nil
         OnboardingPreferences.hardestSubject = hardestSubject
+        OnboardingPreferences.gender = gender?.rawValue
         OnboardingPreferences.weeklyStudy = weeklyStudy?.rawValue
         OnboardingPreferences.method = studyMethod?.rawValue
         OnboardingPreferences.hasCommitted = hasCommitted
@@ -709,6 +802,7 @@ extension OnboardingModel {
         examChoice = SchoolExams.choice(id: OnboardingPreferences.examID)
         examDate = OnboardingPreferences.examDate
         hardestSubject = OnboardingPreferences.hardestSubject.flatMap { subjects.contains($0) ? $0 : nil }
+        gender = OnboardingPreferences.gender.flatMap(StudentGender.init(rawValue:))
         weeklyStudy = OnboardingPreferences.weeklyStudy.flatMap(WeeklyStudy.init(rawValue:))
         studyMethod = OnboardingPreferences.method.flatMap(StudyMethod.init(rawValue:))
         hasCommitted = OnboardingPreferences.hasCommitted
@@ -819,6 +913,20 @@ enum StudyWorry: String, CaseIterable, Identifiable {
 }
 
 /// **Le temps de révision d'aujourd'hui, par semaine** (lot 12). Quatre crans, sans jugement.
+/// **Le genre de l'élève**, tel qu'il le dit : un homme, une femme, autre. Les valeurs sont
+/// celles des statistiques (`onboarding_answer`, champ `gender`).
+enum StudentGender: String, CaseIterable, Identifiable {
+    case male
+    case female
+    case other
+
+    var id: String { rawValue }
+
+    func title(locale: UiLocale) -> String {
+        L10n.t("ios.onb18.gender.\(rawValue)", locale: locale)
+    }
+}
+
 enum WeeklyStudy: String, CaseIterable, Identifiable {
     case underOne
     case oneToThree

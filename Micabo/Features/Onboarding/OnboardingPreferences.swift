@@ -458,6 +458,7 @@ enum OnboardingPreferences {
         /// Lot 12 : la matière la plus dure, le temps de révision par semaine, l'engagement.
         static let hardestSubject = "micabo.onboarding.hardestSubject"
         static let weeklyStudy = "micabo.onboarding.weeklyStudy"
+        static let gender = "micabo.onboarding.gender"
         static let committed = "micabo.onboarding.committed"
         /// L'heure à laquelle il révise, de 5 à 23. C'est l'heure du rappel.
         static let studyHour = "micabo.onboarding.studyHour"
@@ -488,7 +489,7 @@ enum OnboardingPreferences {
             sheetLanguage, schoolTrack, schoolYear, displayName,
             source, triedApps, blocker, examHorizon, method, studyHour, worries,
             exam, examDate, examPlaced,
-            hardestSubject, weeklyStudy, committed
+            hardestSubject, weeklyStudy, committed, gender
         ] + resume
     }
 
@@ -623,6 +624,12 @@ enum OnboardingPreferences {
     }
 
     /// Le temps de révision par semaine d'aujourd'hui (lot 12), `WeeklyStudy`.
+    /// **Le genre répondu au parcours** (`StudentGender`), ou rien quand la question est passée.
+    static var gender: String? {
+        get { defaults.string(forKey: Key.gender) }
+        set { write(newValue, forKey: Key.gender) }
+    }
+
     static var weeklyStudy: String? {
         get { defaults.string(forKey: Key.weeklyStudy) }
         set { write(newValue, forKey: Key.weeklyStudy) }

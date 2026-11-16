@@ -252,6 +252,7 @@ enum DeckLessonBuilder {
             "deck": .flag(true),
             "generated": .flag(false),
             "cards": .number(Double(cards.count)),
+            "title": .name(course.title),
         ])
         return course
     }

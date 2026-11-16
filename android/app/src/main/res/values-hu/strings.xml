@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">És még</string>
     <string name="ios_onb16_time_max">Nagyon intenzív</string>
     <string name="ios_onb16_welcome_cta">Igen, kezdjük</string>
+    <string name="ios_onb18_q_gender">És **te**…?</string>
+    <string name="ios_onb18_say_gender">Hogy jól szólítsalak meg.</string>
+    <string name="ios_onb18_gender_male">Férfi</string>
+    <string name="ios_onb18_gender_female">Nő</string>
+    <string name="ios_onb18_gender_other">Egyéb</string>
     <string name="ios_onb16_welcome_say">Szia, Mika vagyok, az új tanulási asszisztensed. Felteszek pár kérdést, hogy előkészítsem a terved. Rendben?</string>
     <string name="ios_onb17_offer_say">Várj, %1$s! **Jobb árat** adok neked.</string>
     <string name="ios_onb17_offer_sayAnon">Várj! **Jobb árat** adok neked.</string>
