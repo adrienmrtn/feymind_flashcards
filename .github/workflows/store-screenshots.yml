@@ -6,7 +6,7 @@
 # pour envoyer. Les images vont sur la version en préparation ; une version en ligne est figée.
 #
 # Les images du 6,9″ sont dans le dépôt (store/screenshots/<langue>/) ; celles du 6,3″ en sont
-# tirées ici, à chaque envoi. Pour en changer un texte : store/screenshots/generator/.
+# tirées ici, à chaque envoi. Pour en changer un texte : store/screenshots/generator-v3/.
 #
 # Secrets du dépôt : ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY — les mêmes que la grille de
 # prix (docs/revenuecat.md, §15).

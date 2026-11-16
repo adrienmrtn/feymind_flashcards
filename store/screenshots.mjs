@@ -20,7 +20,7 @@
  * 3. **Les autres tailles d'iPhone sont vidées** (6,5″, 5,5″…) : App Store Connect y met alors
  *    la réduction des nouvelles, au lieu d'y laisser les anciennes.
  *
- * Une fiche dans une langue sans images (`it`, `ja`…) n'est pas touchée, et la simulation la
+ * Une fiche dans une langue sans images (`et`, `pt-PT`…) n'est pas touchée, et la simulation la
  * nomme. Les vidéos d'aperçu non plus.
  */
 
