@@ -9,6 +9,50 @@
         <item quantity="one">%1$d Karte</item>
         <item quantity="other">%1$d Karten</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Dein Fach</item>
+        <item quantity="other">Deine %1$d Fächer</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d Punkt: eine echte Herausforderung. Wir gehen Schritt für Schritt</item>
+        <item quantity="other">+%1$d Punkte: eine echte Herausforderung. Wir gehen Schritt für Schritt</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d Punkt: ehrgeizig und machbar</item>
+        <item quantity="other">+%1$d Punkte: ehrgeizig und machbar</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d Punkt: ein kleiner Schritt, absolut machbar</item>
+        <item quantity="other">+%1$d Punkte: ein kleiner Schritt, absolut machbar</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d Tag gratis, danach %2$s pro Woche. Jederzeit kündbar.</item>
+        <item quantity="other">%1$d Tage gratis, danach %2$s pro Woche. Jederzeit kündbar.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d Tag gratis, danach %2$s pro Jahr. Jederzeit kündbar.</item>
+        <item quantity="other">%1$d Tage gratis, danach %2$s pro Jahr. Jederzeit kündbar.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d Tag gratis</item>
+        <item quantity="other">%1$d Tage gratis</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Teste ihn %1$d Tag lang gratis.</item>
+        <item quantity="other">Teste ihn %1$d Tage lang gratis.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Meinen Gratis-Tag starten</item>
+        <item quantity="other">Meine %1$d Gratis-Tage starten</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d Tag gratis, dann wöchentlich</item>
+        <item quantity="other">%1$d Tage gratis, dann wöchentlich</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d Tag gratis, dann %2$s pro Jahr</item>
+        <item quantity="other">%1$d Tage gratis, dann %2$s pro Jahr</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d Tag in Folge</item>
         <item quantity="other">%1$d Tage in Folge</item>
@@ -36,6 +80,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Meinen Fehler als Karte speichern</item>
         <item quantity="other">Meine %1$d Fehler als Karten speichern</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d Fragen</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d Frage ist unbeantwortet. Trotzdem abgeben?</item>

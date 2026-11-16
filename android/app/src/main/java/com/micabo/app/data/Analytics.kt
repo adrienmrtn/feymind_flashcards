@@ -91,6 +91,8 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
     }
 
     fun track(name: String, props: Map<String, Any?> = emptyMap()) {
+        // Les rendus des tests (Robolectric) n'envoient rien.
+        if (android.os.Build.FINGERPRINT == "robolectric") return
         // La table refuse un nom hors de sa forme, et avec lui tout le lot où il voyage.
         if (!NAME.matches(name)) {
             Log.w(TAG, "Nom d'événement refusé : $name")

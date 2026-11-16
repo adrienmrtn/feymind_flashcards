@@ -212,7 +212,7 @@ private fun Setup(examName: String?, examLessons: List<String>, initialMinutes: 
                     }
                 }
             }
-            Text(stringResource(R.string.lesson_exam_questionCount, Paper.questionCount(minutes).toString()), style = nunito(14.sp, FontWeight.Bold), color = colors.inkSecondary)
+            Text(pluralStringResource(R.plurals.lesson_exam_questionCount, Paper.questionCount(minutes), Paper.questionCount(minutes)), style = nunito(14.sp, FontWeight.Bold), color = colors.inkSecondary)
             Text(stringResource(R.string.lesson_exam_lessons), style = nunito(15.sp, FontWeight.ExtraBold), color = colors.inkSecondary, modifier = Modifier.padding(top = 8.dp))
             if (ready.isEmpty()) NoLessons()
             ready.forEach { lesson ->
