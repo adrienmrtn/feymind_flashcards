@@ -182,6 +182,10 @@ struct ProfileSummaryStepView: View {
     /// Une séance par jour : sept dans la semaine.
     static let sessionsPerWeek = 7
 
+    /// La durée d'une séance (une heure au plus) et le nombre de séances par jour.
+    private var sessionMinutes: Int { RevisionPlanner.sessionLength(dailyMinutes: model.minutesPerDay) }
+    private var sessionsPerDay: Int { RevisionPlanner.sessionLengths(dailyMinutes: model.minutesPerDay).count }
+
     private var title: String {
         guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb10.plan.titleNoName") }
         return i18n.t("ios.onb10.plan.title", ["name": name])
@@ -224,17 +228,20 @@ struct ProfileSummaryStepView: View {
                 .padding(.top, 4)
 
             VStack(spacing: 10) {
+                // Lot 16 : une séance dure une heure au plus ; au-delà, plusieurs séances par jour.
                 block(
                     label: i18n.t("ios.onb12.plan.tonightLabel"),
                     value: OnbWords.hour(model.reminderHour, locale: i18n.locale),
-                    detail: i18n.t("ios.onb12.plan.tonightDetail", ["topic": tonight, "min": "\(model.minutesPerDay)"]),
+                    detail: i18n.t("ios.onb12.plan.tonightDetail", ["topic": tonight, "min": "\(sessionMinutes)"]),
                     tone: V3Color.accentBright,
                     highlighted: true
                 )
                 block(
                     label: i18n.t("ios.onb12.plan.weekLabel"),
-                    value: "\(Self.sessionsPerWeek)",
-                    detail: i18n.t("ios.onb12.plan.weekDetail", ["min": "\(model.minutesPerDay)"]),
+                    value: "\(Self.sessionsPerWeek * sessionsPerDay)",
+                    detail: sessionsPerDay > 1
+                        ? i18n.t("ios.onb16.plan.weekSplit", ["min": "\(sessionMinutes)", "count": "\(sessionsPerDay)"])
+                        : i18n.t("ios.onb12.plan.weekDetail", ["min": "\(sessionMinutes)"]),
                     tone: V3Color.ink,
                     highlighted: false
                 )

@@ -55,7 +55,7 @@ final class Paywall12RenderTests: XCTestCase {
         exam: (name: String, id: String)? = ("Bac", "fr.bac"),
         subjects: [String] = ["Mathématiques", "Histoire", "SVT", "Philosophie"],
         reminder: Bool = true,
-        topic: String? = "La guerre froide"
+        topic: String? = nil
     ) -> PaywallContext {
         PaywallContext(
             profile: PaywallProfile(
@@ -156,7 +156,7 @@ final class Paywall12RenderTests: XCTestCase {
         try RenderGallery.renderDevice("pay12-fr-offer", offer())
         try RenderGallery.renderDevice(
             "pay12-fr-farewell",
-            PaywallFarewellScreen(name: "Lina", topic: "La guerre froide", onContinue: {}).environment(\.mikaStill, true)
+            PaywallFarewellScreen(name: "Lina", topic: nil, onContinue: {}).environment(\.mikaStill, true)
         )
         let end = PaywallTimeline.endDate(from: Self.now, trialDays: 3)
         try RenderGallery.renderDevice(
@@ -170,7 +170,7 @@ final class Paywall12RenderTests: XCTestCase {
     func testLanguagesOnDevice() throws {
         use(.de)
         OnboardingPreferences.displayName = "Mia"
-        let german = context(name: "Mia", exam: ("Abitur", "de.abitur"), subjects: ["Mathématiques", "Physique", "Anglais"], topic: "Der Kalte Krieg")
+        let german = context(name: "Mia", exam: ("Abitur", "de.abitur"), subjects: ["Mathématiques", "Physique", "Anglais"], topic: nil)
         try RenderGallery.renderDevice("pay12-de-trial", paywall(context: german))
         try RenderGallery.renderDevice("pay12-de-offer", devices: [.iPhoneSE], offer())
         try RenderGallery.renderDevice(
@@ -182,7 +182,7 @@ final class Paywall12RenderTests: XCTestCase {
         try RenderGallery.renderDevice(
             "pay12-de-farewell",
             devices: [.iPhoneSE],
-            PaywallFarewellScreen(name: "Mia", topic: "Der Kalte Krieg", onContinue: {}).environment(\.mikaStill, true)
+            PaywallFarewellScreen(name: "Mia", topic: nil, onContinue: {}).environment(\.mikaStill, true)
         )
 
         use(.ar)
@@ -207,7 +207,7 @@ final class Paywall12RenderTests: XCTestCase {
         PriceDisplay.setOverride(nil)
         use(.en)
         OnboardingPreferences.displayName = "Emma"
-        let english = context(name: "Emma", exam: ("SAT", "us.sat"), subjects: ["Calculus", "Chemistry"], topic: "The Cold War")
+        let english = context(name: "Emma", exam: ("SAT", "us.sat"), subjects: ["Calculus", "Chemistry"], topic: nil)
         try RenderGallery.renderDevice("pay14-en-trial", paywall(context: english))
         try RenderGallery.renderDevice("pay14-en-offer", offer())
 

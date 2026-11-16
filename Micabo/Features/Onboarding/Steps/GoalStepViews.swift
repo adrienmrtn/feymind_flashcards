@@ -13,7 +13,7 @@ struct GoalStepView: View {
 
     private var say: OnbSay {
         if let subject = model.hardestSubject {
-            return OnbSay(i18n.t("ios.onb12.react.hardest", ["subject": SubjectDisplay.subject(subject, locale: i18n.locale)]), mood: .happy)
+            return OnbSay(i18n.t("ios.onb16.react.hardest", ["subject": SubjectDisplay.subject(subject, locale: i18n.locale)]), mood: .happy)
         }
         return OnbSay(i18n.t("ios.onb12.say.goal"), mood: .idle)
     }
@@ -53,17 +53,17 @@ struct WorriesStepView: View {
     /// Ce que Mika répond à un blocage.
     static func reaction(to worry: StudyWorry, locale: UiLocale) -> String {
         switch worry {
-        case .examStress: L10n.t("ios.onb12.react.worry.examStress", locale: locale)
-        case .hardLessons: L10n.t("ios.onb12.react.worry.hardLessons", locale: locale)
+        case .examStress: L10n.t("ios.onb16.react.worry.examStress", locale: locale)
+        case .hardLessons: L10n.t("ios.onb16.react.worry.hardLessons", locale: locale)
         case .homework: L10n.t("ios.onb12.react.worry.homework", locale: locale)
         case .forgetting: L10n.t("ios.onb12.react.worry.forgetting", locale: locale)
         case .noStart: L10n.t("ios.onb12.react.worry.noStart", locale: locale)
-        case .motivation: L10n.t("ios.onb12.react.worry.motivation", locale: locale)
+        case .motivation: L10n.t("ios.onb16.react.worry.motivation", locale: locale)
         }
     }
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb10.q.worries"), say: say) {
+        OnbQuestion(i18n.t("ios.onb16.q.worries"), say: say) {
             VStack(spacing: OnbLayout.rowGap) {
                 ForEach(StudyWorry.allCases) { worry in
                     OnbOption(
@@ -136,7 +136,7 @@ struct StudyMethodStepView: View {
 
 // MARK: - Mika reformule
 
-/// **« Lina, voilà ce qui coince. »** (lot 15) Le pivot du parcours : de la douleur à l'espoir.
+/// **« Lina, voici ce qui est difficile pour toi. »** (lot 15, mots simples au lot 16) Le pivot du parcours : de la douleur à l'espoir.
 ///
 /// L'écran reprend ce que l'élève vient de dire, trois lignes au plus (sa matière la plus
 /// dure, un blocage, son temps) — la preuve qu'on a écouté —, puis « Montre-moi ». Sans Mika :
@@ -147,8 +147,8 @@ struct SolutionMapStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     private var title: String {
-        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb15.recap.titleNoName") }
-        return i18n.t("ios.onb15.recap.title", ["name": name])
+        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb16.recap.titleNoName") }
+        return i18n.t("ios.onb16.recap.title", ["name": name])
     }
 
     struct Line: Identifiable {
@@ -163,7 +163,7 @@ struct SolutionMapStepView: View {
         if let subject = model.hardestSubject {
             lines.append(Line(
                 icon: MicaboIcon.subjectIcon(subject) ?? .book,
-                text: L10n.t("ios.onb12.recap.hardest", locale: locale, vars: ["subject": SubjectDisplay.subject(subject, locale: locale)])
+                text: L10n.t("ios.onb16.recap.hardest", locale: locale, vars: ["subject": SubjectDisplay.subject(subject, locale: locale)])
             ))
         }
         for worry in model.answeredWorries.prefix(1) {

@@ -184,6 +184,8 @@ struct MicaboApp: App {
                 // Voir `DebugCourseCatalog`.
                 DebugCourseCatalog.seedIfNeeded(in: container.mainContext, social: social)
                 #endif
+                // Une séance dure une heure au plus (lot 16) : le planning d'avant est ramené.
+                StudyPlanStore.capLongSessions(in: container.mainContext)
                 await auth.restore()
                 // L'identité RevenueCat **avant** de lire le droit, et avant tout achat :
                 // `app_user_id` doit être l'`auth.users.id`, sinon le webhook refuse.

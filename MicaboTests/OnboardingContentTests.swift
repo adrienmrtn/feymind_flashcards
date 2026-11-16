@@ -121,7 +121,7 @@ final class OnboardingContentTests: XCTestCase {
                 XCTAssertTrue(title.contains("**"), "\(locale.rawValue) \(story) : une story a son mot-clé")
             }
         }
-        XCTAssertEqual(OnboardingStory.allCases.map(\.index), [1, 2, 3, 4])
+        XCTAssertEqual(OnboardingStory.allCases.map(\.index), [1, 2, 3, 4, 5], "Lot 16 : « Tous tes cours, simplifiés. » en premier")
     }
 
     /// Les textes de la spécification, tels qu'ils s'affichent en français.
@@ -137,7 +137,7 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(french("ios.onb10.q.exam"), "Qu'est-ce qui arrive en premier ?")
         XCTAssertEqual(french("ios.onb10.react.subjects"), "Noté ! Je prépare tes leçons là-dessus.")
         XCTAssertEqual(french("ios.onb10.q.goal"), "Ton **objectif n°1** cette année ?")
-        XCTAssertEqual(french("ios.onb10.q.worries"), "Qu'est-ce qui te **bloque** le plus ?")
+        XCTAssertEqual(french("ios.onb16.q.worries"), "Quand tu révises, qu'est-ce qui est le plus **difficile** ?")
         XCTAssertEqual(french("ios.onb10.solutions.title", ["name": "Lina"]), "Voilà comment je t'aide, **Lina**")
         XCTAssertEqual(french("ios.onb10.q.target"), "Et tu **vises** combien ?")
         XCTAssertEqual(french("ios.onb10.start.commit"), "Je m'engage")
@@ -279,7 +279,6 @@ final class OnboardingContentTests: XCTestCase {
         ])
         XCTAssertEqual(lina.planSummary(locale: .fr).map(\.id), ["exam", "subjects", "daily", "goal", "lesson"])
         XCTAssertEqual(lina.planSummary(locale: .fr).first { $0.id == "goal" }?.value, "12/20 → 16/20")
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: lina, locale: .fr), "Le second degré", "Lot 15 : le sujet du scanner")
     }
 
     /// **Une plage de notes se lit de gauche à droite, comme une équation**, en arabe aussi :
@@ -309,7 +308,6 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertFalse(goals.contains(.dreamSchool))
         XCTAssertFalse(goals.contains(.passYear))
         XCTAssertEqual(FirstLessonStepView.band(for: tom.tier), "lower")
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: tom, locale: .fr), "La Révolution française")
         XCTAssertEqual(SampleCard.pick(for: tom.subjects).card, .history)
         XCTAssertTrue(NotificationsStepView.message(for: tom, locale: .fr).hasPrefix("Tom, "))
     }
@@ -325,7 +323,6 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(ines.classLabel, "Licence 1")
         XCTAssertTrue(LearningGoal.offered(for: ines.tier).contains(.passYear))
         XCTAssertEqual(FirstLessonStepView.band(for: ines.tier), "higher")
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: ines, locale: .fr), "Les intégrales", "Lot 15 : le sujet du scanner")
         let reaction = try XCTUnwrap(ExamStepView.reaction(choice: ines.examChoice, date: ines.examDate, now: Self.now, locale: .fr))
         XCTAssertTrue(reaction.hasPrefix("Partiels dans "), reaction)
     }
@@ -354,7 +351,6 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(sam.targetLabel(locale: .en), "3.7")
         XCTAssertEqual(sam.gradeGap(locale: .en)?.title(locale: .en), "+0.7: ambitious, and doable")
         XCTAssertEqual(SampleCard.pick(for: sam.subjects).card, .chemistry)
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: sam, locale: .en), "Acid-base reactions")
     }
 
     /// **L'Espagne, l'Italie, le Maroc** : la PAU, la Maturità, le Bac national.
@@ -483,11 +479,11 @@ final class OnboardingContentTests: XCTestCase {
 
         lina.currentScore = nil
         lina.targetScore = nil
-        XCTAssertEqual(StartingPointStepView.title(for: lina, locale: .fr), "On vise **haut**")
+        XCTAssertEqual(StartingPointStepView.title(for: lina, locale: .fr), "Ton **objectif** est fixé")
 
         let exam = try XCTUnwrap(lina.examChoices.first)
         lina.choose(exam: exam, now: Self.now)
-        XCTAssertEqual(StartingPointStepView.title(for: lina, locale: .fr), "**Bac** : on vise haut")
+        XCTAssertEqual(StartingPointStepView.title(for: lina, locale: .fr), "**Bac** : ton objectif est fixé")
     }
 
     /// Mika réagit à ce qui arrive en premier : loin, bientôt, un contrôle, ou rien.

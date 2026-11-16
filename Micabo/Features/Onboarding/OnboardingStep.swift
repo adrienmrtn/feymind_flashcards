@@ -11,7 +11,7 @@ import Foundation
 /// 2. **Ce qui coince** : la matière la plus dure, l'objectif, les blocages, le temps, la
 ///    méthode, puis « Je t'ai compris » (`solutionMap`).
 /// 3. **Comment Mika t'aide** : d'où vient Mika, tes cours deviennent des leçons, le scanner
-///    (avec une matière scientifique), « pas un simple ChatGPT », et ce que dit la recherche.
+///    (avec une matière scientifique), et ce que dit la recherche.
 /// 4. **Ton objectif** : les deux moyennes, la courbe, le temps par jour.
 /// 5. **Ton organisation** : la semaine au calendrier, la concentration, le rappel,
 ///    l'engagement.
@@ -67,9 +67,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
     /// **Démo : le scanner d'exercices**, étape par étape, sur un exercice de maths de sa
     /// classe. Sautée sans matière scientifique (lot 15).
     case scanDemo
-    /// **« Je ne suis pas juste ChatGPT »** : conçu pour sa classe, des leçons construites,
-    /// ses habitudes.
-    case notJustChat
     /// **Ce que dit la recherche** : Kestin et al., Scientific Reports, 2025.
     case research
 
@@ -183,10 +180,12 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
         // Retirés au lot 14 : la carte isolée (les cartes reviennent dans la démo finale), le
         // jour J, la question d'essai.
         case "cardsDemo": .scanDemo
-        case "examDemo": .notJustChat
+        case "examDemo": .research
         case "sampleCard": .currentAverage
         // Retiré au lot 15 : le chat, redit par la question à Mika du récit final.
-        case "chatDemo": .notJustChat
+        case "chatDemo": .research
+        // Retiré au lot 16 (« enlève la page Mika n'est pas un simple ChatGPT »).
+        case "notJustChat": .research
         default: nil
         }
     }
@@ -203,7 +202,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
             0
         case .studyIntro, .hardestSubject, .goal, .worries, .studyHours, .studyMethod, .solutionMap:
             1
-        case .helpIntro, .origin, .lessonDemo, .scanDemo, .notJustChat, .research:
+        case .helpIntro, .origin, .lessonDemo, .scanDemo, .research:
             2
         case .goalIntro, .currentAverage, .targetAverage, .startingPoint, .dailyTime:
             3
@@ -273,7 +272,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
             .question
         case .origin, .lessonDemo, .scanDemo, .planDemo, .focusDemo:
             .demo
-        case .notJustChat, .research, .startingPoint, .notifications, .commitment, .storyCreate,
+        case .research, .startingPoint, .notifications, .commitment, .storyCreate,
              .storyPath, .storyPractice, .storyAsk, .freeTrialIntro, .trialOffer:
             .page
         case .paywall:

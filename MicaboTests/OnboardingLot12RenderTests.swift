@@ -176,8 +176,9 @@ final class OnboardingLot14RenderTests: XCTestCase {
         model.targetScore = 16
         model.dailyMinutes = 45
         model.studyHour = 18
-        model.firstLessonChoice = .topic
-        model.firstLessonTopic = topic
+        // Lot 16 : aucun sujet tapé d'office (`topic` n'est plus posé) : le plan parle de la
+        // matière, pas d'une leçon inventée.
+        _ = topic
         return model
     }
 
@@ -264,7 +265,7 @@ final class OnboardingLot14RenderTests: XCTestCase {
     private func french(chapters: ClosedRange<Int>) throws {
         let model = lina()
         for step in seen(by: model) where chapters.contains(step.chapter) {
-            try render("onb15-fr-\(id(step))", step, model)
+            try render("onb16-fr-\(id(step))", step, model)
         }
     }
 
@@ -278,7 +279,7 @@ final class OnboardingLot14RenderTests: XCTestCase {
         use(.en)
         let model = emma()
         for step in seen(by: model) where chapters.contains(step.chapter) {
-            try render("onb15-en-\(id(step))", step, model, devices: [.iPhone15Pro])
+            try render("onb16-en-\(id(step))", step, model, devices: [.iPhone15Pro])
         }
     }
 
@@ -290,21 +291,21 @@ final class OnboardingLot14RenderTests: XCTestCase {
         let model = lina()
         let pro = [RenderDevice.iPhone15Pro]
         for step in [OnboardingStep.origin, .lessonDemo, .scanDemo, .commitment] {
-            try render("onb15-fr-\(id(step))-before", step, model, devices: pro, playsDemo: false)
+            try render("onb16-fr-\(id(step))-before", step, model, devices: pro, playsDemo: false)
         }
         // Lot 15 : le bouton à maintenir, doigt posé à 62 %, puis lâché trop tôt.
-        try render("onb15-fr-\(id(.commitment))-holding", .commitment, model, view: AnyView(CommitmentStepView(previewHold: 0.62)))
-        try render("onb15-fr-\(id(.commitment))-early", .commitment, model, devices: pro, view: AnyView(CommitmentStepView(previewEarly: true)))
+        try render("onb16-fr-\(id(.commitment))-holding", .commitment, model, view: AnyView(CommitmentStepView(previewHold: 0.62)))
+        try render("onb16-fr-\(id(.commitment))-early", .commitment, model, devices: pro, view: AnyView(CommitmentStepView(previewEarly: true)))
         // Le scanner à chaque niveau : l'étape 2, puis le résultat au collège et après le bac.
-        try render("onb15-fr-\(id(.scanDemo))-step2", .scanDemo, model, devices: pro, view: AnyView(ScanDemoStepView(previewStage: 2)))
-        try render("onb15-fr-\(id(.scanDemo))-college", .scanDemo, model, view: AnyView(ScanDemoStepView(previewStage: 3, previewExercise: .pythagoras)))
-        try render("onb15-fr-\(id(.scanDemo))-sup", .scanDemo, model, devices: pro, view: AnyView(ScanDemoStepView(previewStage: 3, previewExercise: .integral)))
+        try render("onb16-fr-\(id(.scanDemo))-step2", .scanDemo, model, devices: pro, view: AnyView(ScanDemoStepView(previewStage: 2)))
+        try render("onb16-fr-\(id(.scanDemo))-college", .scanDemo, model, view: AnyView(ScanDemoStepView(previewStage: 3, previewExercise: .pythagoras)))
+        try render("onb16-fr-\(id(.scanDemo))-sup", .scanDemo, model, devices: pro, view: AnyView(ScanDemoStepView(previewStage: 3, previewExercise: .integral)))
         let short = lina()
         short.dailyMinutes = 10
-        try render("onb15-fr-\(id(.dailyTime))-10", .dailyTime, short, devices: pro)
+        try render("onb16-fr-\(id(.dailyTime))-10", .dailyTime, short, devices: pro)
         let long = lina()
         long.dailyMinutes = 120
-        try render("onb15-fr-\(id(.dailyTime))-120", .dailyTime, long, devices: pro)
+        try render("onb16-fr-\(id(.dailyTime))-120", .dailyTime, long, devices: pro)
     }
 
     // MARK: - Les écritures
@@ -312,7 +313,7 @@ final class OnboardingLot14RenderTests: XCTestCase {
     /// **L'arabe** (droite à gauche) et **le japonais** (sans la police condensée) sur les écrans
     /// qui portent le plus de texte.
     private static let scriptSteps: [OnboardingStep] = [
-        .welcome, .studyIntro, .helpIntro, .origin, .lessonDemo, .scanDemo, .notJustChat, .research,
+        .welcome, .studyIntro, .helpIntro, .origin, .lessonDemo, .scanDemo, .research,
         .currentAverage, .dailyTime, .organizeIntro, .commitment, .firstLesson,
         .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .freeTrialIntro, .trialOffer,
     ]
@@ -321,7 +322,7 @@ final class OnboardingLot14RenderTests: XCTestCase {
         use(.ar)
         let arabic = noura()
         for step in Self.scriptSteps {
-            try render("onb15-ar-\(id(step))", step, arabic, devices: [.iPhone15Pro], rtl: true)
+            try render("onb16-ar-\(id(step))", step, arabic, devices: [.iPhone15Pro], rtl: true)
         }
     }
 
@@ -330,15 +331,55 @@ final class OnboardingLot14RenderTests: XCTestCase {
         let japanese = lina()
         japanese.displayName = "ユイ"
         for step in Self.scriptSteps {
-            try render("onb15-ja-\(id(step))", step, japanese, devices: [.iPhone15Pro])
+            try render("onb16-ja-\(id(step))", step, japanese, devices: [.iPhone15Pro])
+        }
+    }
+
+    // MARK: - Lot 16
+
+    /// **Les deux premières stories** (« Tous tes cours, simplifiés. », puis les sources), et
+    /// **l'écran des matières** groupé, au collège, au lycée, à l'université.
+    func testHookAndSubjectsInFrench() throws {
+        let model = lina()
+        let pro = [RenderDevice.iPhone15Pro]
+        try render("onb16-fr-hook-1", .hookLogo, model, view: AnyView(StoriesStepView(previewPage: .intro)))
+        try render("onb16-fr-hook-2", .hookLogo, model, devices: pro, view: AnyView(StoriesStepView(previewPage: .lesson)))
+        for (name, track, year) in [("college", "fr.college", "fr.3e"), ("lycee", "fr.lyceeGeneral", "fr.terminale"), ("licence", "fr.universite", "fr.l1")] {
+            let pupil = student(name: "Lina", region: "FR", track: track, year: year, subjects: [], hardest: nil, topic: "")
+            try render("onb16-subjects-fr-\(name)", .subjects, pupil, devices: name == "lycee" ? [.iPhone15Pro, .iPhoneSE] : pro)
+        }
+    }
+
+    /// **L'écran des matières dans d'autres pays** : le Royaume-Uni et les États-Unis en
+    /// anglais, l'Allemagne en allemand.
+    func testSubjectsAbroad() throws {
+        let pro = [RenderDevice.iPhone15Pro]
+        use(.en)
+        try render("onb16-subjects-uk", .subjects, student(name: "Sam", region: "GB", track: "uk.alevels", year: "uk.y12", subjects: [], hardest: nil, topic: ""), devices: pro)
+        try render("onb16-subjects-us", .subjects, student(name: "Emma", region: "US", track: "us.high", year: "us.hs11", subjects: [], hardest: nil, topic: ""), devices: pro)
+        use(.de)
+        try render("onb16-subjects-de", .subjects, student(name: "Mia", region: "DE", track: "de.gymnasium", year: "de.klasse12", subjects: [], hardest: nil, topic: ""), devices: pro)
+    }
+
+    /// **Le récit d'exemple suit le pays** (lot 16) : le Royaume-Uni (la Magna Carta), les
+    /// États-Unis (la Révolution américaine), l'Allemagne (la réunification), l'Italie
+    /// (l'unité), et un pays sans sujet dédié (la révolution industrielle).
+    func testHistoryStoryFollowsTheCountry() throws {
+        let cases: [(String, String, UiLocale)] = [("uk", "GB", .en), ("us", "US", .en), ("de", "DE", .de), ("it", "IT", .it), ("world", "MA", .fr)]
+        for (tag, region, locale) in cases {
+            use(locale)
+            let model = student(name: "Sam", region: region, track: "", year: "", subjects: ["Histoire"], hardest: nil, topic: "")
+            for step in [OnboardingStep.storyIntro, .storyCreate, .storyPractice, .storyAsk] {
+                try render("onb16-story-\(tag)-\(id(step))", step, model, devices: [.iPhone15Pro])
+            }
         }
     }
 
     /// **Très grand texte, sur le plus petit iPhone** : rien ne se coupe, le contenu défile.
     func testLargeTextOnSmallPhone() throws {
         let model = lina()
-        for step in [OnboardingStep.helpIntro, .solutionMap, .notJustChat, .research, .scanDemo, .currentAverage, .storyPath, .storyAsk, .commitment, .trialOffer] {
-            try render("onb15-xxl-\(id(step))", step, model, devices: [.iPhoneSE], xxl: true)
+        for step in [OnboardingStep.helpIntro, .solutionMap, .research, .scanDemo, .currentAverage, .storyPath, .storyAsk, .commitment, .trialOffer] {
+            try render("onb16-xxl-\(id(step))", step, model, devices: [.iPhoneSE], xxl: true)
         }
     }
 }

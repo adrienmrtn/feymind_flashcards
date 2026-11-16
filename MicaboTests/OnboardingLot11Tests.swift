@@ -63,7 +63,7 @@ final class OnboardingLot11Tests: XCTestCase {
         after(.lessonDemo, .origin)
         after(.scanDemo, .lessonDemo)
         // Lot 15 : le chat est parti (redit par la question à Mika du récit final).
-        after(.notJustChat, .scanDemo)
+        after(.research, .scanDemo)
         after(.organizeIntro, .dailyTime)
         after(.planDemo, .organizeIntro)
         after(.focusDemo, .planDemo)
@@ -87,7 +87,7 @@ final class OnboardingLot11Tests: XCTestCase {
         XCTAssertEqual(OnbDemo.subject(for: model, locale: .fr), SubjectDisplay.subject("Anglais", locale: .fr), "Sa seule matière, même sans question d'exemple")
         model.subjects = ["Anglais", "Espagnol"]
         XCTAssertNil(OnbDemo.subject(for: model, locale: .fr), "Aucune famille connue ni matière la plus dure : la phrase se dit sans matière")
-        XCTAssertFalse(OnbDemo.topic(for: model, locale: .fr).hasPrefix("ios."))
+        XCTAssertFalse(OnbDemo.lessonTitle(for: model, locale: .fr).hasPrefix("ios."), "Lot 16 : la matière, ou « Ta première leçon »")
     }
 
     /// **La bienvenue après l'achat** : une fois montré, le paywall reste monté même quand Pro

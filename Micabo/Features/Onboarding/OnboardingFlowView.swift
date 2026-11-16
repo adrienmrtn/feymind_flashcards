@@ -226,7 +226,6 @@ struct OnboardingStepScreen: View {
         case .origin: OriginStepView()
         case .lessonDemo: LessonDemoStepView()
         case .scanDemo: ScanDemoStepView()
-        case .notJustChat: NotJustChatStepView()
         case .research: ResearchStepView()
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()

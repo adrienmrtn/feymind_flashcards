@@ -12,9 +12,10 @@ struct WelcomeStepView: View {
     var body: some View {
         OnbChapterOpener(
             title: i18n.t("ios.onb15.open.welcome.title"),
-            say: i18n.t("ios.onb15.open.welcome.say"),
+            // Lot 16 : les mots du fondateur, et un bouton qui répond à sa question.
+            say: i18n.t("ios.onb16.welcome.say"),
             mood: .wave,
-            cta: i18n.t("ios.onb10.go")
+            cta: i18n.t("ios.onb16.welcome.cta")
         ) {
             model.advance()
         }

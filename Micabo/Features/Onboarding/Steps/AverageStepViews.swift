@@ -343,9 +343,9 @@ struct StartingPointStepView: View {
             ])
         }
         if let exam {
-            return L10n.t("ios.onb10.start.titleExam", locale: locale, vars: ["exam": exam.choice.title(locale: locale)])
+            return L10n.t("ios.onb16.start.titleExam", locale: locale, vars: ["exam": exam.choice.title(locale: locale)])
         }
-        return L10n.t("ios.onb10.start.titleBare", locale: locale)
+        return L10n.t("ios.onb16.start.titleBare", locale: locale)
     }
 
     var body: some View {
@@ -354,7 +354,7 @@ struct StartingPointStepView: View {
             OnbTitle(title, size: OnbLayout.display, keyword: V3Color.green)
                 .padding(.top, OnbLayout.titleTop)
 
-            OnbMikaRow(say: OnbSay(i18n.t("ios.onb10.start.line"), mood: .proud))
+            OnbMikaRow(say: OnbSay(i18n.t("ios.onb16.start.line"), mood: .proud))
                 .padding(.top, OnbLayout.mikaGap)
 
             projection

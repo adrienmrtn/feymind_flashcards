@@ -31,10 +31,10 @@ enum OnbDemo {
         return SubjectDisplay.subject(pick.subject, locale: locale)
     }
 
-    /// **Le sujet des démos** : l'exemple de sa matière et de son niveau, le même que celui
-    /// que propose la première leçon.
-    static func topic(for model: OnboardingModel, locale: UiLocale) -> String {
-        FirstLessonStepView.exampleTopic(for: model, locale: locale)
+    /// **Le titre de la leçon de la démo** (lot 16 : aucun titre de leçon inventé) : sa
+    /// matière la plus dure, sinon « Ta première leçon ».
+    static func lessonTitle(for model: OnboardingModel, locale: UiLocale) -> String {
+        subject(for: model, locale: locale) ?? L10n.t("ios.onb11.plan.lesson", locale: locale)
     }
 
     /// Les matières des séances de la semaine : la plus dure d'abord, puis les autres.
@@ -156,12 +156,12 @@ struct LessonDemoStepView: View {
         let rows: [(MicaboIcon, Color, String)] = [
             (.notes, V3Color.iconBlue, i18n.t("ios.onb11.lesson.notes")),
             (.quiz, V3Color.iconGreen, i18n.t("ios.onb11.lesson.quiz")),
-            (.cards, V3Color.iconLilac, i18n.t("ios.onb11.lesson.cards")),
+            (.cards, V3Color.iconLilac, i18n.t("ios.onb16.lesson.cards")),
         ]
         return VStack(alignment: .leading, spacing: compact ? 10 : 14) {
             HStack(spacing: 10) {
                 OnbIcon(icon: .book, size: 26)
-                Text(OnbDemo.topic(for: model, locale: i18n.locale))
+                Text(OnbDemo.lessonTitle(for: model, locale: i18n.locale))
                     .font(V3Font.heading(26))
                     .foregroundStyle(V3Color.ink)
                     .lineLimit(2)
@@ -327,7 +327,7 @@ struct ScanDemoStepView: View {
 
     var body: some View {
         OnbDemoStage(
-            title: i18n.t("ios.onb15.scan.title"),
+            title: i18n.t("ios.onb16.scan.title"),
             playLabel: playLabel,
             isPlayed: current >= 3,
             onPlay: next
@@ -572,7 +572,8 @@ struct PlanDemoStepView: View {
                     .foregroundStyle(V3Color.ink)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            Text(i18n.t("ios.quiz.time.short", ["n": "\(model.minutesPerDay)"]))
+            // Une séance, une heure au plus (lot 16).
+            Text(i18n.t("ios.quiz.time.short", ["n": "\(RevisionPlanner.sessionLength(dailyMinutes: model.minutesPerDay))"]))
                 .font(OnbType.label)
                 .foregroundStyle(V3Color.accentBright)
                 .lineLimit(1)
@@ -613,7 +614,7 @@ struct PlanDemoStepView: View {
 
 // MARK: - La concentration
 
-/// **« Téléphone posé, minuteur lancé. »** (lot 12) Une séance de concentration à sa durée,
+/// **« Tu peux aussi travailler en sessions qui te rapportent de l'XP. »** (lot 12, lot 16) Une séance de concentration à sa durée,
 /// sur sa matière la plus dure. On la lance : l'anneau se remplit (en accéléré, et c'est
 /// écrit), puis la séance est finie.
 struct FocusDemoStepView: View {
@@ -633,9 +634,26 @@ struct FocusDemoStepView: View {
     /// La durée de l'anneau accéléré, en secondes.
     static let fastSeconds = 1.8
 
+    /// **La séance de la démo** (lot 16) : la durée d'une séance de son plan (une heure au plus,
+    /// `RevisionPlanner.sessionLengths`), et au moins un bloc de 25 minutes, celui qui rapporte
+    /// de l'XP dans l'app : une séance plus courte n'en rapporterait pas.
+    static func demoMinutes(dailyMinutes: Int) -> Int {
+        let session = RevisionPlanner.sessionLengths(dailyMinutes: dailyMinutes).first ?? XPRules.focusMinutes
+        return max(XPRules.focusMinutes, min(FocusPlan.maxMinutes, session))
+    }
+
+    /// **L'XP de cette séance, celle de l'app** : `XPRules.focusSession` par bloc de 25 minutes
+    /// de travail terminé (`FocusPhases.xp`). Aucun chiffre écrit à la main.
+    static func demoXP(dailyMinutes: Int) -> Int {
+        FocusPhases.xp(forWorkSeconds: TimeInterval(demoMinutes(dailyMinutes: dailyMinutes) * 60))
+    }
+
+    private var minutes: Int { Self.demoMinutes(dailyMinutes: model.minutesPerDay) }
+
     var body: some View {
         OnbDemoStage(
-            title: i18n.t("ios.onb12.focus.title"),
+            // Lot 16 : « Tu peux aussi travailler en sessions qui te rapportent de l'XP. »
+            title: i18n.t("ios.onb16.focus.title"),
             playLabel: i18n.t("ios.onb12.focus.play"),
             isPlayed: isDone,
             onPlay: start
@@ -649,7 +667,7 @@ struct FocusDemoStepView: View {
                         .stroke(isDone ? V3Color.green : V3Color.accent, style: StrokeStyle(lineWidth: 14, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                     VStack(spacing: 4) {
-                        Text(verbatim: isDone ? "0:00" : "\(model.minutesPerDay):00")
+                        Text(verbatim: isDone ? "0:00" : "\(minutes):00")
                             .font(V3Font.display(56))
                             .monospacedDigit()
                             .foregroundStyle(V3Color.ink)
@@ -668,10 +686,22 @@ struct FocusDemoStepView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 6)
 
-                Label(i18n.t(isDone ? "ios.onb12.focus.finished" : "ios.onb12.focus.fast"), systemImage: isDone ? "checkmark.circle.fill" : "hare.fill")
-                    .font(OnbType.mention)
-                    .foregroundStyle(isDone ? V3Color.green : V3Color.ink3)
+                if isDone {
+                    // La fin de la séance : l'XP qu'elle rapporte dans l'app.
+                    HStack(spacing: 10) {
+                        Label(i18n.t("ios.onb12.focus.finished"), systemImage: "checkmark.circle.fill")
+                            .font(OnbType.label)
+                            .foregroundStyle(V3Color.green)
+                        OnbXPPill(points: Self.demoXP(dailyMinutes: model.minutesPerDay))
+                    }
                     .frame(maxWidth: .infinity)
+                    .transition(.onbPop)
+                } else {
+                    Label(i18n.t("ios.onb12.focus.fast"), systemImage: "hare.fill")
+                        .font(OnbType.mention)
+                        .foregroundStyle(V3Color.ink3)
+                        .frame(maxWidth: .infinity)
+                }
             }
             .contentShape(Rectangle())
             .onTapGesture { start() }

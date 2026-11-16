@@ -69,7 +69,7 @@ final class OnboardingLot14Tests: XCTestCase {
         XCTAssertEqual(DailyTimeStepView.qualifierKey(5), "ios.onb10.time.5")
         XCTAssertEqual(DailyTimeStepView.qualifierKey(15), "ios.onb10.time.15")
         XCTAssertEqual(DailyTimeStepView.qualifierKey(45), "ios.onb10.time.30")
-        XCTAssertEqual(DailyTimeStepView.qualifierKey(120), "ios.onb14.time.max")
+        XCTAssertEqual(DailyTimeStepView.qualifierKey(120), "ios.onb16.time.max")
         for locale in UiLocale.allCases {
             for minutes in DailyLoad.steps {
                 XCTAssertFalse(L10n.t(DailyTimeStepView.qualifierKey(minutes), locale: locale).hasPrefix("ios."), "\(locale.rawValue) \(minutes)")
@@ -82,25 +82,6 @@ final class OnboardingLot14Tests: XCTestCase {
     // MARK: - « Je ne suis pas juste ChatGPT »
 
     /// **La première ligne dit sa classe**, sans chiffre ; sans classe, une phrase pour tous.
-    func testNotJustChatSaysTheClass() {
-        let model = OnboardingModel()
-        model.select(country: .fr)
-        if let track = model.tracks.first(where: { $0.id == "fr.lyceeGeneral" }) {
-            model.track = track
-            model.year = track.years.first { $0.id == "fr.terminale" }
-        }
-        let lines = NotJustChatStepView.lines(for: model, locale: .fr)
-        XCTAssertEqual(lines.count, 3)
-        XCTAssertTrue(lines[0].text.contains("Terminale"), lines[0].text)
-
-        let anyone = NotJustChatStepView.lines(for: OnboardingModel(), locale: .fr)
-        XCTAssertFalse(anyone[0].text.contains("{"), anyone[0].text)
-        let digits = try? NSRegularExpression(pattern: #"[0-9]"#)
-        for line in lines + anyone {
-            XCTAssertNil(digits?.firstMatch(in: line.text, range: NSRange(line.text.startIndex..., in: line.text)), line.text)
-        }
-    }
-
     // MARK: - Le prix
 
     /// **Le prix à la semaine pour tout le monde** (décision du fondateur), sauf variante

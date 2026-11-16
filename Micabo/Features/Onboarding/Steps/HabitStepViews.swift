@@ -22,14 +22,14 @@ struct DailyTimeStepView: View {
         )
     }
 
-    /// **Le mot du rythme** : tranquille, régulier, sérieux, intense, à fond.
+    /// **Le mot du rythme** : tranquille, régulier, sérieux, intense, très intense.
     static func qualifierKey(_ minutes: Int) -> String {
         switch minutes {
         case ..<10: "ios.onb10.time.5"
         case ..<15: "ios.onb10.time.10"
         case ..<30: "ios.onb10.time.15"
         case ..<60: "ios.onb10.time.30"
-        default: "ios.onb14.time.max"
+        default: "ios.onb16.time.max"
         }
     }
 

@@ -766,8 +766,21 @@ enum OnboardingTrial {
 
     /// Vrai tant qu'une offre propose encore l'essai à cet élève. Tant que la boutique n'a
     /// rien dit, on suit le catalogue : c'est le cas d'un premier lancement.
+    ///
+    /// **Pourquoi l'aperçu de l'essai peut ne pas s'afficher** (lot 16, build 183) : les deux
+    /// écrans ne sautent que si la boutique répond explicitement que **ce compte n'a plus droit à
+    /// l'essai** (`checkTrialOrIntroDiscountEligibility` → « inéligible » : un seul essai par
+    /// identifiant Apple et par groupe d'abonnements, et un compte TestFlight qui a déjà démarré
+    /// un essai ou acheté une offre du groupe l'a consommé) ou qu'**aucun essai n'est posé dans
+    /// son pays**. Une réponse « inconnue » ou en retard laisse le catalogue parler : l'essai
+    /// s'affiche. Ce que la boutique a répondu part dans `paywall_trial_status`.
+    ///
+    /// En Debug, `-forceTrialPreview` force l'aperçu (rendus, essais sur simulateur).
     static var isOffered: Bool {
-        PaywallCatalog.yearly.hasTrial || PaywallCatalog.weekly.hasTrial
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-forceTrialPreview") { return true }
+        #endif
+        return PaywallCatalog.yearly.hasTrial || PaywallCatalog.weekly.hasTrial
     }
 }
 
@@ -827,7 +840,7 @@ enum WeeklyStudy: String, CaseIterable, Identifiable {
     /// Ce que Mika en dit, à l'écran suivant.
     func reaction(locale: UiLocale) -> String {
         switch self {
-        case .underOne: L10n.t("ios.onb12.react.hours.underOne", locale: locale)
+        case .underOne: L10n.t("ios.onb16.react.hours.underOne", locale: locale)
         case .oneToThree: L10n.t("ios.onb12.react.hours.oneToThree", locale: locale)
         case .threeToSix: L10n.t("ios.onb12.react.hours.threeToSix", locale: locale)
         case .overSix: L10n.t("ios.onb12.react.hours.overSix", locale: locale)

@@ -1,8 +1,8 @@
 import SwiftUI
 
 // Le parcours en chapitres (lot 14, réécrit au lot 15). Ici, l'écran qui ouvre un chapitre, et
-// les trois pages du chapitre « Comment Mika t'aide » qui ne sont pas des démos de fonction :
-// d'où vient Mika, « pas un simple ChatGPT », ce que dit la recherche.
+// les pages du chapitre « Comment Mika t'aide » qui ne sont pas des démos de fonction : d'où
+// vient Mika, ce que dit la recherche.
 //
 // **La voix (lot 15)** : le titre, c'est l'app qui parle à l'élève — jamais « je » ; elle parle
 // de Mika à la troisième personne. La bulle, c'est Mika, et lui seul, à la première personne.
@@ -75,19 +75,25 @@ struct ChapterOpenerStepView: View {
     /// Le titre, la phrase de Mika, et son humeur.
     static func phrase(for step: OnboardingStep) -> (title: String, say: String, mood: MikaMood) {
         switch step {
-        case .studyIntro: ("ios.onb15.open.study.title", "ios.onb15.open.study.say", .look)
-        case .helpIntro: ("ios.onb15.open.help.title", "ios.onb15.open.help.say", .happy)
-        case .goalIntro: ("ios.onb15.open.goal.title", "ios.onb15.open.goal.say", .proud)
+        case .studyIntro: ("ios.onb15.open.study.title", "ios.onb16.open.study.say", .look)
+        case .helpIntro: ("ios.onb15.open.help.title", "ios.onb16.open.help.say", .happy)
+        case .goalIntro: ("ios.onb15.open.goal.title", "ios.onb16.open.goal.say", .proud)
         case .organizeIntro: ("ios.onb15.open.organize.title", "ios.onb15.open.organize.say", .write)
         default: ("ios.onb15.open.story.title", "ios.onb15.open.story.say", .wink)
         }
+    }
+
+    /// Ce que dit Mika : pour le récit (lot 16), l'exemple de son pays, nommé.
+    private var say: String {
+        guard step == .storyIntro else { return i18n.t(Self.phrase(for: step).say) }
+        return i18n.t("ios.onb16.story.intro.say", ["topic": i18n.t(OnbHistoryStory.forStudent(model).lessonKey)])
     }
 
     var body: some View {
         let phrase = Self.phrase(for: step)
         OnbChapterOpener(
             title: i18n.t(phrase.title),
-            say: i18n.t(phrase.say),
+            say: say,
             mood: phrase.mood,
             cta: i18n.t(step == .helpIntro || step == .storyIntro ? "ios.onb12.recap.cta" : "common.continue")
         ) {
@@ -173,7 +179,7 @@ struct OnbSourceStrip: View {
 
 // MARK: - D'où vient Mika
 
-/// **« Mika a été créé pour ranger ta pile de cours. »** (lot 15, mots du fondateur.) Mika au
+/// **« Mika a été créé pour t'aider à organiser tes cours. »** (lot 16, mots du fondateur.) Mika au
 /// milieu, et autour de lui la pile en vrac : un PDF, une fiche, un document, un enregistrement,
 /// une photo de cahier. « Ranger la pile » : tout s'envole dans **une seule carte**, « Tes
 /// cours », rangée par matière — les siennes.
@@ -211,7 +217,7 @@ struct OriginStepView: View {
 
     var body: some View {
         OnbScreen {
-            OnbTitle(i18n.t("ios.onb15.origin.title"), size: OnbLayout.questionTitle)
+            OnbTitle(i18n.t("ios.onb16.origin.title"), size: OnbLayout.questionTitle)
                 .padding(.top, OnbLayout.titleTop)
 
             OnbCentered {
@@ -229,7 +235,7 @@ struct OriginStepView: View {
                 .onTapGesture { arrange() }
             }
         } footer: {
-            V3Button(i18n.t(isTidy ? "common.continue" : "ios.onb14.origin.play")) {
+            V3Button(i18n.t(isTidy ? "common.continue" : "ios.onb16.origin.play")) {
                 if isTidy { model.advance() } else { arrange() }
             }
         }
@@ -303,68 +309,6 @@ struct OriginStepView: View {
         Haptics.success()
         withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
             tidy = true
-        }
-    }
-}
-
-// MARK: - « Pas un simple ChatGPT »
-
-/// **« Mika n'est pas un simple ChatGPT. »** (lot 15 : Mika à la troisième personne.) Trois
-/// lignes, tirées de ses réponses et vraies : fait pour les élèves de sa classe, des leçons
-/// plutôt que des pavés de texte, sa façon de réviser (son temps, sa méthode, ses blocages).
-/// Aucun chiffre. Au centre optique de la page.
-struct NotJustChatStepView: View {
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @Environment(\.onbCompact) private var compact
-
-    struct Line: Identifiable {
-        var id: String { text }
-        let icon: MicaboIcon
-        let tone: Color
-        let text: String
-    }
-
-    /// Les trois lignes : sa classe quand on la connaît.
-    static func lines(for model: OnboardingModel, locale: UiLocale) -> [Line] {
-        let trained = model.classLabel.map {
-            L10n.t("ios.onb15.chat.trained", locale: locale, vars: ["class": $0])
-        } ?? L10n.t("ios.onb15.chat.trainedAny", locale: locale)
-        return [
-            Line(icon: .diploma, tone: V3Color.iconBlue, text: trained),
-            Line(icon: .book, tone: V3Color.iconGreen, text: L10n.t("ios.onb15.chat.lessons", locale: locale)),
-            Line(icon: .brain, tone: V3Color.iconLilac, text: L10n.t("ios.onb15.chat.habits", locale: locale)),
-        ]
-    }
-
-    var body: some View {
-        OnbScreen {
-            OnbTitle(i18n.t("ios.onb15.chat.title"), size: OnbLayout.questionTitle)
-                .padding(.top, OnbLayout.titleTop)
-
-            OnbCentered {
-                VStack(alignment: .leading, spacing: compact ? 20 : 28) {
-                    ForEach(Self.lines(for: model, locale: i18n.locale)) { line in
-                        HStack(alignment: .center, spacing: 16) {
-                            MicaboIconView(icon: line.icon, size: 28 * 1.35, tint: line.tone)
-                                .frame(width: 56, height: 56)
-                                .background(V3Color.wash(of: line.tone), in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
-                            Text(v3: OnbPhrase(line.text).text, highlight: OnbPhrase(line.text).highlight)
-                                .font(OnbType.body)
-                                .lineSpacing(OnbType.bodySpacing)
-                                .foregroundStyle(V3Color.ink)
-                                .multilineTextAlignment(.leading)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
-                }
-            }
-        } footer: {
-            V3Button(i18n.t("common.continue")) {
-                model.advance()
-            }
         }
     }
 }

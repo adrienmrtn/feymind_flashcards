@@ -1,12 +1,117 @@
 import SwiftUI
 
-// Lot 14, réécrit au lot 15 : « Voyons une leçon, du début à la fin. » Un exemple annoncé comme
-// tel — la Révolution française —, raconté en quatre écrans et une conclusion, puis « Et toi,
+// Lot 14, réécrit au lot 15 et au lot 16 : « Voyons une leçon, du début à la fin. » Un exemple
+// annoncé comme tel — un sujet d'histoire de son pays (`OnbHistoryStory`) —, raconté en quatre
+// écrans et une conclusion, puis « Et toi,
 // ta première leçon ? ». Chaque écran : un titre (la voix de l'app, jamais « je »), un vrai
 // morceau d'app en grand au centre optique, le bouton. Pas de bulle : le morceau d'app parle.
-// Le même exemple pour tout le monde, dans toutes les langues : c'est un récit, pas une démo sur
-// sa matière. Faits vérifiés : la Bastille tombe en 1789, la monarchie en août 1792, Louis XVI
-// fuit vers l'est en juin 1791 et il est arrêté à Varennes.
+// Le sujet suit le pays, le texte la langue de l'app ; faits vérifiés (voir `OnbHistoryStory`).
+
+// MARK: - Le sujet du récit, selon le pays
+
+/// **Le sujet d'histoire du récit d'exemple, selon le pays de l'élève** (lot 16, demande du
+/// fondateur : « trop axé pour les Français, ça serait bien de l'axer pour chaque pays »).
+///
+/// Le récit reste un exemple annoncé comme tel ; son sujet vient du **pays** (pas de la langue),
+/// son texte de la langue de l'app. Les pays sans sujet dédié prennent un sujet universel : la
+/// révolution industrielle. Chaque fait est vérifié (dates, noms) ; la bonne réponse du quiz est
+/// toujours la deuxième des trois années affichées.
+///
+/// | Pays | Sujet | La bonne année |
+/// |---|---|---|
+/// | France | la Révolution française | 1789, la prise de la Bastille |
+/// | Royaume-Uni | la Magna Carta | 1215, scellée à Runnymede |
+/// | États-Unis | la Révolution américaine | 1776, la Déclaration d'indépendance |
+/// | Allemagne | la réunification | 1989, la chute du Mur |
+/// | Italie | l'unité italienne | 1861, le royaume d'Italie |
+/// | Espagne | la Transition démocratique | 1978, la Constitution |
+/// | Portugal | la révolution des Œillets | 1974 |
+/// | Pologne | Solidarność | 1980, le syndicat fondé à Gdańsk |
+/// | Turquie | la naissance de la République | 1923 |
+/// | ailleurs | la révolution industrielle | 1769, le brevet de James Watt |
+enum OnbHistoryStory: String, CaseIterable {
+    case france
+    case uk
+    case us
+    case germany
+    case italy
+    case spain
+    case portugal
+    case poland
+    case turkey
+    case world
+
+    /// Le sujet de cet élève : celui de son pays, ou le sujet universel.
+    static func forStudent(_ model: OnboardingModel) -> OnbHistoryStory {
+        switch model.country {
+        case .fr: return .france
+        case .uk: return .uk
+        case .us: return .us
+        case .de: return .germany
+        case .it: return .italy
+        case .es: return .spain
+        case .pt: return .portugal
+        case .pl: return .poland
+        case .tr: return .turkey
+        case .other:
+            switch model.regionCode?.uppercased() {
+            case "FR": return .france
+            case "GB": return .uk
+            case "US": return .us
+            case "DE": return .germany
+            case "IT": return .italy
+            case "ES": return .spain
+            case "PT": return .portugal
+            case "PL": return .poland
+            case "TR": return .turkey
+            default: return .world
+            }
+        default: return .world
+        }
+    }
+
+    /// La clé d'un texte du récit. La France garde les clés du lot 14.
+    private func key(_ field: String) -> String {
+        if self == .france {
+            return switch field {
+            case "lesson": "ios.onb14.story.lesson"
+            case "question": "ios.onb14.story.create.question"
+            case "node1": "ios.onb14.story.node.estates"
+            case "node2": "ios.onb14.story.node.bastille"
+            case "quiz": "ios.onb14.story.quiz.q"
+            case "askQ": "ios.onb14.story.ask.q"
+            default: "ios.onb15.story.ask.a"
+            }
+        }
+        return "ios.onb16.story.\(rawValue).\(field)"
+    }
+
+    var lessonKey: String { key("lesson") }
+    var questionKey: String { key("question") }
+    var node1Key: String { key("node1") }
+    var node2Key: String { key("node2") }
+    var quizKey: String { key("quiz") }
+    var askQuestionKey: String { key("askQ") }
+    var askAnswerKey: String { key("askA") }
+
+    /// Les trois années du quiz, dans l'ordre d'affichage : la bonne est la deuxième.
+    var years: [String] {
+        switch self {
+        case .france: ["1792", "1789", "1804"]
+        case .uk: ["1066", "1215", "1688"]
+        case .us: ["1783", "1776", "1789"]
+        case .germany: ["1961", "1989", "1990"]
+        case .italy: ["1848", "1861", "1870"]
+        case .spain: ["1975", "1978", "1982"]
+        case .portugal: ["1968", "1974", "1986"]
+        case .poland: ["1956", "1980", "1989"]
+        case .turkey: ["1919", "1923", "1938"]
+        case .world: ["1712", "1769", "1830"]
+        }
+    }
+
+    var rightYear: String { years[1] }
+}
 
 // MARK: - Le gabarit
 
@@ -82,6 +187,7 @@ private extension View {
 struct StoryCreateStepView: View {
     var previewArrived = false
 
+    @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @State private var arrived = false
 
@@ -101,7 +207,7 @@ struct StoryCreateStepView: View {
                     attachment(.photo)
                     Spacer(minLength: 0)
                 }
-                Text(i18n.t("ios.onb14.story.create.question"))
+                Text(i18n.t(OnbHistoryStory.forStudent(model).questionKey))
                     .font(OnbType.body)
                     .lineSpacing(OnbType.bodySpacing)
                     .foregroundStyle(V3Color.ink)
@@ -149,6 +255,7 @@ struct StoryCreateStepView: View {
 struct StoryPathStepView: View {
     var previewArrived = false
 
+    @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.onbCompact) private var compact
     @State private var arrived = false
@@ -165,9 +272,10 @@ struct StoryPathStepView: View {
     }
 
     private var nodes: [Node] {
-        [
-            Node(id: 0, icon: .scroll, tone: V3Color.iconBlue, text: i18n.t("ios.onb14.story.node.estates")),
-            Node(id: 1, icon: .flag, tone: V3Color.iconPink, text: i18n.t("ios.onb14.story.node.bastille")),
+        let story = OnbHistoryStory.forStudent(model)
+        return [
+            Node(id: 0, icon: .scroll, tone: V3Color.iconBlue, text: i18n.t(story.node1Key)),
+            Node(id: 1, icon: .flag, tone: V3Color.iconPink, text: i18n.t(story.node2Key)),
             Node(id: 2, icon: .quiz, tone: V3Color.iconGreen, text: i18n.t("lesson.nav.quiz")),
             Node(id: 3, icon: .cards, tone: V3Color.iconLilac, text: i18n.t("lesson.nav.flashcards")),
             Node(id: 4, icon: .alarm, tone: V3Color.iconYellow, text: i18n.t("ios.onb14.story.node.review")),
@@ -181,7 +289,7 @@ struct StoryPathStepView: View {
             OnbPanel(padding: 18) {
                 HStack(spacing: 10) {
                     OnbIcon(icon: .book, size: 26)
-                    Text(i18n.t("ios.onb14.story.lesson"))
+                    Text(i18n.t(OnbHistoryStory.forStudent(model).lessonKey))
                         .font(V3Font.heading(24))
                         .foregroundStyle(V3Color.ink)
                         .lineLimit(1)
@@ -243,6 +351,7 @@ struct StoryPathStepView: View {
 struct StoryPracticeStepView: View {
     var previewArrived = false
 
+    @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.onbCompact) private var compact
     @State private var arrived = false
@@ -252,10 +361,11 @@ struct StoryPracticeStepView: View {
     private var shown: Bool { arrived || previewArrived || settled }
 
     var body: some View {
-        OnbStoryStage(title: i18n.t("ios.onb15.story.practice.title")) {
+        let story = OnbHistoryStory.forStudent(model)
+        return OnbStoryStage(title: i18n.t("ios.onb16.story.practice.title")) {
             OnbPanel(padding: 20) {
                 HStack(alignment: .center) {
-                    Text(verbatim: "\(i18n.t("lesson.nav.quiz")) · \(i18n.t("ios.onb14.story.lesson"))")
+                    Text(verbatim: "\(i18n.t("lesson.nav.quiz")) · \(i18n.t(story.lessonKey))")
                         .font(OnbType.mention)
                         .foregroundStyle(V3Color.ink2)
                         .lineLimit(1)
@@ -265,15 +375,15 @@ struct StoryPracticeStepView: View {
                         .scaleEffect(shown ? 1 : 0.6)
                         .opacity(shown ? 1 : 0)
                 }
-                Text(i18n.t("ios.onb14.story.quiz.q"))
+                Text(i18n.t(story.quizKey))
                     .font(V3Font.heading(30))
                     .foregroundStyle(V3Color.ink)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 VStack(spacing: 10) {
-                    ForEach(["1792", "1789", "1804"], id: \.self) { year in
-                        let right = year == "1789"
+                    ForEach(story.years, id: \.self) { year in
+                        let right = year == story.rightYear
                         HStack(spacing: 8) {
                             Text(verbatim: year)
                                 .font(V3Font.heading(28))
@@ -306,6 +416,7 @@ struct StoryPracticeStepView: View {
 struct StoryAskStepView: View {
     var previewArrived = false
 
+    @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @State private var arrived = false
 
@@ -314,9 +425,9 @@ struct StoryAskStepView: View {
     private var shown: Bool { arrived || previewArrived || settled }
 
     var body: some View {
-        OnbStoryStage(title: i18n.t("ios.onb15.story.ask.title")) {
+        OnbStoryStage(title: i18n.t("ios.onb16.story.ask.title")) {
             VStack(spacing: 14) {
-                Text(i18n.t("ios.onb14.story.ask.q"))
+                Text(i18n.t(OnbHistoryStory.forStudent(model).askQuestionKey))
                     .font(OnbType.body)
                     .lineSpacing(OnbType.bodySpacing)
                     .foregroundStyle(V3Color.onAccent)
@@ -330,7 +441,7 @@ struct StoryAskStepView: View {
 
                 HStack(alignment: .bottom, spacing: 10) {
                     MikaAvatar(size: 40)
-                    Text(i18n.t("ios.onb15.story.ask.a"))
+                    Text(i18n.t(OnbHistoryStory.forStudent(model).askAnswerKey))
                         .font(OnbType.body)
                         .lineSpacing(OnbType.bodySpacing)
                         .foregroundStyle(V3Color.ink)

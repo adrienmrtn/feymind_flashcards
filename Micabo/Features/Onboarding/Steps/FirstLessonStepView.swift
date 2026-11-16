@@ -40,9 +40,10 @@ struct FirstLessonStepView: View {
         model.firstLessonChoice == .importSource || (model.firstLessonSubject != nil && !isTyping)
     }
 
-    /// Un exemple de sujet, tiré de sa première matière et de son niveau.
+    /// Ce qu'on peut taper (lot 16 : plus de titre de leçon inventé, « ne mets pas de cours
+    /// d'exemple »).
     private var example: String {
-        i18n.t("ios.onb10.lesson.example", ["topic": Self.exampleTopic(for: model, locale: i18n.locale)])
+        i18n.t("ios.onb16.lesson.hint")
     }
 
     var body: some View {
@@ -166,26 +167,6 @@ struct FirstLessonStepView: View {
     }
 
     // MARK: L'exemple
-
-    /// **Le sujet du fil des exemples** (lot 15) : dans la famille de sa matière la plus dure et
-    /// à son niveau (collège, lycée, après le bac). La démo de la leçon le montre, la première
-    /// leçon le propose.
-    ///
-    /// - En maths, **le sujet de l'exercice du scanner** : Pythagore au collège, le second
-    ///   degré au lycée, les intégrales après le bac (`OnbScanExercise`).
-    /// - **Aucune matière reconnue** : le repli unique est la Révolution française, l'exemple
-    ///   du récit final.
-    static func exampleTopic(for model: OnboardingModel, locale: UiLocale) -> String {
-        let pick = SampleCard.pick(for: model.demoSubjects)
-        guard model.subjects.contains(pick.subject) else {
-            return L10n.t("ios.onb14.story.lesson", locale: locale)
-        }
-        let band = band(for: model.tier)
-        if pick.card == .math, band != "lower" {
-            return L10n.t("ios.onb15.ex.math.\(band)", locale: locale)
-        }
-        return L10n.t("ios.onb10.lesson.ex.\(pick.card.rawValue).\(band)", locale: locale)
-    }
 
     /// Les trois hauteurs d'exemple.
     static func band(for tier: EducationTier?) -> String {
