@@ -184,7 +184,7 @@ fun WeekStrip(start: LocalDate, selected: Int, modifier: Modifier = Modifier, do
                         .then(if (onPick != null) Modifier.clickable { onPick(offset) } else Modifier),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("${day.dayOfMonth}", style = text(19.sp, FontWeight.Bold), color = if (isSelected) Color.White else colors.ink, maxLines = 1)
+                    Text("${day.dayOfMonth}", style = text(19.sp, FontWeight.Bold), color = if (isSelected) Color.White else colors.ink)
                 }
                 Box(Modifier.size(6.dp).clip(CircleShape).background(if (offset == event) colors.yellow else if (offset < done) colors.green else Color.Transparent))
             }

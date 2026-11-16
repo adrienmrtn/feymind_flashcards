@@ -456,5 +456,27 @@ val SheetShape: Shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 /** Un texte qu'on annonce sans le lire deux fois (les visuels de démo). */
 fun Modifier.described(text: String) = semantics { contentDescription = text }
 
+/**
+ * **Un grand chiffre qui rapetisse plutôt que de se couper** (`minimumScaleFactor` de
+ * l'iPhone) : une formule, un prix, une note sur une ligne, même à 200 % de texte.
+ */
+@Composable
+fun FitText(
+    text: String,
+    style: TextStyle,
+    color: Color,
+    modifier: Modifier = Modifier,
+    align: TextAlign = TextAlign.Start,
+    minSize: Int = 12,
+) {
+    androidx.compose.foundation.text.BasicText(
+        text = text,
+        style = style.copy(color = color, textAlign = align),
+        maxLines = 1,
+        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = minSize.sp, maxFontSize = style.fontSize, stepSize = 1.sp),
+        modifier = modifier,
+    )
+}
+
 /** Le style d'un grand chiffre de démo (Sofia 28–44). */
 fun figure(size: Int): TextStyle = display(size.sp, FontWeight.Black, 1.0f)

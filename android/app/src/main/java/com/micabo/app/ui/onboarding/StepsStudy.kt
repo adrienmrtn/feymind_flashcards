@@ -278,7 +278,7 @@ fun OriginStep(model: OnboardingModel, previewTidy: Boolean = false) {
                         subjects.forEach { subject ->
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Icon(MicaboIcons.subject(SubjectKind.of(subject)), null, tint = subjectTone(subject), modifier = Modifier.size(26.dp))
-                                Text(SubjectDisplay.subject(subject, appLanguageCode), style = text(17.sp, FontWeight.SemiBold), color = colors.ink, maxLines = 1)
+                                Text(SubjectDisplay.subject(subject, appLanguageCode), style = text(17.sp, FontWeight.SemiBold), color = colors.ink)
                             }
                         }
                     }
@@ -383,7 +383,7 @@ fun ScanDemoStep(model: OnboardingModel, previewStage: Int? = null) {
                 ) {
                     LeftToRight {
                         if (exercise.problem != null) {
-                            Text(exercise.problem, style = figure(40), color = colors.ink, maxLines = 1)
+                            com.micabo.app.ui.v3.FitText(exercise.problem, figure(40), colors.ink)
                         } else {
                             RightTriangle(Modifier.size(240.dp, if (compact && captured) 120.dp else 150.dp))
                         }
@@ -405,7 +405,7 @@ fun ScanDemoStep(model: OnboardingModel, previewStage: Int? = null) {
                             }
                             Column(Modifier.weight(1f)) {
                                 Text(t(key), style = text(17.sp, FontWeight.SemiBold), color = colors.accentBright)
-                                LeftToRight { Text(formula, style = figure(28), color = colors.ink, maxLines = 1) }
+                                LeftToRight { com.micabo.app.ui.v3.FitText(formula, figure(28), colors.ink) }
                             }
                         }
                     }
@@ -413,7 +413,7 @@ fun ScanDemoStep(model: OnboardingModel, previewStage: Int? = null) {
                         LeftToRight {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                                 Icon(Icons.Rounded.CheckCircle, null, tint = colors.green, modifier = Modifier.size(30.dp))
-                                Text(exercise.resultKey?.let { t(it) } ?: exercise.result, style = figure(32), color = colors.green, maxLines = 1)
+                                com.micabo.app.ui.v3.FitText(exercise.resultKey?.let { t(it) } ?: exercise.result, figure(32), colors.green)
                             }
                         }
                     }
@@ -477,7 +477,7 @@ private fun ResearchBar(label: String, share: Float, badge: String, strong: Bool
                 Box(Modifier.weight(1f).height(30.dp)) {
                     Box(Modifier.fillMaxWidth(share).height(30.dp).clip(RoundedCornerShape(9.dp)).background(if (strong) colors.accent else colors.inkTertiary))
                 }
-                Text(badge, style = figure(if (strong) 44 else 28), color = if (strong) colors.accentBright else colors.inkSecondary, modifier = Modifier.width(72.dp), maxLines = 1)
+                com.micabo.app.ui.v3.FitText(badge, figure(if (strong) 44 else 28), if (strong) colors.accentBright else colors.inkSecondary, Modifier.width(72.dp))
             }
         }
     }

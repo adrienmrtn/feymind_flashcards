@@ -197,7 +197,7 @@ private fun LanguageChip(host: OnboardingHost) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(7.dp),
         ) {
-            Text(current.label, style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, maxLines = 1)
+            Text(current.label, style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary)
             Icon(Icons.Rounded.ExpandMore, contentDescription = t("ios.appLanguage"), tint = colors.inkSecondary, modifier = Modifier.size(18.dp))
         }
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
@@ -260,7 +260,7 @@ private fun StoryIntro() {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     val tone = subjectTone(subject)
                     com.micabo.app.ui.v3.IconTile(MicaboIcons.subject(SubjectKind.of(subject)), tone, size = 38.dp, iconSize = 22.dp, radius = 11.dp)
-                    Text(SubjectDisplay.subject(subject, appLanguageCode), style = Type.option, color = colors.ink, modifier = Modifier.weight(1f), maxLines = 1)
+                    Text(SubjectDisplay.subject(subject, appLanguageCode), style = Type.option, color = colors.ink, modifier = Modifier.weight(1f))
                     Icon(Icons.Rounded.CheckCircle, null, tint = colors.green, modifier = Modifier.size(22.dp))
                 }
             }
@@ -326,7 +326,7 @@ private fun StoryScan() {
     LeftToRight {
         Box(Modifier.fillMaxWidth().padding(vertical = 6.dp), contentAlignment = Alignment.Center) {
             Viewfinder(colors.pink, Modifier.fillMaxWidth().height(96.dp))
-            Text("2x² − 8x + 6 = 0", style = display(26.sp), color = colors.ink, maxLines = 1)
+            com.micabo.app.ui.v3.FitText("2x² − 8x + 6 = 0", display(26.sp), colors.ink)
         }
     }
     StoryTile {
@@ -355,7 +355,7 @@ private fun StoryPlan(exam: String) {
                 Text(t("ios.cal.nextExam"), style = text(13.sp), color = colors.inkSecondary)
                 Text(exam, style = display(22.sp), color = colors.ink)
             }
-            Text(Words.duration(12, locale), style = text(15.sp, FontWeight.Bold), color = colors.yellowInk, maxLines = 1, modifier = Modifier.clip(CircleShape).background(colors.yellowWash).padding(horizontal = 12.dp, vertical = 6.dp))
+            Text(Words.duration(12, locale), style = text(15.sp, FontWeight.Bold), color = colors.yellowInk, modifier = Modifier.clip(CircleShape).background(colors.yellowWash).padding(horizontal = 12.dp, vertical = 6.dp))
         }
     }
     StoryTile { WeekStrip(start = LocalDate.of(2026, 11, 9), selected = 4, done = 4, event = 6, modifier = Modifier.padding(vertical = 14.dp, horizontal = 6.dp)) }
@@ -428,7 +428,7 @@ fun CountryStep(model: OnboardingModel) {
         ) {
             Icon(Icons.Rounded.Search, null, tint = colors.inkTertiary)
             Box(Modifier.weight(1f)) {
-                if (query.isEmpty()) Text(t("ios.countryPlaceholder"), style = text(17.sp), color = colors.inkTertiary, maxLines = 1)
+                if (query.isEmpty()) Text(t("ios.countryPlaceholder"), style = text(17.sp), color = colors.inkTertiary)
                 BasicTextField(
                     value = query,
                     onValueChange = { query = it },
@@ -552,7 +552,7 @@ fun ExamStep(model: OnboardingModel) {
                     Text(Words.date(date, locale), style = text(17.sp, FontWeight.SemiBold), color = colors.ink)
                 }
                 val days = model.examDaysLeft() ?: 0
-                if (days > 0) Text(Words.duration(days, locale), style = text(15.sp, FontWeight.Bold), color = colors.yellowInk, maxLines = 1, modifier = Modifier.clip(CircleShape).background(colors.yellowWash).padding(horizontal = 10.dp, vertical = 5.dp))
+                if (days > 0) Text(Words.duration(days, locale), style = text(15.sp, FontWeight.Bold), color = colors.yellowInk, modifier = Modifier.clip(CircleShape).background(colors.yellowWash).padding(horizontal = 10.dp, vertical = 5.dp))
                 Icon(Icons.Rounded.Edit, null, tint = colors.accentBright, modifier = Modifier.size(18.dp))
             }
         }

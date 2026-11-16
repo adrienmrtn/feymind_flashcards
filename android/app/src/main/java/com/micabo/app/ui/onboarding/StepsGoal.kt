@@ -111,7 +111,7 @@ fun NotchSlider(count: Int, index: Int, onIndex: (Int) -> Unit, lower: String, u
     val compact = LocalCompact.current
     Column(Modifier.fillMaxWidth().padding(top = if (compact) 8.dp else 28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(if (compact) 18.dp else 30.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            LeftToRight { Text(value, style = figure(64), color = tone, maxLines = 1, textAlign = TextAlign.Center, modifier = Modifier.testTag("sliderValue")) }
+            LeftToRight { com.micabo.app.ui.v3.FitText(value, figure(64), tone, Modifier.fillMaxWidth().testTag("sliderValue"), TextAlign.Center) }
             if (qualifier != null) Text(qualifier, style = text(20.sp, FontWeight.SemiBold), color = colors.ink, textAlign = TextAlign.Center)
         }
         LeftToRight {
@@ -137,9 +137,9 @@ fun NotchSlider(count: Int, index: Int, onIndex: (Int) -> Unit, lower: String, u
                     modifier = Modifier.fillMaxWidth().semantics { contentDescription = value },
                 )
                 Row(Modifier.fillMaxWidth()) {
-                    Text(lower, style = text(17.sp, FontWeight.SemiBold), color = colors.inkSecondary, maxLines = 1)
+                    Text(lower, style = text(17.sp, FontWeight.SemiBold), color = colors.inkSecondary)
                     Spacer(Modifier.weight(1f))
-                    Text(upper, style = text(17.sp, FontWeight.SemiBold), color = colors.inkSecondary, maxLines = 1)
+                    Text(upper, style = text(17.sp, FontWeight.SemiBold), color = colors.inkSecondary)
                 }
             }
         }
@@ -365,9 +365,9 @@ fun FocusDemoStep(model: OnboardingModel, previewDone: Boolean = false) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     LeftToRight {
                         val left = ((1f - fill.value) * minutes * 60).toInt()
-                        Text("%d:%02d".format(left / 60, left % 60), style = figure(52), color = colors.ink, maxLines = 1)
+                        com.micabo.app.ui.v3.FitText("%d:%02d".format(left / 60, left % 60), figure(52), colors.ink)
                     }
-                    model.focusSubject?.let { Text(SubjectDisplay.subject(it, appLanguageCode), style = text(17.sp, FontWeight.SemiBold), color = colors.ink, maxLines = 1) }
+                    model.focusSubject?.let { Text(SubjectDisplay.subject(it, appLanguageCode), style = text(17.sp, FontWeight.SemiBold), color = colors.ink) }
                 }
             }
             if (done) {

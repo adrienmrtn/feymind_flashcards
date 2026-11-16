@@ -82,8 +82,24 @@ propre à Android prend le préfixe `x_` et s'écrit dans `CUSTOM` en tête de
 python3 android/tools/generate_strings.py
 ```
 
-Le script régénère `res/values-*/strings.xml` et `plurals.xml` pour les 26 langues, et
-signale les clés introuvables. Ne pas éditer ces fichiers à la main.
+Le script régénère `res/values-*/strings.xml` et `plurals.xml` pour les **32 langues** de
+l'iPhone (l'hébreu s'écrit `values-iw`), et signale les clés introuvables. Une clé peut aussi
+s'appeler par son nom, comme sur l'iPhone : `t("ios.onb15.q.name", "name" to "Lina")` (les
+familles de `KEY_PREFIXES` et toute clé écrite en toutes lettres entrent d'office ; la table est
+`i18n/CatalogKeys.kt`, l'ordre des variables `i18n/StringVars.kt`). Une phrase propre à Android
+s'écrit dans `CUSTOM`, `strings_knowunity.py` ou `strings_lot13.py` (nb, he, ja, lt, lv, ko) :
+le test `I18nCatalogTest` refuse une phrase absente d'une langue. Ne pas éditer ces fichiers à
+la main.
+
+**Les systèmes scolaires** (filières, années, matières, examens et leurs dates, pour 40 pays)
+sont recopiés de l'iPhone dans `onboarding/SchoolSystemData.kt` :
+
+```
+python3 android/tools/generate_school_systems.py
+```
+
+Le parcours d'accueil (`onboarding/` pour la logique, `ui/onboarding/` pour les écrans) suit
+`OnboardingStep.swift` écran par écran ; ses composants V3.3 sont dans `ui/v3/`.
 
 **Le backend** : les fonctions sont dans `supabase/functions/` (dont `transcribe-audio`, écrite
 pour l'audio Android), les migrations dans `supabase/migrations/`. Un commit dont le message
@@ -91,9 +107,17 @@ contient `[supabase]` déploie les migrations nouvelles et les fonctions touché
 
 ## 4. Vérifier avant de livrer
 
-- La CI Android doit être verte (elle compile tout, R8 compris).
-- Rien n'est testé automatiquement sur un téléphone : installer l'APK du run, ou passer par le
-  test interne, et refaire le parcours touché.
+- La CI Android doit être verte : elle compile tout (R8 compris) et lance
+  `gradle -p android :app:testDebugUnitTest` (Robolectric, sur la JVM) : la logique du parcours
+  (dates de l'essai sur plusieurs fuseaux, séances d'une heure au plus, récit par pays, reprise
+  d'un écran retiré), les 32 langues, le maintien pour s'engager sur le vrai bouton, et **les
+  rendus de chaque écran sur onze téléphones** (petit 360 × 640, Pixel 8, Pixel 8 Pro, pliable
+  déplié, tablette, texte à 130 et 200 %, arabe, thème clair, trois boutons et encoche, anglais).
+  Chaque rendu est vérifié : rien ne plante, aucun texte n'est coupé, le bouton principal reste
+  visible au-dessus de la barre du système. Les images partent dans l'artefact
+  `micabo-android-rendus-<n>` (avec `report.txt`).
+- Ce que les rendus ne disent pas (le toucher, la vitesse, les achats) : installer l'APK du run,
+  ou passer par le test interne, et refaire le parcours touché.
 - Points à surveiller en priorité : la connexion Google et le lien par courriel jusqu'au retour
   dans l'app ; une leçon créée sur Android qui apparaît sur l'iPhone, et l'inverse ; un achat
   avec un compte testeur de licence (Play Console → Configuration → Test des licences).

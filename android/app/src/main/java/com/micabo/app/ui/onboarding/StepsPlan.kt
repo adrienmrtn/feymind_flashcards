@@ -36,6 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -221,7 +224,7 @@ private fun PlanBlock(label: String, value: String, detail: String, tone: Color,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(value, style = figure(if (LocalCompact.current) 34 else 40), color = tone, maxLines = 1, modifier = Modifier.widthIn(min = 76.dp))
+        com.micabo.app.ui.v3.FitText(value, figure(if (LocalCompact.current) 34 else 40), tone, Modifier.widthIn(min = 76.dp, max = 160.dp))
         Column(Modifier.weight(1f)) {
             Text(label, style = text(17.sp, FontWeight.SemiBold), color = colors.inkSecondary)
             Text(detail, style = text(17.sp, FontWeight.SemiBold, 22.sp), color = colors.ink)
@@ -256,7 +259,7 @@ fun StoryCreateStep(model: OnboardingModel) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Icon(source.icon, null, tint = tone, modifier = Modifier.size(22.dp))
-                        Text(t(source.titleKey), style = text(15.sp, FontWeight.SemiBold), color = colors.ink, maxLines = 1)
+                        Text(t(source.titleKey), style = text(15.sp, FontWeight.SemiBold), color = colors.ink)
                         Icon(Icons.Rounded.CheckCircle, null, tint = colors.green, modifier = Modifier.size(16.dp))
                     }
                 }
@@ -289,7 +292,6 @@ fun StoryPathStep(model: OnboardingModel) {
         Triple(MicaboIcons.cards, colors.iconLilac, t("lesson.nav.flashcards")),
         Triple(MicaboIcons.alarm, colors.iconYellow, t("ios.onb14.story.node.review")),
     )
-    val step = if (compact) 64.dp else 76.dp
     StoryStage(t("ios.onb15.story.path.title"), model) {
         Panel {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -297,28 +299,40 @@ fun StoryPathStep(model: OnboardingModel) {
                 Text(t(story.lessonKey), style = display(24.sp), color = colors.ink)
             }
             LeftToRight {
-                BoxWithConstraints(Modifier.fillMaxWidth()) {
+                // Le chemin en zigzag : chaque étape à sa hauteur (un libellé long passe à la
+                // ligne), le trait pointillé passe par le centre des pastilles.
+                val centers = remember { mutableStateMapOf<Int, Offset>() }
+                var origin by remember { mutableStateOf(Offset.Zero) }
+                BoxWithConstraints(Modifier.fillMaxWidth().onGloballyPositioned { origin = it.positionInRoot() }) {
                     val width = maxWidth
-                    Canvas(Modifier.fillMaxWidth().height(step * nodes.size)) {
-                        val path = Path()
-                        nodes.indices.forEach { index ->
-                            val x = (if (index % 2 == 0) 0.06f else 0.30f) * size.width + 27.dp.toPx()
-                            val y = step.toPx() * index + step.toPx() / 2
-                            if (index == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    Canvas(Modifier.matchParentSize()) {
+                        val points = nodes.indices.mapNotNull { centers[it]?.minus(origin) }
+                        if (points.size == nodes.size) {
+                            val path = Path()
+                            points.forEachIndexed { index, point -> if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y) }
+                            drawPath(path, colors.accent.copy(alpha = 0.55f), style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 9.dp.toPx()))))
                         }
-                        drawPath(path, colors.accent.copy(alpha = 0.55f), style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 9.dp.toPx()))))
                     }
-                    nodes.forEachIndexed { index, (icon, tone, label) ->
-                        val x = width * (if (index % 2 == 0) 0.06f else 0.30f)
-                        Row(
-                            Modifier.offset(x, step * index + (step - 54.dp) / 2).width(width - x),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        ) {
-                            Box(Modifier.size(54.dp).clip(CircleShape).background(wash(tone)).border(2.5.dp, tone.copy(alpha = 0.7f), CircleShape), contentAlignment = Alignment.Center) {
-                                Icon(icon, null, tint = tone, modifier = Modifier.size(28.dp))
+                    Column(verticalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 16.dp)) {
+                        nodes.forEachIndexed { index, (icon, tone, label) ->
+                            Row(
+                                Modifier.padding(start = width * (if (index % 2 == 0) 0.04f else 0.24f)),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(54.dp)
+                                        .onGloballyPositioned { centers[index] = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f) }
+                                        .clip(CircleShape)
+                                        .background(wash(tone))
+                                        .border(2.5.dp, tone.copy(alpha = 0.7f), CircleShape),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(icon, null, tint = tone, modifier = Modifier.size(28.dp))
+                                }
+                                Text(label, style = text(17.sp, FontWeight.SemiBold, 21.sp), color = if (index == 4) colors.yellow else colors.ink, modifier = Modifier.weight(1f))
                             }
-                            Text(label, style = text(17.sp, FontWeight.SemiBold, 21.sp), color = if (index == 4) colors.yellow else colors.ink, maxLines = 2, modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -335,7 +349,7 @@ fun StoryPracticeStep(model: OnboardingModel) {
     StoryStage(t("ios.onb16.story.practice.title"), model) {
         Panel(padding = 20.dp) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("${t("lesson.nav.quiz")} · ${t(story.lessonKey)}", style = Type.mention, color = colors.inkSecondary, maxLines = 2, modifier = Modifier.weight(1f))
+                Text("${t("lesson.nav.quiz")} · ${t(story.lessonKey)}", style = Type.mention, color = colors.inkSecondary, modifier = Modifier.weight(1f))
                 XpPill(10)
             }
             Text(t(story.quizKey), style = display(30.sp), color = colors.ink)
