@@ -71,6 +71,8 @@ enum OnbType {
     static let detail = Font.system(.body, design: .default, weight: .regular)
     static let label = Font.system(.body, design: .default, weight: .semibold)
     static let mention = Font.system(.subheadline, design: .default, weight: .regular)
+    /// Ce que Mika dit en grand, à l'ouverture d'un chapitre : le corps, en gras.
+    static let speech = Font.system(.title3, design: .default, weight: .bold)
     /// L'interligne du corps : un peu d'air entre deux lignes de 20 pt.
     static let bodySpacing: CGFloat = 3
 }
@@ -95,13 +97,18 @@ struct OnbCentered<Content: View>: View {
 
 /// **Mika qui parle, en grand** (lot 15, l'écran d'ouverture d'un chapitre) : sa bulle,
 /// centrée, sa pointe vers lui, puis Mika.
+///
+/// **Elle se dit mot par mot, en gras** : `spoken` compte les mots déjà dits (`nil` : tous).
+/// La phrase entière est posée dès le départ, les mots à venir transparents : la bulle ne
+/// change pas de taille pendant que Mika parle.
 struct OnbSpeech: View {
     let text: String
+    var spoken: Int?
 
     var body: some View {
         let phrase = OnbPhrase(text)
-        Text(v3: phrase.text, highlight: phrase.highlight)
-            .font(OnbType.body)
+        OnbWordReveal.text(phrase, spoken: spoken)
+            .font(OnbType.speech)
             .lineSpacing(OnbType.bodySpacing)
             .foregroundStyle(V3Color.ink)
             .multilineTextAlignment(.center)
@@ -211,7 +218,7 @@ struct OnbScreen<Content: View, Footer: View>: View {
 }
 
 extension OnbScreen where Footer == EmptyView {
-    /// Un écran sans pied : un choix unique, qui avance à l'appui.
+    /// Un écran sans pied.
     init(@ViewBuilder content: () -> Content) {
         self.init(content: content, footer: { EmptyView() })
     }
@@ -348,7 +355,7 @@ struct OnbQuestion<Answers: View, Footer: View>: View {
 }
 
 extension OnbQuestion where Footer == EmptyView {
-    /// Une question à choix unique : pas de bouton, la réponse avance.
+    /// Une question sans pied.
     init(_ title: String, say: OnbSay?, @ViewBuilder answers: () -> Answers) {
         self.init(title, say: say, answers: answers, footer: { EmptyView() })
     }
@@ -385,19 +392,122 @@ struct OnbOption: View {
     }
 }
 
-/// **Un choix unique qui avance** : la réponse s'écrit sous le ressort court de l'app (la
-/// coche apparaît, la ligne se gonfle), et la page part **à la fin de ce ressort** — pas après
-/// une minuterie. « Réduire les animations » : un fondu bref, puis la page.
+/// **Un choix unique se coche, et c'est le bouton qui avance** (demande du fondateur : « qu'on
+/// ne passe pas direct au clic »). La réponse s'écrit sous le ressort court de l'app (la coche
+/// apparaît, la ligne se gonfle) ; « Continuer », au pied, s'allume dès qu'il y a une réponse.
 enum OnbPick {
     static func choose(on step: OnboardingStep, model: OnboardingModel, _ apply: () -> Void) {
         guard model.step == step else { return }
-        let curve = MicaboMotion.resolved(MicaboMotion.quick, reduceMotion: UIAccessibility.isReduceMotionEnabled)
-        withAnimation(curve, completionCriteria: .logicallyComplete) {
+        withAnimation(MicaboMotion.resolved(MicaboMotion.quick, reduceMotion: UIAccessibility.isReduceMotionEnabled)) {
             apply()
-        } completion: {
-            guard model.step == step else { return }
+        }
+    }
+}
+
+/// **Le bouton d'une question à choix unique** : « Continuer », éteint tant que rien n'est
+/// coché.
+struct OnbPickButton: View {
+    let isAnswered: Bool
+
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        V3Button(i18n.t("common.continue"), isEnabled: isAnswered) {
             model.advance()
         }
+    }
+}
+
+// MARK: - Ce qui se dévoile
+
+/// **Vrai quand un écran se pose tout de suite dans son état final**, sans jouer son arrivée :
+/// dans un rendu, avec « Réduire les animations », et avec VoiceOver (un bouton qui n'apparaît
+/// qu'à la fin d'une animation n'a pas à se faire attendre par le lecteur d'écran).
+@propertyWrapper
+struct OnbArrivalSkipped: DynamicProperty {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
+    @Environment(\.onboardingStill) private var still
+    @Environment(\.onbSettled) private var settled
+
+    var wrappedValue: Bool { reduceMotion || voiceOver || still || settled }
+}
+
+private struct OnbRevealed: ViewModifier {
+    let shown: Bool
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .offset(y: shown || reduceMotion ? 0 : 12)
+            .allowsHitTesting(shown)
+            .accessibilityHidden(!shown)
+            .animation(MicaboMotion.resolved(MicaboMotion.gentle, reduceMotion: reduceMotion), value: shown)
+    }
+}
+
+extension View {
+    /// **Un bouton qui n'apparaît qu'à la fin de l'animation de l'écran** : sa place est gardée
+    /// (rien ne bouge quand il arrive), il monte de quelques points en fondu, et il ne se
+    /// touche pas avant.
+    func onbRevealed(_ shown: Bool) -> some View {
+        modifier(OnbRevealed(shown: shown))
+    }
+}
+
+/// **Une phrase qui se dit mot par mot** (la bulle de Mika, à l'ouverture d'un chapitre).
+enum OnbWordReveal {
+    /// Les mots de la phrase, chacun avec le blanc qui le suit : mis bout à bout, ils
+    /// redonnent la phrase. Une langue qui s'écrit sans espaces (le japonais) se dit par
+    /// petits groupes de caractères.
+    static func words(of text: String) -> [String] {
+        var words: [String] = []
+        var current = ""
+        var closing = false
+        for character in text {
+            if character.isWhitespace {
+                closing = true
+            } else if closing {
+                words.append(current)
+                current = ""
+                closing = false
+            }
+            current.append(character)
+        }
+        if !current.isEmpty { words.append(current) }
+        guard words.count <= 2, text.count > 12 else { return words }
+        let characters = Array(text)
+        return stride(from: 0, to: characters.count, by: 3).map { start in
+            String(characters[start..<min(start + 3, characters.count)])
+        }
+    }
+
+    /// Le temps laissé après un mot, en secondes : une respiration après une ponctuation.
+    static func pause(after word: String) -> Double {
+        guard let last = word.last(where: { !$0.isWhitespace }) else { return 0.075 }
+        if ".!?…。！？".contains(last) { return 0.3 }
+        if ",;:،、：".contains(last) { return 0.17 }
+        return 0.075
+    }
+
+    /// La phrase, ses `spoken` premiers mots à l'encre (le mot-clé dans sa couleur), les
+    /// suivants transparents ; `nil` : toute la phrase.
+    static func text(_ phrase: OnbPhrase, spoken: Int?, keyword: Color = V3Color.accentBright) -> Text {
+        let sentence = phrase.text
+        let marked = phrase.highlight.flatMap { sentence.range(of: $0) }
+        var result = Text(verbatim: "")
+        var cursor = sentence.startIndex
+        for (index, word) in words(of: sentence).enumerated() {
+            let isSpoken = spoken.map { index < $0 } ?? true
+            let isKeyword = marked?.contains(cursor) ?? false
+            let color: Color = isSpoken ? (isKeyword ? keyword : V3Color.ink) : .clear
+            result = result + Text(verbatim: word).foregroundStyle(color)
+            cursor = sentence.index(cursor, offsetBy: word.count, limitedBy: sentence.endIndex) ?? sentence.endIndex
+        }
+        return result
     }
 }
 

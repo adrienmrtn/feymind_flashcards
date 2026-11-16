@@ -282,9 +282,9 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
 
     var isQuestion: Bool { kind == .question }
 
-    /// **Un choix unique avance tout seul, et n'a pas de bouton.** Un choix multiple, une
-    /// saisie ou un curseur a son bouton.
-    var advancesOnChoice: Bool {
+    /// **Les questions à choix unique** : une réponse se coche, et « Continuer » avance
+    /// (`OnbPickButton`).
+    var isSingleChoice: Bool {
         switch self {
         case .country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod:
             true
@@ -292,6 +292,10 @@ enum OnboardingStep: Int, CaseIterable, Identifiable, Hashable {
             false
         }
     }
+
+    /// **Aucun écran n'avance plus à l'appui d'une réponse** (demande du fondateur : « qu'on
+    /// ne passe pas direct au clic ») : chaque question a son bouton.
+    var advancesOnChoice: Bool { false }
 
     /// **La barre du haut** se retire des écrans qui sont un moment à eux seuls.
     var showsChrome: Bool {

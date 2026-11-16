@@ -213,6 +213,9 @@ final class PaywallTests: XCTestCase {
         let legal = PaywallCopy.legal(for: PaywallCatalog.yearly, locale: .fr)
         XCTAssertEqual(legal, "Payé aujourd'hui : \(yearly.displayPrice), puis chaque année. Annule quand tu veux.")
         XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "S'abonner")
+        // À la fin du parcours d'accueil, le bouton dit « Continuer » ; le prix reste dans la mention.
+        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, endsOnboarding: true, locale: .fr), "Continuer")
+        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, endsOnboarding: true, locale: .en), "Continue")
     }
 
     /// **Le tarif réduit n'a pas d'essai**, et rien sur son écran n'en promet : ni son

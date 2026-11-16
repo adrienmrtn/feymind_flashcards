@@ -307,9 +307,16 @@ struct OnbGradeWheel: View {
 /// qu'il vise. C'est un objectif dessiné, pas une prédiction : elle met côte à côte ce qu'il a
 /// dit avoir et ce qu'il a dit viser, à la date qu'il a donnée. Sans examen, l'horizon est de
 /// trois mois ; moyenne passée, la courbe se dessine sans chiffres.
+///
+/// **Le bouton n'apparaît qu'une fois la courbe arrivée** (demande du fondateur) : on regarde
+/// la courbe se tracer, la note visée se pose, puis « C'est mon objectif ».
 struct StartingPointStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @OnbArrivalSkipped private var skipsArrival
+
+    /// La courbe est arrivée au bout.
+    @State private var landed = false
 
     /// Sans examen daté : l'horizon de la projection, en jours.
     static let openHorizonDays = 91
@@ -363,13 +370,14 @@ struct StartingPointStepView: View {
             V3Button(i18n.t("ios.onb12.start.cta")) {
                 model.advance()
             }
+            .onbRevealed(landed || skipsArrival || !model.isMovingForward)
         }
     }
 
     /// La carte : son intitulé, la courbe, puis d'où l'on part et quand on arrive.
     private var projection: some View {
         VStack(spacing: 8) {
-            OnbProjectionChart(target: target)
+            OnbProjectionChart(target: target, onLanded: { landed = true })
                 .frame(height: 170)
 
             HStack(alignment: .firstTextBaseline) {
@@ -406,6 +414,8 @@ struct StartingPointStepView: View {
 struct OnbProjectionChart: View {
     /// La note visée, écrite au bout de la courbe ; sans elle, la courbe est sans chiffres.
     let target: String?
+    /// La courbe est tracée, le point et la note sont posés.
+    var onLanded: () -> Void = {}
 
     @Environment(\.onboardingStill) private var frozen
     @Environment(\.onbSettled) private var settled
@@ -423,12 +433,20 @@ struct OnbProjectionChart: View {
     var body: some View {
         chart
             .onAppear {
-                guard !still, !reduceMotion, drawn == 0 else { return }
+                guard !still, !reduceMotion else {
+                    onLanded()
+                    return
+                }
+                guard drawn == 0 else { return }
                 withAnimation(MicaboMotion.fill(seconds: 1.1), completionCriteria: .logicallyComplete) {
                     drawn = 1
                 } completion: {
                     Haptics.soft()
-                    withAnimation(MicaboMotion.celebrate) { arrived = true }
+                    withAnimation(MicaboMotion.celebrate, completionCriteria: .logicallyComplete) {
+                        arrived = true
+                    } completion: {
+                        onLanded()
+                    }
                 }
             }
     }

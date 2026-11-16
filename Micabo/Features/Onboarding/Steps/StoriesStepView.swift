@@ -434,11 +434,12 @@ struct StoryTag: View {
 
 /// **Page 1 : « Tous tes cours, simplifiés. »** (lot 16) Mika, et tes cours rangés par
 /// matière, chacun avec son icône : la promesse avant la démonstration. Les matières sont des
-/// matières courantes, dans la langue de l'app ; rien n'est compté.
+/// matières courantes, dans la langue de l'app ; rien n'est compté. Pas de physique : son
+/// atome se lisait comme un logo (demande du fondateur).
 private struct StoryIntroPreview: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
-    private static let subjects = ["Mathématiques", "Histoire", "Physique", "Anglais"]
+    private static let subjects = ["Mathématiques", "Histoire", "SVT", "Anglais"]
 
     var body: some View {
         MikaMascot(mood: .wave, size: 96)

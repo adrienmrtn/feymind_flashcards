@@ -123,6 +123,8 @@ struct OnbStoryStage<Panel: View>: View {
     /// Le libellé du bouton ; « Continuer » par défaut.
     var cta: String?
     var ctaSymbol: String?
+    /// Faux tant que l'écran joue son animation : le bouton n'apparaît qu'après.
+    var ctaShown = true
     @ViewBuilder let panel: () -> Panel
 
     @Environment(OnboardingModel.self) private var model
@@ -145,6 +147,7 @@ struct OnbStoryStage<Panel: View>: View {
             V3Button(cta ?? i18n.t("common.continue"), systemImage: ctaSymbol) {
                 model.advance()
             }
+            .onbRevealed(ctaShown)
         }
     }
 }
@@ -184,22 +187,36 @@ private extension View {
 /// **« Tu poses ta question, Mika crée la leçon. »** La barre de création de l'app, en grand :
 /// deux supports joints, une question précise. Le bouton du pied crée la leçon ; l'écran
 /// suivant montre ce qui en sort.
+///
+/// **La question s'écrit sous les yeux de l'élève** (demande du fondateur) : les supports se
+/// posent, puis le texte se tape lettre à lettre, et « Créer la leçon » n'apparaît qu'une fois
+/// la question écrite. La phrase entière est posée dès le départ, ce qui reste à écrire
+/// transparent : le champ ne change pas de taille. Toucher le champ écrit tout d'un coup.
 struct StoryCreateStepView: View {
     var previewArrived = false
 
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @OnbArrivalSkipped private var skipsArrival
+
     @State private var arrived = false
+    /// Les caractères déjà écrits.
+    @State private var typed = 0
+    /// La question est écrite : le bouton est là.
+    @State private var written = false
 
-    @Environment(\.onbSettled) private var settled
-
-    private var shown: Bool { arrived || previewArrived || settled }
+    /// Rien ne se rejoue dans un rendu, ni quand on revient sur l'écran.
+    private var isPosed: Bool { previewArrived || skipsArrival || !model.isMovingForward }
+    private var shown: Bool { arrived || isPosed }
+    private var isWritten: Bool { written || isPosed }
 
     var body: some View {
-        OnbStoryStage(
+        let question = i18n.t(OnbHistoryStory.forStudent(model).questionKey)
+        return OnbStoryStage(
             title: i18n.t("ios.onb15.story.create.title"),
             cta: i18n.t("ios.onb14.story.create.cta"),
-            ctaSymbol: "sparkles"
+            ctaSymbol: "sparkles",
+            ctaShown: isWritten
         ) {
             OnbPanel(padding: 18) {
                 HStack(spacing: 8) {
@@ -207,7 +224,7 @@ struct StoryCreateStepView: View {
                     attachment(.photo)
                     Spacer(minLength: 0)
                 }
-                Text(i18n.t(OnbHistoryStory.forStudent(model).questionKey))
+                typedText(question)
                     .font(OnbType.body)
                     .lineSpacing(OnbType.bodySpacing)
                     .foregroundStyle(V3Color.ink)
@@ -220,9 +237,36 @@ struct StoryCreateStepView: View {
                         RoundedRectangle(cornerRadius: V3Metric.radiusInner, style: .continuous)
                             .strokeBorder(V3Color.accent, lineWidth: 2)
                     )
+                    .accessibilityLabel(Text(question))
             }
             .onbStoryArrival($arrived)
+            .contentShape(Rectangle())
+            .onTapGesture { written = true }
+            .task { await write(question) }
         }
+    }
+
+    /// La question : ce qui est écrit à l'encre, le reste transparent.
+    private func typedText(_ question: String) -> Text {
+        guard !isWritten else { return Text(verbatim: question) }
+        let cut = question.index(question.startIndex, offsetBy: min(typed, question.count))
+        return Text(verbatim: String(question[..<cut]))
+            + Text(verbatim: String(question[cut...])).foregroundStyle(Color.clear)
+    }
+
+    /// La question s'écrit, lettre à lettre, une fois les supports posés.
+    @MainActor
+    private func write(_ question: String) async {
+        guard !isWritten else { return }
+        try? await Task.sleep(for: .milliseconds(700))
+        for count in stride(from: 1, through: question.count, by: 1) {
+            guard !Task.isCancelled, !written else { return }
+            typed = count
+            try? await Task.sleep(for: .milliseconds(30))
+        }
+        guard !Task.isCancelled else { return }
+        try? await Task.sleep(for: .milliseconds(200))
+        written = true
     }
 
     private func attachment(_ source: OnbSource) -> some View {
@@ -249,20 +293,29 @@ struct StoryCreateStepView: View {
 // MARK: - 2. Le parcours
 
 /// **« Tu obtiens un parcours fait pour retenir. »** Le chemin de la leçon, en zigzag comme
-/// dans l'app : deux thèmes, un quiz, des cartes, une révision quelques jours plus tard. Le
-/// chemin se trace à l'arrivée. La phrase de Mika dit d'où vient cette forme : la recherche
-/// en sciences cognitives (répétition espacée, test de récupération) — rien de plus.
+/// dans l'app : deux thèmes, un quiz, des cartes, une révision quelques jours plus tard.
+///
+/// **Les étapes arrivent une à une** (demande du fondateur) : le trait avance jusqu'à la
+/// suivante, elle se pose d'un ressort, une onde part de son cercle, et le téléphone vibre à
+/// chacune (plus fort à la dernière). Le bouton n'apparaît qu'une fois le chemin complet.
+/// Toucher le chemin le pose d'un coup.
 struct StoryPathStepView: View {
     var previewArrived = false
 
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.onbCompact) private var compact
-    @State private var arrived = false
+    @OnbArrivalSkipped private var skipsArrival
 
-    @Environment(\.onbSettled) private var settled
+    /// Les étapes déjà posées.
+    @State private var placed = 0
 
-    private var shown: Bool { arrived || previewArrived || settled }
+    /// Rien ne se rejoue dans un rendu, ni quand on revient sur l'écran.
+    private var isPosed: Bool { previewArrived || skipsArrival || !model.isMovingForward }
+    private var visible: Int { isPosed ? Self.nodeCount : placed }
+    private var isComplete: Bool { visible >= Self.nodeCount }
+
+    private static let nodeCount = 5
 
     struct Node: Identifiable {
         let id: Int
@@ -285,7 +338,7 @@ struct StoryPathStepView: View {
     private var step: CGFloat { compact ? 56 : 72 }
 
     var body: some View {
-        OnbStoryStage(title: i18n.t("ios.onb15.story.path.title")) {
+        OnbStoryStage(title: i18n.t("ios.onb15.story.path.title"), ctaShown: isComplete) {
             OnbPanel(padding: 18) {
                 HStack(spacing: 10) {
                     OnbIcon(icon: .book, size: 26)
@@ -297,7 +350,31 @@ struct StoryPathStepView: View {
                 }
                 path
             }
-            .onbStoryArrival($arrived)
+            .contentShape(Rectangle())
+            .onTapGesture { placed = Self.nodeCount }
+            .task { await trace() }
+        }
+    }
+
+    /// Le chemin se pose, une étape après l'autre.
+    @MainActor
+    private func trace() async {
+        guard !isPosed, placed == 0 else { return }
+        // La page finit de glisser.
+        try? await Task.sleep(for: .milliseconds(450))
+        for next in 1...Self.nodeCount {
+            guard !Task.isCancelled, placed < Self.nodeCount else { return }
+            // Le trait part tout de suite (il a sa propre courbe) ; l'étape se pose quand il
+            // arrive, et le téléphone vibre à ce moment-là.
+            let lead = next == 1 ? 0 : 0.22
+            withAnimation(.spring(duration: 0.5, bounce: 0.45).delay(lead)) { placed = next }
+            try? await Task.sleep(for: .seconds(lead))
+            if next == Self.nodeCount {
+                Haptics.success()
+            } else {
+                Haptics.medium()
+            }
+            try? await Task.sleep(for: .milliseconds(360))
         }
     }
 
@@ -313,16 +390,27 @@ struct StoryPathStepView: View {
                     line.move(to: points[0])
                     for point in points.dropFirst() { line.addLine(to: point) }
                 }
-                .trim(from: 0, to: shown ? 1 : 0)
+                // Le trait va jusqu'à la dernière étape posée (les segments ont la même longueur).
+                .trim(from: 0, to: CGFloat(max(0, visible - 1)) / CGFloat(Self.nodeCount - 1))
                 .stroke(V3Color.accent.opacity(0.55), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round, dash: [2, 9]))
+                .animation(.easeInOut(duration: 0.4), value: visible)
 
                 ForEach(nodes) { node in
                     let point = points[node.id]
+                    let isOn = node.id < visible
                     HStack(spacing: 10) {
                         MicaboIconView(icon: node.icon, size: 26 * 1.35, tint: node.tone)
                             .frame(width: 54, height: 54)
                             .background(V3Color.wash(of: node.tone), in: Circle())
                             .overlay(Circle().strokeBorder(node.tone.opacity(0.7), lineWidth: 2.5))
+                            // L'onde : un cercle qui s'élargit et s'efface quand l'étape se pose.
+                            .background(
+                                Circle()
+                                    .strokeBorder(node.tone, lineWidth: 3)
+                                    .scaleEffect(isOn ? 1.7 : 1)
+                                    .opacity(isOn ? 0 : 1)
+                            )
+                            .scaleEffect(isOn ? 1 : 0.2)
                         Text(node.text)
                             .font(OnbType.label)
                             .foregroundStyle(node.id == 4 ? V3Color.yellow : V3Color.ink)
@@ -332,7 +420,7 @@ struct StoryPathStepView: View {
                             .frame(width: width - point.x - 40, alignment: .leading)
                     }
                     .position(x: point.x + (width - point.x - 40) / 2 + 8, y: point.y)
-                    .opacity(shown ? 1 : (node.id == 0 ? 1 : 0.25))
+                    .opacity(isOn ? 1 : 0)
                 }
             }
         }

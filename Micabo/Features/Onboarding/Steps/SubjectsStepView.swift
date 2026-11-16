@@ -396,6 +396,8 @@ struct HardestSubjectStepView: View {
                     }
                 }
             }
+        } footer: {
+            OnbPickButton(isAnswered: model.hardestSubject != nil)
         }
     }
 }
