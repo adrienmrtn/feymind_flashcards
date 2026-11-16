@@ -128,7 +128,8 @@ final class ChatRenderTests: XCTestCase {
         let rows = empty ? [] : (0..<4).map { index in
             ChatHistoryRow(title: copy.titles[index], preview: copy.previews[index], date: now.addingTimeInterval(offsets[index]), origin: origins[index], courseTitle: index == 0 ? copy.lesson : nil)
         }
-        return ChatHistoryContent(rows: rows, totalCount: rows.count, query: .constant(""), onOpen: { _ in }, still: true)
+        // Lot 12 : l'historique est le contenu du tiroir, posé en page (une croix en tête).
+        return ChatDrawerContent(rows: rows, totalCount: rows.count, name: nil, query: .constant(""), onOpen: { _ in }, onClose: {}, still: true)
             .environment(\.mikaStill, true)
     }
 

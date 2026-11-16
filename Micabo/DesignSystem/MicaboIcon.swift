@@ -81,6 +81,16 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
     case friends
     case privacy
 
+    // MARK: Hors base — les domaines d'études (lot 16, écran des matières)
+
+    case health
+    case economy
+    case statistics
+    case computer
+    case engineering
+    case politics
+    case astronomy
+
     var id: String { rawValue }
 
     /// **Les icônes qu'un modèle peut donner à une leçon ou à un thème**, et ce que chacune
@@ -147,7 +157,9 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
         case .check: "checkmark.circle.fill"
         case .palette: "paintpalette.fill"
         case .diploma: "graduationcap.fill"
-        case .atom: "atom"
+        // « atom » ne se dessinait pas (la tuile de la physique restait vide, première story) :
+        // l'éclair, l'énergie, est un symbole sûr.
+        case .atom: "bolt.fill"
         case .scroll: "scroll.fill"
         case .pin: "mappin.circle.fill"
         case .alarm: "alarm.fill"
@@ -175,6 +187,13 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
         case .rate: "star.bubble.fill"
         case .friends: "person.2.fill"
         case .privacy: "hand.raised.fill"
+        case .health: "cross.case.fill"
+        case .economy: "chart.line.uptrend.xyaxis"
+        case .statistics: "chart.bar.fill"
+        case .computer: "laptopcomputer"
+        case .engineering: "gearshape.fill"
+        case .politics: "building.columns.fill"
+        case .astronomy: "moon.stars.fill"
         }
     }
 
@@ -222,7 +241,12 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
         case .rate: "star.bubble"
         case .friends: "person.2"
         case .privacy: "hand.raised"
-        case .quill, .hourglass, .brain, .atom, .text, .theme: nil
+        case .health: "cross.case"
+        case .statistics: "chart.bar"
+        case .engineering: "gearshape"
+        case .politics: "building.columns"
+        case .astronomy: "moon.stars"
+        case .quill, .hourglass, .brain, .atom, .text, .theme, .economy, .computer: nil
         }
     }
 
@@ -231,7 +255,8 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
     /// l'idée qu'elles portent. C'est lui qui donne le pâle d'une tuile (`tone.pale`).
     var tone: LessonTone {
         switch self {
-        case .calculator, .rocket, .atom, .brain, .flask, .globe, .scroll, .diploma, .quill, .book, .palette:
+        case .calculator, .rocket, .atom, .brain, .flask, .globe, .scroll, .diploma, .quill, .book, .palette,
+             .health, .economy, .statistics, .computer, .engineering, .politics, .astronomy:
             LessonTone.forSubject(self)
         case .lightbulb, .trophy, .flame, .folder, .alarm, .rate, .hourglass, .star:
             .yellow
@@ -260,7 +285,8 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
     var isInBase: Bool {
         switch self {
         case .audio, .home, .lessons, .profile, .mail, .apps, .document, .language, .theme,
-             .rate, .friends, .privacy:
+             .rate, .friends, .privacy,
+             .health, .economy, .statistics, .computer, .engineering, .politics, .astronomy:
             false
         default:
             true

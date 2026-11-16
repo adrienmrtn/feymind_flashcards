@@ -834,16 +834,56 @@ class LessonRepository(
         if (!exam.isNullOrBlank()) put("exam", exam)
         put("level", levelOf(profile.tier))
         put("country", country)
-        put("schoolStage", stageName(profile))
+        put("schoolStage", profile.stageTitle.ifBlank { stageName(profile) })
         put("language", language)
         if (profile.tier.isNotBlank()) put("tier", profile.tier)
-        profile.currentScore?.let {
-            put("currentScore", it)
-            put("scoreLabel", ExamGrade.label(it / 100.0, country))
+        // **Les cours calibrés par niveau** (`calibration.ts`, comme l'iPhone) : le pays par son
+        // code ISO, la filière et l'année du catalogue, le rang de l'année, ses examens, les
+        // matières choisies et l'examen de l'année avec sa date.
+        val region = com.micabo.app.onboarding.Countries.regionCode(country)?.lowercase() ?: profile.region.lowercase()
+        if (region.isNotBlank()) put("region", region)
+        val track = com.micabo.app.onboarding.SchoolSystem.track(profile.trackId, region)
+        val year = com.micabo.app.onboarding.SchoolSystem.year(profile.yearId, track)
+        if (track != null) {
+            put("trackId", track.id)
+            put("track", track.title)
         }
-        profile.targetScore?.let {
-            put("targetScore", it)
-            put("targetLabel", ExamGrade.label(it / 100.0, country))
+        if (year != null && track != null) {
+            put("yearId", year.id)
+            put("year", year.title)
+            put("yearRank", track.years.indexOf(year) + 1)
+            put("yearCount", track.years.size)
+            val exams = year.exams.ifEmpty { track.exams }.mapNotNull { com.micabo.app.onboarding.SchoolExams.catalog[it]?.title }
+            if (exams.isNotEmpty()) putJsonArray("yearExams") { exams.forEach { add(JsonPrimitive(it)) } }
+        }
+        if (profile.subjects.isNotEmpty()) putJsonArray("subjects") { profile.subjects.sorted().take(12).forEach { add(JsonPrimitive(it)) } }
+        val chosenExam = com.micabo.app.onboarding.SchoolExams.choice(profile.examId)
+        if (chosenExam is com.micabo.app.onboarding.ExamChoice.Named && profile.examDay >= 0) {
+            val millis = java.time.LocalDate.ofEpochDay(profile.examDay).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            put("targetExam", examLine(chosenExam.exam.title, millis))
+        }
+        // Les notes dans le barème que l'élève a lu (« 12/20 », « 2,3 », « B+ ») : le serveur lit
+        // le libellé d'abord.
+        val scale = com.micabo.app.onboarding.StudentGradeScale.of(region, country, track)
+        fun label(grade: Int): String =
+            if (grade < com.micabo.app.onboarding.TargetScore.MIN) "< " + scale.scale.choices.first().label else scale.scale.label(grade)
+        if (profile.grade >= 0) {
+            put("currentScore", com.micabo.app.onboarding.TargetScore.percent(profile.grade.coerceAtLeast(com.micabo.app.onboarding.TargetScore.MIN)))
+            put("scoreLabel", label(profile.grade))
+        } else {
+            profile.currentScore?.let {
+                put("currentScore", it)
+                put("scoreLabel", ExamGrade.label(it / 100.0, country))
+            }
+        }
+        if (profile.gradeTarget >= 0) {
+            put("targetScore", com.micabo.app.onboarding.TargetScore.percent(profile.gradeTarget))
+            put("targetLabel", label(profile.gradeTarget))
+        } else {
+            profile.targetScore?.let {
+                put("targetScore", it)
+                put("targetLabel", ExamGrade.label(it / 100.0, country))
+            }
         }
         if (profile.worries.isNotEmpty()) putJsonArray("worries") { profile.worries.forEach { add(JsonPrimitive(it)) } }
         putJsonArray("kinds") { listOf("choice", "truefalse", "gap", "order", "match").forEach { add(JsonPrimitive(it)) } }

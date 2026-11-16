@@ -35,6 +35,8 @@ struct HomeActions {
     /// Envoyer le sujet tapé : la leçon se crée.
     var send: () -> Void = {}
     var dismissKeyboard: () -> Void = {}
+    /// Lot 12 — le bouton menu, en haut à gauche : le tiroir des conversations.
+    var menu: () -> Void = {}
 }
 
 /// Ce que l'en-tête montre à gauche.
@@ -96,7 +98,8 @@ struct HomeScreen: View {
                 offerRemaining: offerRemaining,
                 onPro: actions.pro,
                 onLeague: actions.league,
-                onStreak: actions.streak
+                onStreak: actions.streak,
+                onMenu: actions.menu
             )
             .padding(.top, 8)
 
@@ -161,9 +164,26 @@ struct HomeHeader: View {
     let onPro: () -> Void
     let onLeague: () -> Void
     let onStreak: () -> Void
+    /// Lot 12 — le tiroir des conversations.
+    var onMenu: () -> Void = {}
 
     var body: some View {
         HStack(spacing: 16) {
+            Button(action: onMenu) {
+                // Trois traits inégaux, le plus court en bas : le menu, à la façon de Micabo.
+                VStack(alignment: .leading, spacing: 4.5) {
+                    Capsule().frame(width: 22, height: 2.6)
+                    Capsule().frame(width: 22, height: 2.6)
+                    Capsule().frame(width: 13, height: 2.6)
+                }
+                .foregroundStyle(V3Color.ink)
+                .frame(width: 44, height: 44)
+                .background(V3Color.surface, in: Circle())
+                .overlay(Circle().strokeBorder(V3Color.line, lineWidth: V3Metric.border))
+            }
+            .buttonStyle(MicaboPressableButtonStyle(feedback: .light))
+            .padding(.trailing, -4)
+            .accessibilityLabel(Text(L10n.t("ios.chat12.menu", locale: .resolved())))
             proEntry
             Spacer(minLength: 8)
             figure(
@@ -284,6 +304,8 @@ struct HomeActionArea: View {
 
     /// La jauge de l'écriture ne s'étire pas d'un bord à l'autre.
     static let gaugeWidth: CGFloat = 220
+    /// Le bouton qui écrit une leçon ne s'étire pas non plus sur un grand écran.
+    static let primaryWidth: CGFloat = 340
 
     var body: some View {
         VStack(spacing: 10) {
@@ -300,8 +322,17 @@ struct HomeActionArea: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let action = board.action {
-                V3Chip(action.title, systemImage: action.symbol, tone: Self.tone(of: action.kind)) {
-                    actions.perform(action)
+                if action.isPrimary {
+                    // Lot 13 — écrire une leçon : la pilule blanche, le bouton de l'écran.
+                    V3Button(action.title, systemImage: action.symbol) {
+                        actions.perform(action)
+                    }
+                    .frame(maxWidth: Self.primaryWidth)
+                    .padding(.top, 4)
+                } else {
+                    V3Chip(action.title, systemImage: action.symbol, tone: Self.tone(of: action.kind)) {
+                        actions.perform(action)
+                    }
                 }
             }
             if let exit = board.exit {
@@ -318,7 +349,7 @@ struct HomeActionArea: View {
         switch kind {
         case .session, .lesson, .more, .create, .retry: V3Color.iconBlue
         case .cards: V3Color.iconGreen
-        case .first, .unlock: V3Color.iconYellow
+        case .first, .unlock, .write: V3Color.iconYellow
         }
     }
 }

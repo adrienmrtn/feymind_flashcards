@@ -28,9 +28,9 @@ function androidLanguages(): string[] {
 }
 
 describe("les langues des fiches", () => {
-  it("sont les vingt-six de l'iPhone, dans le même ordre", () => {
+  it("sont les trente-deux de l'iPhone, dans le même ordre", () => {
     expect(CONTENT_LANGUAGES).toEqual(swiftLanguages());
-    expect(CONTENT_LANGUAGES).toHaveLength(26);
+    expect(CONTENT_LANGUAGES).toHaveLength(32);
   });
 
   it("couvrent celles qu'Android envoie au serveur", () => {

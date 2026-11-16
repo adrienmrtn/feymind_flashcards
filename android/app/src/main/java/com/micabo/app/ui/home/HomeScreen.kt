@@ -85,6 +85,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import com.micabo.app.R
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.ui.platform.testTag
+import com.micabo.app.data.FirstLesson
 import com.micabo.app.data.Lesson
 import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.currentCircle
@@ -128,6 +132,9 @@ fun HomeScreen() {
     var full by remember { mutableStateOf(false) }
     var streakSheet by remember { mutableStateOf(false) }
     val focus = LocalFocusManager.current
+    val context = LocalContext.current
+    var newLesson by remember { mutableStateOf(false) }
+    var firstLesson by remember { mutableStateOf(FirstLesson.pending(context)) }
     val focusSeconds by app.focus.seconds.collectAsState()
     val xpStatus by app.xp.status.collectAsState()
     // Le temps du minuteur compte dans le temps de révision, comme celui passé dans les leçons.
@@ -171,20 +178,15 @@ fun HomeScreen() {
         if (navigator.current == Screen.Home) navigator.push(screen)
     }
 
-    /** Le curseur dans la barre, la barre en vue : pour écrire sa première leçon. */
+    /** La feuille « Nouvelle leçon », le curseur dans son champ. */
     fun focusComposer() {
-        scope.launch {
-            list.animateScrollToItem(0)
-            runCatching { composerFocus.requestFocus() }
-            keyboard?.show()
-        }
+        newLesson = true
     }
 
     // **Les notifications** (Android 13 et plus) : demandées ici, et seulement ici. Plus juste
     // avant le paywall (l'étape du rappel de l'accueil), où la fenêtre du système coupait l'élan
     // vers l'essai. Pas tant que le cadeau du paywall attend ou s'affiche, ni avant la première
     // leçon : le rappel du jour n'a rien à rappeler sans elle. Une fois, jamais en boucle.
-    val context = LocalContext.current
     val notifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { app.rescheduleReminders() }
     val onHome = navigator.current == Screen.Home
     val giftPending by app.gift.pending.collectAsState()
@@ -223,11 +225,13 @@ fun HomeScreen() {
     ) {
         item {
             // La rangée du haut : « ✦ Pro » pour qui ne l'est pas, puis l'XP de la semaine et la série.
-            Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painterResource(R.mipmap.ic_launcher_foreground_art),
-                    contentDescription = null,
-                    modifier = Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)),
+            com.micabo.app.ui.v3.CappedFontScale { Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+                // Les conversations avec Mika (`ios.chat12.menu`) : le chat autonome et son historique.
+                androidx.compose.material3.Icon(
+                    androidx.compose.material.icons.Icons.Rounded.Forum,
+                    contentDescription = com.micabo.app.i18n.t("ios.chat12.menu"),
+                    tint = colors.ink,
+                    modifier = Modifier.size(44.dp).clip(RoundedCornerShape(22.dp)).clickable { open(Screen.Chat()) }.padding(10.dp).testTag("homeChat"),
                 )
                 Spacer(Modifier.width(8.dp))
                 if (isPro) {
@@ -239,32 +243,22 @@ fun HomeScreen() {
                 XpPill(onClick = { open(Screen.League) })
                 Spacer(Modifier.width(8.dp))
                 StreakPill(onClick = { streakSheet = true })
-            }
+            } }
         }
         item {
-            Row(Modifier.padding(start = 20.dp, end = 20.dp, top = 22.dp), verticalAlignment = Alignment.Bottom) {
-                RichText(
-                    stringResource(R.string.lesson_home_title),
-                    style = nunito(30.sp, FontWeight.Black, lineHeight = 34.sp),
-                    color = colors.ink,
-                    modifier = Modifier.weight(1f),
-                )
-                Mika(MikaMood.IDLE, 84.dp)
-            }
-        }
-        item {
-            ComposerCard(composer, onSend = ::send, focusRequester = composerFocus)
-        }
-        item {
-            // Plus de cadenas sur les imports tant que la leçon offerte reste.
-            SourceRow(
-                composer,
-                isPro = isPro || onboardingLesson || freeLessonLeft,
-                onFull = { full = true },
-                onLocked = {
-                    focus.clearFocus()
-                    if (navigator.current == Screen.Home) navigator.push(Screen.Paywall("import_pro"))
+            // **La leçon au centre** (lot 13) : Mika, une phrase, une action. La première leçon
+            // choisie au parcours d'accueil attend ici ; sinon, « + Nouvelle leçon ».
+            HomeStage(
+                firstTopic = (firstLesson as? FirstLesson.Intent.Topic)?.topic?.takeIf { lessons.isEmpty() },
+                firstImport = firstLesson == FirstLesson.Intent.Import && lessons.isEmpty(),
+                freeLessonLeft = freeLessonLeft,
+                onWriteFirst = { topic ->
+                    composer.draft = topic
+                    FirstLesson.clear(context)
+                    firstLesson = null
+                    send()
                 },
+                onNewLesson = { newLesson = true },
             )
         }
         item {
@@ -307,6 +301,25 @@ fun HomeScreen() {
         }
     }
 
+    if (newLesson) {
+        NewLessonSheet(
+            composer = composer,
+            canImport = isPro || onboardingLesson || freeLessonLeft,
+            onSend = {
+                newLesson = false
+                FirstLesson.clear(context)
+                firstLesson = null
+                send()
+            },
+            onFull = { full = true },
+            onLocked = {
+                newLesson = false
+                focus.clearFocus()
+                if (navigator.current == Screen.Home) navigator.push(Screen.Paywall("import_pro"))
+            },
+            onDismiss = { newLesson = false },
+        )
+    }
     if (full) {
         AlertDialog(
             onDismissRequest = { full = false },

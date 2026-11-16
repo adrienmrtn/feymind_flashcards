@@ -37,9 +37,15 @@ final class SolverCamera: NSObject, AVCapturePhotoCaptureDelegate {
         }
     }
 
+    /// Arrête la visée — et **éteint la lampe d'abord** : une lampe allumée ne doit pas
+    /// survivre à la fermeture de la caméra, ni au passage en arrière-plan.
     func stop() {
         queue.async { [weak self] in
             guard let self, self.session.isRunning else { return }
+            if let device = self.device, device.hasTorch, device.torchMode != .off, (try? device.lockForConfiguration()) != nil {
+                device.torchMode = .off
+                device.unlockForConfiguration()
+            }
             self.session.stopRunning()
             DispatchQueue.main.async {
                 self.isRunning = false
@@ -64,6 +70,16 @@ final class SolverCamera: NSObject, AVCapturePhotoCaptureDelegate {
         }
         device = camera
         configured = true
+        // Après une mise au point touchée, l'autofocus continu reprend dès que la scène bouge.
+        NotificationCenter.default.addObserver(forName: AVCaptureDevice.subjectAreaDidChangeNotification, object: camera, queue: nil) { [weak self] _ in
+            self?.queue.async {
+                guard let device = self?.device, device.isFocusModeSupported(.continuousAutoFocus), (try? device.lockForConfiguration()) != nil else { return }
+                device.focusMode = .continuousAutoFocus
+                if device.isExposureModeSupported(.continuousAutoExposure) { device.exposureMode = .continuousAutoExposure }
+                device.isSubjectAreaChangeMonitoringEnabled = false
+                device.unlockForConfiguration()
+            }
+        }
         let torch = camera.hasTorch
         DispatchQueue.main.async { self.hasTorch = torch }
     }
@@ -75,6 +91,42 @@ final class SolverCamera: NSObject, AVCapturePhotoCaptureDelegate {
             device.torchMode = wanted ? .on : .off
             device.unlockForConfiguration()
             DispatchQueue.main.async { self.torchOn = wanted }
+        }
+    }
+
+    /// Le grossissement au début d'un pincement : le geste multiplie celui-là.
+    @ObservationIgnored private var pinchBase: CGFloat = 1
+    /// Au-delà, l'image devient floue sur une feuille : on s'arrête.
+    static let maxZoom: CGFloat = 6
+
+    /// Le zoom d'un pincement (lot 12) : `scale` est celui du geste depuis son début.
+    func pinch(_ scale: CGFloat, began: Bool) {
+        queue.async { [weak self] in
+            guard let self, let device = self.device else { return }
+            if began { self.pinchBase = device.videoZoomFactor }
+            let ceiling = min(device.activeFormat.videoMaxZoomFactor, Self.maxZoom)
+            let wanted = max(1, min(self.pinchBase * scale, ceiling))
+            guard (try? device.lockForConfiguration()) != nil else { return }
+            device.videoZoomFactor = wanted
+            device.unlockForConfiguration()
+        }
+    }
+
+    /// La mise au point et l'exposition sur le point touché (`point` en coordonnées de
+    /// capteur, de 0 à 1), puis l'autofocus continu reprend la main.
+    func focus(at point: CGPoint) {
+        queue.async { [weak self] in
+            guard let self, let device = self.device, (try? device.lockForConfiguration()) != nil else { return }
+            if device.isFocusPointOfInterestSupported, device.isFocusModeSupported(.autoFocus) {
+                device.focusPointOfInterest = point
+                device.focusMode = .autoFocus
+            }
+            if device.isExposurePointOfInterestSupported, device.isExposureModeSupported(.autoExpose) {
+                device.exposurePointOfInterest = point
+                device.exposureMode = .autoExpose
+            }
+            device.isSubjectAreaChangeMonitoringEnabled = true
+            device.unlockForConfiguration()
         }
     }
 
@@ -131,4 +183,66 @@ struct SolverCameraPreview: UIViewRepresentable {
     }
 
     func updateUIView(_ uiView: PreviewView, context: Context) {}
+}
+
+/// **La visée qu'on pince et qu'on touche** (lot 12) : le pincement zoome, l'appui fait la
+/// mise au point à cet endroit ; un carré bleu s'y pose et s'efface de lui-même (une animation
+/// du calque, pas une minuterie).
+struct ScanCameraPreview: UIViewRepresentable {
+    let camera: SolverCamera
+
+    final class PreviewView: UIView {
+        override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
+        var previewLayer: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
+        weak var camera: SolverCamera?
+        private let marker = CAShapeLayer()
+
+        override init(frame: CGRect) {
+            super.init(frame: frame)
+            backgroundColor = .black
+            previewLayer.videoGravity = .resizeAspectFill
+            marker.strokeColor = UIColor(red: 0.36, green: 0.53, blue: 1, alpha: 1).cgColor
+            marker.fillColor = UIColor.clear.cgColor
+            marker.lineWidth = 2
+            marker.opacity = 0
+            layer.addSublayer(marker)
+            addGestureRecognizer(UIPinchGestureRecognizer(target: self, action: #selector(pinched(_:))))
+            addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(tapped(_:))))
+            isAccessibilityElement = false
+        }
+
+        required init?(coder: NSCoder) { nil }
+
+        @objc private func pinched(_ gesture: UIPinchGestureRecognizer) {
+            guard gesture.state == .began || gesture.state == .changed else { return }
+            camera?.pinch(gesture.scale, began: gesture.state == .began)
+        }
+
+        @objc private func tapped(_ gesture: UITapGestureRecognizer) {
+            let point = gesture.location(in: self)
+            camera?.focus(at: previewLayer.captureDevicePointConverted(fromLayerPoint: point))
+            let side: CGFloat = 72
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            marker.path = UIBezierPath(roundedRect: CGRect(x: point.x - side / 2, y: point.y - side / 2, width: side, height: side), cornerRadius: 14).cgPath
+            CATransaction.commit()
+            let fade = CAKeyframeAnimation(keyPath: "opacity")
+            fade.values = [1, 1, 0]
+            fade.keyTimes = [0, 0.6, 1]
+            fade.duration = UIAccessibility.isReduceMotionEnabled ? 0.6 : 1.1
+            marker.add(fade, forKey: "focus")
+            UISelectionFeedbackGenerator().selectionChanged()
+        }
+    }
+
+    func makeUIView(context: Context) -> PreviewView {
+        let view = PreviewView()
+        view.previewLayer.session = camera.session
+        view.camera = camera
+        return view
+    }
+
+    func updateUIView(_ uiView: PreviewView, context: Context) {
+        uiView.camera = camera
+    }
 }

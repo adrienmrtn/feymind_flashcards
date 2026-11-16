@@ -39,7 +39,7 @@ struct ChatCameraView: View {
             onDone: finish
         ) {
             if allowed && SolverCamera.isAvailable {
-                SolverCameraPreview(session: camera.session)
+                ScanCameraPreview(camera: camera)
             } else {
                 Color.black
             }

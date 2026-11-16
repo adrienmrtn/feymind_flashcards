@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Le Mika de l'écran de lancement (LaunchMika de l'iPhone), dans le cercle de l'icône du système. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/launch_mika"
+    android:inset="16%" />

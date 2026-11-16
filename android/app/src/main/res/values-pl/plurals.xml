@@ -9,6 +9,66 @@
         <item quantity="one">%1$d fiszka</item>
         <item quantity="other">fiszki: %1$d</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Twój przedmiot</item>
+        <item quantity="few">Twoje %1$d przedmioty</item>
+        <item quantity="many">Twoich %1$d przedmiotów</item>
+        <item quantity="other">Twoich %1$d przedmiotów</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d punkt: prawdziwe wyzwanie. Idziemy krok po kroku</item>
+        <item quantity="few">+%1$d punkty: prawdziwe wyzwanie. Idziemy krok po kroku</item>
+        <item quantity="many">+%1$d punktów: prawdziwe wyzwanie. Idziemy krok po kroku</item>
+        <item quantity="other">+%1$d punktów: prawdziwe wyzwanie. Idziemy krok po kroku</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d punkt: ambitnie, ale wykonalnie</item>
+        <item quantity="few">+%1$d punkty: ambitnie, ale wykonalnie</item>
+        <item quantity="many">+%1$d punktów: ambitnie, ale wykonalnie</item>
+        <item quantity="other">+%1$d punktów: ambitnie, ale wykonalnie</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d punkt: mały krok, w pełni wykonalny</item>
+        <item quantity="few">+%1$d punkty: mały krok, w pełni wykonalny</item>
+        <item quantity="many">+%1$d punktów: mały krok, w pełni wykonalny</item>
+        <item quantity="other">+%1$d punktów: mały krok, w pełni wykonalny</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d dzień</item>
+        <item quantity="few">%1$d dni</item>
+        <item quantity="many">%1$d dni</item>
+        <item quantity="other">%1$d dnia</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d dzień za darmo, potem %2$s tygodniowo. Anuluj, kiedy chcesz.</item>
+        <item quantity="other">%1$d dni za darmo, potem %2$s tygodniowo. Anuluj, kiedy chcesz.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d dzień za darmo, potem %2$s rocznie. Anuluj, kiedy chcesz.</item>
+        <item quantity="other">%1$d dni za darmo, potem %2$s rocznie. Anuluj, kiedy chcesz.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d dzień za darmo</item>
+        <item quantity="other">%1$d dni za darmo</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Wypróbuj go za darmo przez %1$d dzień.</item>
+        <item quantity="other">Wypróbuj go za darmo przez %1$d dni.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Zacznij mój darmowy dzień</item>
+        <item quantity="few">Zacznij moje %1$d darmowe dni</item>
+        <item quantity="many">Zacznij moich %1$d darmowych dni</item>
+        <item quantity="other">Zacznij moich %1$d darmowych dni</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d dzień za darmo, potem co tydzień</item>
+        <item quantity="other">%1$d dni za darmo, potem co tydzień</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d dzień za darmo, potem %2$s rocznie</item>
+        <item quantity="other">%1$d dni za darmo, potem %2$s rocznie</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d dzień z rzędu</item>
         <item quantity="other">%1$d dni z rzędu</item>
@@ -40,6 +100,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Dodaj mój błąd do fiszek</item>
         <item quantity="other">Dodaj moje błędy (%1$d) do fiszek</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">Pytania: %1$d</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d pytanie bez odpowiedzi. Oddać mimo to?</item>

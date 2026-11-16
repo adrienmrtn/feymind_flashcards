@@ -9,6 +9,54 @@
         <item quantity="one">%1$d kártya</item>
         <item quantity="other">%1$d kártya</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">A tantárgyad</item>
+        <item quantity="other">A(z) %1$d tantárgyad</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d pont: igazi kihívás. Lépésről lépésre haladunk</item>
+        <item quantity="other">+%1$d pont: igazi kihívás. Lépésről lépésre haladunk</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d pont: ambiciózus, de megvalósítható</item>
+        <item quantity="other">+%1$d pont: ambiciózus, de megvalósítható</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d pont: kis lépés, teljesen megvalósítható</item>
+        <item quantity="other">+%1$d pont: kis lépés, teljesen megvalósítható</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d nap</item>
+        <item quantity="other">%1$d nap</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d nap ingyen, utána heti %2$s. Bármikor lemondhatod.</item>
+        <item quantity="other">%1$d nap ingyen, utána heti %2$s. Bármikor lemondhatod.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d nap ingyen, utána évi %2$s. Bármikor lemondhatod.</item>
+        <item quantity="other">%1$d nap ingyen, utána évi %2$s. Bármikor lemondhatod.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d nap ingyen</item>
+        <item quantity="other">%1$d nap ingyen</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Próbáld ki ingyen %1$d napig.</item>
+        <item quantity="other">Próbáld ki ingyen %1$d napig.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Az ingyenes napom indítása</item>
+        <item quantity="other">A(z) %1$d ingyenes napom indítása</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d nap ingyen, utána hetente</item>
+        <item quantity="other">%1$d nap ingyen, utána hetente</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d nap ingyen, utána évi %2$s</item>
+        <item quantity="other">%1$d nap ingyen, utána évi %2$s</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d nap egymás után</item>
         <item quantity="other">%1$d nap egymás után</item>
@@ -35,6 +83,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Hibám hozzáadása a kártyákhoz</item>
         <item quantity="other">%1$d hibám hozzáadása a kártyákhoz</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d kérdés</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d kérdés megválaszolatlan. Beadod így is?</item>

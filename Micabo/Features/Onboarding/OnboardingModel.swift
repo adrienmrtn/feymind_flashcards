@@ -149,7 +149,76 @@ final class OnboardingModel {
         return result
     }
 
-    var subjects: Set<String> = []
+    var subjects: Set<String> = [] {
+        didSet {
+            // La matière la plus dure appartient aux matières cochées : décochée, elle s'en va.
+            if let hardestSubject, !subjects.contains(hardestSubject) {
+                self.hardestSubject = nil
+            }
+        }
+    }
+
+    /// **La matière qui lui donne le plus de fil à retordre** (lot 12), parmi celles cochées.
+    /// C'est elle que prennent les démonstrations et la question d'essai. Un nom du catalogue
+    /// (`SubjectCatalog`), jamais un texte tapé.
+    var hardestSubject: String? {
+        didSet {
+            guard let hardestSubject, hardestSubject != oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "hardestSubject", "value": .text(hardestSubject)])
+        }
+    }
+
+    /// **La matière des démonstrations** : la plus dure, sinon la seule cochée, sinon celle
+    /// que la question d'essai prendrait.
+    var focusSubject: String? {
+        if let hardestSubject { return hardestSubject }
+        if subjects.count == 1 { return subjects.first }
+        return nil
+    }
+
+    /// **Une matière scientifique parmi les siennes** (maths, physique, chimie) : le scanner
+    /// d'exercices se montre sur un exercice de maths de sa classe.
+    var hasScienceSubject: Bool {
+        subjects.contains { subject in
+            switch SampleCard.card(forEmoji: SubjectCatalog.emoji(for: subject)) {
+            case .some(.math), .some(.chemistry): true
+            default: false
+            }
+        }
+    }
+
+    /// Les matières que la question d'essai et les démonstrations considèrent : la plus dure
+    /// d'abord, quand elle a une question ; sinon toutes celles cochées.
+    var demoSubjects: Set<String> {
+        if let focusSubject, SampleCard.card(forEmoji: SubjectCatalog.emoji(for: focusSubject)) != nil {
+            return [focusSubject]
+        }
+        return subjects
+    }
+
+    /// **Le temps de révision d'aujourd'hui, par semaine** (lot 12).
+    var weeklyStudy: WeeklyStudy? {
+        didSet {
+            guard let weeklyStudy, weeklyStudy != oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "weeklyStudy", "value": .text(weeklyStudy.rawValue)])
+        }
+    }
+
+    /// **Comment il révise aujourd'hui** (lot 12).
+    var studyMethod: StudyMethod? {
+        didSet {
+            guard let studyMethod, studyMethod != oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "studyMethod", "value": .text(studyMethod.rawValue)])
+        }
+    }
+
+    /// **L'engagement est pris** (`commitment`) : l'appui long a été tenu jusqu'au bout.
+    var hasCommitted = false {
+        didSet {
+            guard hasCommitted, !oldValue, !isRestoring else { return }
+            Analytics.track(.onboardingAnswer, ["field": "commitment", "value": "pris"])
+        }
+    }
 
     /// **Ce qui le bloque.** Plusieurs réponses ; `solutionMap` répond aux trois premières
     /// cochées.
@@ -422,12 +491,16 @@ final class OnboardingModel {
 
     /// **Les écrans sautés, selon ce qui a été répondu** : la question de niveau que le pays
     /// n'a pas ; la moyenne visée quand la moyenne a été passée ; les deux écrans de l'essai
-    /// quand la boutique dit que cet élève n'y a plus droit (on ne promet pas trois jours
-    /// qu'Apple ne donnera pas).
+    /// quand la boutique ne le propose pas à cet élève.
     func isSkipped(_ step: OnboardingStep) -> Bool {
         if step.isSkipped(for: country, custom: customCountry) { return true }
         switch step {
         case .targetAverage: return didSkipAverages
+        case .hardestSubject: return subjects.count < 2
+        // Lot 15 : le scanner montre un exercice de maths de sa classe, seulement à qui a une
+        // matière scientifique (le fil des exemples suit ses matières).
+        case .scanDemo: return !hasScienceSubject
+        // On ne promet pas des jours qu'Apple ne donnera pas.
         case .freeTrialIntro, .trialOffer: return !OnboardingTrial.isOffered
         default: return false
         }
@@ -568,6 +641,10 @@ final class OnboardingModel {
         OnboardingPreferences.studyHour = studyHour
         OnboardingPreferences.examID = examChoice?.id
         OnboardingPreferences.examDate = examChoice?.hasDate == true ? examDate : nil
+        OnboardingPreferences.hardestSubject = hardestSubject
+        OnboardingPreferences.weeklyStudy = weeklyStudy?.rawValue
+        OnboardingPreferences.method = studyMethod?.rawValue
+        OnboardingPreferences.hasCommitted = hasCommitted
     }
 }
 
@@ -582,6 +659,12 @@ extension OnboardingModel {
     ///
     /// `OnboardingModel()` reste un parcours neuf : seule la vue du parcours reprend.
     static func resuming(in context: ModelContext?) -> OnboardingModel {
+        #if DEBUG
+        // Les tests d'interface ouvrent le parcours directement sur une étape (lot 15).
+        if let step = OnboardingDebugLaunch.step {
+            return OnboardingDebugLaunch.model(at: step)
+        }
+        #endif
         let model = OnboardingModel()
         guard let saved = OnboardingPreferences.resumeStep, saved != .hookLogo else { return model }
 
@@ -625,6 +708,10 @@ extension OnboardingModel {
         studyHour = OnboardingPreferences.studyHour
         examChoice = SchoolExams.choice(id: OnboardingPreferences.examID)
         examDate = OnboardingPreferences.examDate
+        hardestSubject = OnboardingPreferences.hardestSubject.flatMap { subjects.contains($0) ? $0 : nil }
+        weeklyStudy = OnboardingPreferences.weeklyStudy.flatMap(WeeklyStudy.init(rawValue:))
+        studyMethod = OnboardingPreferences.method.flatMap(StudyMethod.init(rawValue:))
+        hasCommitted = OnboardingPreferences.hasCommitted
         switch FirstLessonIntent.pending {
         case .topic(let topic):
             firstLessonChoice = .topic
@@ -637,6 +724,38 @@ extension OnboardingModel {
     }
 }
 
+#if DEBUG
+// MARK: - Le lancement des tests d'interface
+
+/// **Ouvrir le parcours sur une étape**, pour les tests d'interface (lot 15) : lancé avec
+/// `-onboardingStep commitment`, le parcours s'ouvre sur l'engagement, avec les réponses de
+/// Lina (France, deux matières, 45 min par jour, rappel à 18 h) et sans engagement pris. Le
+/// test passe aussi `-micabo.onboarding.completed NO`, pour que le parcours s'affiche même si
+/// une autre suite de tests l'a marqué fini sur ce simulateur. Absent des versions publiées.
+enum OnboardingDebugLaunch {
+    /// L'étape demandée, par son nom de statistiques.
+    static var step: OnboardingStep? {
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "-onboardingStep"), arguments.indices.contains(index + 1) else { return nil }
+        let name = arguments[index + 1]
+        return OnboardingStep.allCases.first { $0.analyticsName == name }
+    }
+
+    static func model(at step: OnboardingStep) -> OnboardingModel {
+        let model = OnboardingModel()
+        model.displayName = "Lina"
+        model.select(country: .fr)
+        model.subjects = ["Mathématiques", "Philosophie"]
+        model.hardestSubject = "Mathématiques"
+        model.dailyMinutes = 45
+        model.studyHour = 18
+        model.hasCommitted = false
+        model.place(on: step)
+        return model
+    }
+}
+#endif
+
 // MARK: - L'essai
 
 /// **L'essai gratuit tel que la boutique le propose à cet élève** : sa durée vient du
@@ -647,8 +766,21 @@ enum OnboardingTrial {
 
     /// Vrai tant qu'une offre propose encore l'essai à cet élève. Tant que la boutique n'a
     /// rien dit, on suit le catalogue : c'est le cas d'un premier lancement.
+    ///
+    /// **Pourquoi l'aperçu de l'essai peut ne pas s'afficher** (lot 16, build 183) : les deux
+    /// écrans ne sautent que si la boutique répond explicitement que **ce compte n'a plus droit à
+    /// l'essai** (`checkTrialOrIntroDiscountEligibility` → « inéligible » : un seul essai par
+    /// identifiant Apple et par groupe d'abonnements, et un compte TestFlight qui a déjà démarré
+    /// un essai ou acheté une offre du groupe l'a consommé) ou qu'**aucun essai n'est posé dans
+    /// son pays**. Une réponse « inconnue » ou en retard laisse le catalogue parler : l'essai
+    /// s'affiche. Ce que la boutique a répondu part dans `paywall_trial_status`.
+    ///
+    /// En Debug, `-forceTrialPreview` force l'aperçu (rendus, essais sur simulateur).
     static var isOffered: Bool {
-        PaywallCatalog.yearly.hasTrial || PaywallCatalog.weekly.hasTrial
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-forceTrialPreview") { return true }
+        #endif
+        return PaywallCatalog.yearly.hasTrial || PaywallCatalog.weekly.hasTrial
     }
 }
 
@@ -683,6 +815,83 @@ enum StudyWorry: String, CaseIterable, Identifiable {
     /// Ce qu'elle fait, en une ligne, dite par Mika.
     func solutionBody(locale: UiLocale) -> String {
         L10n.t("ios.onb10.solution.\(rawValue).body", locale: locale)
+    }
+}
+
+/// **Le temps de révision d'aujourd'hui, par semaine** (lot 12). Quatre crans, sans jugement.
+enum WeeklyStudy: String, CaseIterable, Identifiable {
+    case underOne
+    case oneToThree
+    case threeToSix
+    case overSix
+
+    var id: String { rawValue }
+
+    /// Le libellé de la rangée.
+    func title(locale: UiLocale) -> String {
+        switch self {
+        case .underOne: L10n.t("ios.onb12.hours.underOne", locale: locale)
+        case .oneToThree: L10n.t("ios.onb12.hours.oneToThree", locale: locale)
+        case .threeToSix: L10n.t("ios.onb12.hours.threeToSix", locale: locale)
+        case .overSix: L10n.t("ios.onb12.hours.overSix", locale: locale)
+        }
+    }
+
+    /// Ce que Mika en dit, à l'écran suivant.
+    func reaction(locale: UiLocale) -> String {
+        switch self {
+        case .underOne: L10n.t("ios.onb16.react.hours.underOne", locale: locale)
+        case .oneToThree: L10n.t("ios.onb12.react.hours.oneToThree", locale: locale)
+        case .threeToSix: L10n.t("ios.onb12.react.hours.threeToSix", locale: locale)
+        case .overSix: L10n.t("ios.onb12.react.hours.overSix", locale: locale)
+        }
+    }
+
+    var icon: MicaboIcon {
+        switch self {
+        case .underOne: .hourglass
+        case .oneToThree: .book
+        case .threeToSix: .flame
+        case .overSix: .rocket
+        }
+    }
+}
+
+/// **Comment il révise aujourd'hui** (lot 12). Une réponse.
+enum StudyMethod: String, CaseIterable, Identifiable {
+    case rereading
+    case notes
+    case exercises
+    case nothingFixed
+
+    var id: String { rawValue }
+
+    func title(locale: UiLocale) -> String {
+        switch self {
+        case .rereading: L10n.t("ios.onb12.method.rereading", locale: locale)
+        case .notes: L10n.t("ios.onb12.method.notes", locale: locale)
+        case .exercises: L10n.t("ios.onb12.method.exercises", locale: locale)
+        case .nothingFixed: L10n.t("ios.onb12.method.nothingFixed", locale: locale)
+        }
+    }
+
+    /// La ligne du récapitulatif (`solutionMap`).
+    func recap(locale: UiLocale) -> String {
+        switch self {
+        case .rereading: L10n.t("ios.onb12.recap.method.rereading", locale: locale)
+        case .notes: L10n.t("ios.onb12.recap.method.notes", locale: locale)
+        case .exercises: L10n.t("ios.onb12.recap.method.exercises", locale: locale)
+        case .nothingFixed: L10n.t("ios.onb12.recap.method.nothingFixed", locale: locale)
+        }
+    }
+
+    var icon: MicaboIcon {
+        switch self {
+        case .rereading: .book
+        case .notes: .notes
+        case .exercises: .quill
+        case .nothingFixed: .puzzle
+        }
     }
 }
 

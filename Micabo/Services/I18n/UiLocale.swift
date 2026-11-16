@@ -22,8 +22,11 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
     case ro
     case sv
     case da
+    case nb
     case fi
     case et
+    case lv
+    case lt
     case cs
     case sk
     case hu
@@ -35,6 +38,9 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
     case ru
     case tr
     case ar
+    case he
+    case ja
+    case ko
 
     var id: String { rawValue }
 
@@ -58,8 +64,11 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ro: "Română"
         case .sv: "Svenska"
         case .da: "Dansk"
+        case .nb: "Norsk bokmål"
         case .fi: "Suomi"
         case .et: "Eesti"
+        case .lv: "Latviešu"
+        case .lt: "Lietuvių"
         case .cs: "Čeština"
         case .sk: "Slovenčina"
         case .hu: "Magyar"
@@ -71,6 +80,9 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ru: "Русский"
         case .tr: "Türkçe"
         case .ar: "العربية"
+        case .he: "עברית"
+        case .ja: "日本語"
+        case .ko: "한국어"
         }
     }
 
@@ -91,8 +103,11 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ro: "🇷🇴"
         case .sv: "🇸🇪"
         case .da: "🇩🇰"
+        case .nb: "🇳🇴"
         case .fi: "🇫🇮"
         case .et: "🇪🇪"
+        case .lv: "🇱🇻"
+        case .lt: "🇱🇹"
         case .cs: "🇨🇿"
         case .sk: "🇸🇰"
         case .hu: "🇭🇺"
@@ -104,6 +119,9 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ru: "🇷🇺"
         case .tr: "🇹🇷"
         case .ar: "🇦🇪"
+        case .he: "🇮🇱"
+        case .ja: "🇯🇵"
+        case .ko: "🇰🇷"
         }
     }
 
@@ -122,8 +140,11 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ro: "ro-RO"
         case .sv: "sv-SE"
         case .da: "da-DK"
+        case .nb: "nb-NO"
         case .fi: "fi-FI"
         case .et: "et-EE"
+        case .lv: "lv-LV"
+        case .lt: "lt-LT"
         case .cs: "cs-CZ"
         case .sk: "sk-SK"
         case .hu: "hu-HU"
@@ -135,13 +156,36 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ru: "ru-RU"
         case .tr: "tr-TR"
         case .ar: "ar-AE"
+        case .he: "he-IL"
+        case .ja: "ja-JP"
+        case .ko: "ko-KR"
         }
     }
 
     var foundation: Locale { Locale(identifier: bcp47) }
 
-    /// **L'arabe se lit de droite à gauche** : toute l'interface se retourne avec lui.
-    var isRightToLeft: Bool { self == .ar }
+    /// **Une langue dont les catalogues sont encore la copie anglaise** (lot 13).
+    ///
+    /// Les six langues ajoutées au lot 13 sont nées branchées, avec l'anglais pour contenu, puis
+    /// traduites : chaque fichier `Locales/I18n+xx.swift` porte son drapeau, que le traducteur
+    /// baisse en finissant. Tant qu'il est levé, `I18nTests.testNoLanguageIsLeftInEnglish` ne
+    /// compte pas les phrases restées en anglais ; une fois baissé, il les compte.
+    var catalogIsProvisional: Bool {
+        switch self {
+        case .nb: IosI18nCatalogs.nbIsProvisional
+        case .he: IosI18nCatalogs.heIsProvisional
+        case .ja: IosI18nCatalogs.jaIsProvisional
+        case .lt: IosI18nCatalogs.ltIsProvisional
+        case .lv: IosI18nCatalogs.lvIsProvisional
+        case .ko: IosI18nCatalogs.koIsProvisional
+        default: false
+        }
+    }
+
+    /// **L'arabe et l'hébreu se lisent de droite à gauche** : toute l'interface se retourne avec
+    /// eux. C'est la seule question qu'un écran pose sur le sens de lecture : tout ce qui a été
+    /// fait pour l'arabe (tiroir, flèches, barres de progression, export) vaut pour l'hébreu.
+    var isRightToLeft: Bool { self == .ar || self == .he }
 
     /// Le pays de l'annuaire d'établissements que cette langue désigne, faute de mieux.
     ///
@@ -163,8 +207,11 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ro: "RO"
         case .sv: "SE"
         case .da: "DK"
+        case .nb: "NO"
         case .fi: "FI"
         case .et: "EE"
+        case .lv: "LV"
+        case .lt: "LT"
         case .cs: "CZ"
         case .sk: "SK"
         case .hu: "HU"
@@ -176,6 +223,9 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ru: "RU"
         case .tr: "TR"
         case .ar: "AE"
+        case .he: "IL"
+        case .ja: "JP"
+        case .ko: "KR"
         }
     }
 
@@ -195,8 +245,11 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ro: .ro
         case .sv: .sv
         case .da: .da
+        case .nb: .nb
         case .fi: .fi
         case .et: .et
+        case .lv: .lv
+        case .lt: .lt
         case .cs: .cs
         case .sk: .sk
         case .hu: .hu
@@ -208,6 +261,9 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
         case .ru: .ru
         case .tr: .tr
         case .ar: .ar
+        case .he: .he
+        case .ja: .ja
+        case .ko: .ko
         }
     }
 
@@ -228,6 +284,11 @@ enum UiLocale: String, CaseIterable, Identifiable, Sendable {
             case "pt": return region == "pt" || region == "ao" || region == "mz" ? .pt : .ptBR
             case "es": return region == nil || region == "es" ? .es : .es419
             case "bs", "sh", "cnr": return .hr
+            // Le norvégien arrive en `nb`, en `no` (la macrolangue) ou en `nn` (le nynorsk, servi
+            // en bokmål, la norme écrite de neuf élèves sur dix) ; l'hébreu aussi en `iw`, son
+            // code d'avant 1989 que de vieux systèmes envoient encore.
+            case "nb", "no", "nn": return .nb
+            case "he", "iw": return .he
             default:
                 if let locale = UiLocale(rawValue: primary) { return locale }
             }

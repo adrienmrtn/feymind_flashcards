@@ -44,6 +44,9 @@ struct OnboardingFlowView: View {
             ZStack {
                 ForEach([model.step], id: \.self) { step in
                     OnboardingStepScreen(step: step, onFinish: finish)
+                        // Le nom de l'écran, pour les tests d'interface (lot 15).
+                        .accessibilityElement(children: .contain)
+                        .accessibilityIdentifier("onboarding.step.\(step.analyticsName)")
                         .transition(push)
                 }
             }
@@ -144,10 +147,27 @@ struct OnboardingTopBar: View {
 
     var body: some View {
         let step = model.step
-        V3TopBar(
-            progress: step.showsProgress ? step.progress : nil,
-            onBack: model.canGoBack ? { model.goBack() } : nil
-        ) {
+        HStack(spacing: 14) {
+            if model.canGoBack {
+                Button {
+                    model.goBack()
+                } label: {
+                    Image(systemName: "arrow.backward")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(V3Color.ink)
+                        .frame(width: V3Metric.backSize, height: V3Metric.backSize)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle())
+                .accessibilityLabel(Text(i18n.t("app.common.back")))
+            }
+            // **La jauge, en chapitres** (lot 14) : un segment par chapitre, celui en cours se
+            // remplit ; le nom du chapitre se lit sur l'écran qui l'ouvre.
+            if step.showsProgress {
+                V3ActProgress(acts: OnboardingStep.chapterCount, act: step.chapter, fraction: step.chapterFraction)
+            } else {
+                Spacer(minLength: 0)
+            }
             if step.isSkippable {
                 Button {
                     model.skipAverages()
@@ -161,6 +181,7 @@ struct OnboardingTopBar: View {
                 .buttonStyle(MicaboPressableButtonStyle())
             }
         }
+        .padding(.horizontal, V3Metric.screenMargin)
         .frame(height: Self.height)
         .opacity(step.showsChrome ? 1 : 0)
         .allowsHitTesting(step.showsChrome)
@@ -179,6 +200,7 @@ struct OnboardingStepScreen: View {
         content
             .padding(.top, step.showsChrome ? OnboardingTopBar.height : 0)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .modifier(OnbCompactReader(chrome: step.showsChrome))
             .background(V3Color.bg.ignoresSafeArea())
     }
 
@@ -194,25 +216,35 @@ struct OnboardingStepScreen: View {
         case .year: SchoolYearStepView()
         case .exam: ExamStepView()
         case .subjects: SubjectsStepView()
-        case .lessonDemo: LessonDemoStepView()
+        case .studyIntro, .helpIntro, .goalIntro, .organizeIntro, .storyIntro: ChapterOpenerStepView(step: step)
+        case .hardestSubject: HardestSubjectStepView()
         case .goal: GoalStepView()
         case .worries: WorriesStepView()
+        case .studyHours: StudyHoursStepView()
+        case .studyMethod: StudyMethodStepView()
         case .solutionMap: SolutionMapStepView()
+        case .origin: OriginStepView()
+        case .lessonDemo: LessonDemoStepView()
         case .scanDemo: ScanDemoStepView()
+        case .research: ResearchStepView()
         case .currentAverage: CurrentAverageStepView()
         case .targetAverage: TargetAverageStepView()
         case .startingPoint: StartingPointStepView()
         case .dailyTime: DailyTimeStepView()
         case .planDemo: PlanDemoStepView()
-        case .sampleCard: SampleCardStepView()
-        case .chatDemo: ChatDemoStepView()
+        case .focusDemo: FocusDemoStepView()
         case .notifications: NotificationsStepView()
+        case .commitment: CommitmentStepView()
         case .firstLesson: FirstLessonStepView()
         case .planBuilding: PlanBuildingStepView()
         case .profileSummary: ProfileSummaryStepView()
+        case .storyCreate: StoryCreateStepView()
+        case .storyPath: StoryPathStepView()
+        case .storyPractice: StoryPracticeStepView()
+        case .storyAsk: StoryAskStepView()
+        case .storyClose: StoryCloseStepView()
         case .freeTrialIntro: FreeTrialIntroStepView()
         case .trialOffer: TrialOfferStepView()
-        case .whyNow: WhyNowStepView()
         case .paywall: PaywallStepView(onFinish: onFinish)
         }
     }

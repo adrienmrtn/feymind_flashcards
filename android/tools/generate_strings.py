@@ -55,6 +55,14 @@ LOCALES = {
     "ru": "values-ru",
     "tr": "values-tr",
     "ar": "values-ar",
+    # Lot 13 de l'iPhone : six langues de plus. L'hébreu s'écrit `iw` pour Android (le code
+    # d'avant 1989, celui que toutes les versions d'Android lisent).
+    "nb": "values-nb",
+    "he": "values-iw",
+    "ja": "values-ja",
+    "lt": "values-lt",
+    "lv": "values-lv",
+    "ko": "values-ko",
 }
 
 # Les phrases propres à Android. L'anglais est la langue de base ; une langue absente lit l'anglais.
@@ -1665,6 +1673,10 @@ from strings_knowunity import by_key as knowunity_by_key  # noqa: E402
 
 _KNOWUNITY_STRINGS, CUSTOM_PLURALS = knowunity_by_key()
 CUSTOM.update(_KNOWUNITY_STRINGS)
+# Les six langues du lot 13 (nb, he, ja, lt, lv, ko) pour ces phrases propres à Android.
+from strings_lot13 import merge as merge_lot13  # noqa: E402
+
+merge_lot13(CUSTOM, CUSTOM_PLURALS)
 
 LINE = re.compile(r'^\s*"([^"\\]+)"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,?\s*(//.*)?$')
 TABLE = re.compile(r'^\s*static let (\w+): \[String: String\] = \[\s*$')
@@ -1869,8 +1881,7 @@ def write_plurals(catalogs, by_name: dict[str, str], names: list[str]) -> list[s
             text = lookup(catalogs, key, locale) or (base if locale == "en" else None)
             if text is None:
                 continue
-            if locale not in ("en", "fr") and text == base and not differs_from_parent(locale, lookup(catalogs, key, PARENT.get(locale, "")), base):
-                continue
+            # Une phrase identique à l'anglais s'écrit quand même : chaque langue a toutes ses phrases (`I18nCatalogTest`).
             items = plural_items(text) or plain_plural(text, base, name)
             if items:
                 for quantity, form in PLURALS_ANDROID.get(name, {}).get(locale, {}).items():
@@ -1878,6 +1889,7 @@ def write_plurals(catalogs, by_name: dict[str, str], names: list[str]) -> list[s
                 entries[folder][name] = items
     for folder, plurals in entries.items():
         path = RES / folder / "plurals.xml"
+        path.parent.mkdir(parents=True, exist_ok=True)
         if not plurals:
             path.unlink(missing_ok=True)
             continue
@@ -1897,8 +1909,88 @@ def write_plurals(catalogs, by_name: dict[str, str], names: list[str]) -> list[s
     return missing
 
 
+# Les familles de clés que le code appelle par leur nom (le parcours d'accueil, l'essai, le
+# paywall, les récits par pays) : elles entrent toutes, traduites dans chaque langue.
+KEY_PREFIXES = (
+    "ios.onb16.", "ios.onb15.", "ios.onb14.", "ios.onb12.", "ios.onb11.", "ios.onb10.",
+    "ios.onb9.goal.", "ios.goal.", "ios.onb.worry.", "ios.onb5.exam.", "ios.onb5.trial.", "ios.onb5.grade.",
+    "ios.onb7.trial.", "ios.onb7.notif.", "ios.pay10.", "ios.pay11.", "ios.pay14.", "ios.pay15.",
+    "ios.level.", "ios.home13.", "ios.core13.", "ios.chat12.", "ios.cam12.",
+)
+
+CATALOG_KEYS = ROOT / "android" / "app" / "src" / "main" / "java" / "com" / "micabo" / "app" / "i18n" / "CatalogKeys.kt"
+
+
+def write_keys(keyed: dict[str, str], catalogs) -> None:
+    """`CatalogKeys` : la clé du catalogue → la ressource Android, phrase ou pluriel."""
+    strings, plurals = [], []
+    for key, name in keyed.items():
+        text = lookup(catalogs, key, "en") or lookup(catalogs, key, "fr") or ""
+        (plurals if "plural," in text else strings).append((key, name))
+    lines = [
+        "package com.micabo.app.i18n",
+        "",
+        "import com.micabo.app.R",
+        "",
+        "// Engendré par android/tools/generate_strings.py. Ne pas éditer à la main.",
+        "",
+        "/** Les clés des catalogues de l'iPhone appelées par leur nom (`t(\"ios.onb15.q.name\")`). */",
+        "internal object CatalogKeys {",
+        "    val strings: Map<String, Int> by lazy {",
+        "        hashMapOf(",
+    ]
+    lines += [f'            "{key}" to R.string.{name},' for key, name in strings]
+    lines += ["        )", "    }", "", "    val plurals: Map<String, Int> by lazy {", "        hashMapOf("]
+    lines += [f'            "{key}" to R.plurals.{name},' for key, name in plurals]
+    lines += ["        )", "    }", "}", ""]
+    CATALOG_KEYS.write_text("\n".join(lines), encoding="utf-8")
+
+
+VARS = ROOT / "android" / "app" / "src" / "main" / "java" / "com" / "micabo" / "app" / "i18n" / "StringVars.kt"
+
+
+def write_vars(base: dict[str, tuple[str, list[str]]], plural_names: list[str], catalogs, by_name: dict[str, str]) -> None:
+    """**L'ordre des variables de chaque phrase** : `{name}` devient `%1$s` dans l'ordre de la
+    phrase anglaise. `StringVars` le garde, pour que le code passe ses variables par leur nom
+    (`tr(R.string.x, "name" to "Lina")`) sans dépendre de cet ordre."""
+    lines = [
+        "package com.micabo.app.i18n",
+        "",
+        "import com.micabo.app.R",
+        "",
+        "// Engendré par android/tools/generate_strings.py. Ne pas éditer à la main.",
+        "",
+        "/** Les variables de chaque phrase, dans l'ordre de ses `%n$s`. */",
+        "internal object StringVars {",
+        "    val strings: Map<Int, List<String>> by lazy {",
+        "        hashMapOf(",
+    ]
+    for name in sorted(base):
+        text, variables = base[name]
+        if variables:
+            lines.append(f"            R.string.{name} to listOf({', '.join(chr(34) + v + chr(34) for v in variables)}),")
+    lines += ["        )", "    }", "", "    /** Pour un pluriel : le nombre est `%1$d`, les autres variables suivent. */", "    val plurals: Map<Int, List<String>> by lazy {", "        hashMapOf("]
+    for name in sorted(plural_names):
+        if name in CUSTOM_PLURALS:
+            continue
+        key = by_name.get(name)
+        base_text = (lookup(catalogs, key, "en") or lookup(catalogs, key, "fr") or "") if key else ""
+        parsed = icu_plural(base_text)
+        names = list(dict.fromkeys(re.findall(r"\{(\w+)\}", base_text)))
+        count = parsed[0] if parsed else PLURAL_COUNT.get(name) or (names[0] if len(names) == 1 else None)
+        if parsed:
+            body = next(iter(parsed[1].values()), "")
+            others = [n for n in dict.fromkeys(re.findall(r"\{(\w+)\}", body)) if n != count]
+        else:
+            others = [n for n in names if n != count]
+        lines.append(f"            R.plurals.{name} to listOf({', '.join(chr(34) + v + chr(34) for v in [count or 'count'] + others)}),")
+    lines += ["        )", "    }", "}", ""]
+    VARS.write_text("\n".join(lines), encoding="utf-8")
+
+
 def main() -> int:
-    code = "\n".join(p.read_text(encoding="utf-8") for p in SOURCES.rglob("*.kt"))
+    # Les fichiers engendrés ici ne comptent pas : ils citent ce que le reste du code demande.
+    code = "\n".join(p.read_text(encoding="utf-8") for p in SOURCES.rglob("*.kt") if p.name not in ("CatalogKeys.kt", "StringVars.kt"))
     names = sorted(set(re.findall(r"R\.string\.([A-Za-z0-9_]+)", code)))
     plural_names = sorted(set(re.findall(r"R\.plurals\.([A-Za-z0-9_]+)", code)))
     catalogs = read_catalogs()
@@ -1909,6 +2001,24 @@ def main() -> int:
     by_name: dict[str, str] = {}
     for key in every_key:
         by_name.setdefault(re.sub(r"[.\-]", "_", key), key)
+    # **Les clés appelées par leur nom** (`t("ios.onb15.q.name")`, `CatalogKeys`) : toutes celles
+    # des familles de `KEY_PREFIXES`, et toute clé écrite en toutes lettres dans le code Kotlin.
+    literal = set(re.findall(r'"((?:ios|lesson|common|app|country)\.[A-Za-z0-9_.\-]+)"', code))
+    keyed: dict[str, str] = {}
+    for key in sorted(every_key):
+        known = lookup(catalogs, key, "en") or lookup(catalogs, key, "fr")
+        if known and (key in literal or any(key.startswith(prefix) for prefix in KEY_PREFIXES)):
+            keyed[key] = re.sub(r"[.\-]", "_", key)
+    for key, name in keyed.items():
+        text = lookup(catalogs, key, "en") or lookup(catalogs, key, "fr") or ""
+        if "plural," in text:
+            if name not in plural_names:
+                plural_names.append(name)
+        elif name not in names:
+            names.append(name)
+    names.sort()
+    plural_names.sort()
+    write_keys(keyed, catalogs)
     problems = check_tables(catalogs, by_name)
     if problems:
         print("Variables ou langues fausses : " + ", ".join(problems), file=sys.stderr)
@@ -1944,8 +2054,6 @@ def main() -> int:
             text = texts.get(locale)
             if text is None:
                 continue
-            if locale not in ("en", "fr") and text == base and not differs_from_parent(locale, texts.get(PARENT.get(locale, "")), base):
-                continue
             entries[folder][name] = (text, variables)
 
     if icu_strings:
@@ -1955,6 +2063,8 @@ def main() -> int:
     if missing:
         print("Introuvables : " + ", ".join(missing), file=sys.stderr)
         return 1
+
+    write_vars(entries["values"], plural_names, catalogs, by_name)
 
     for folder, strings in entries.items():
         directory = RES / folder

@@ -27,7 +27,11 @@ struct FocusPlan: Equatable, Identifiable {
 
     static let `default` = FocusPlan()
 
-    static let simpleRange = 5...120
+    /// **Une séance dure une heure au plus** (lot 16, demande du fondateur : « les sessions
+    /// doivent aller que jusqu'à 1 h »). Le temps par jour peut dépasser une heure : le plan le
+    /// découpe alors en plusieurs séances (`RevisionPlanner.sessionLengths`).
+    static let maxMinutes = 60
+    static let simpleRange = 5...maxMinutes
     static let pomodoroRange = 15...60
     static let stepMinutes = 5
     static let cycleRange = 1...4

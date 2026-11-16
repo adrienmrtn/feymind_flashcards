@@ -9,6 +9,54 @@
         <item quantity="one">%1$d kort</item>
         <item quantity="other">%1$d kort</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Ditt ämne</item>
+        <item quantity="other">Dina %1$d ämnen</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d poäng: en riktig utmaning. Vi tar det steg för steg</item>
+        <item quantity="other">+%1$d poäng: en riktig utmaning. Vi tar det steg för steg</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d poäng: ambitiöst, och görbart</item>
+        <item quantity="other">+%1$d poäng: ambitiöst, och görbart</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d poäng: ett litet steg, helt görbart</item>
+        <item quantity="other">+%1$d poäng: ett litet steg, helt görbart</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dagar</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d dag gratis, sedan %2$s per vecka. Avsluta när du vill.</item>
+        <item quantity="other">%1$d dagar gratis, sedan %2$s per vecka. Avsluta när du vill.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d dag gratis, sedan %2$s per år. Avsluta när du vill.</item>
+        <item quantity="other">%1$d dagar gratis, sedan %2$s per år. Avsluta när du vill.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d dag gratis</item>
+        <item quantity="other">%1$d dagar gratis</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Testa gratis i %1$d dag.</item>
+        <item quantity="other">Testa gratis i %1$d dagar.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Starta min gratisdag</item>
+        <item quantity="other">Starta mina %1$d gratisdagar</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d dag gratis, sedan varje vecka</item>
+        <item quantity="other">%1$d dagar gratis, sedan varje vecka</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d dag gratis, sedan %2$s per år</item>
+        <item quantity="other">%1$d dagar gratis, sedan %2$s per år</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d dag i rad</item>
         <item quantity="other">%1$d dagar i rad</item>
@@ -36,6 +84,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Lägg till mitt fel bland korten</item>
         <item quantity="other">Lägg till mina %1$d fel bland korten</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d frågor</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d fråga är obesvarad. Lämna in ändå?</item>

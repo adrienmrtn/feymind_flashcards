@@ -60,12 +60,11 @@ struct DiscountOfferScreen: View {
                 }
 
                 ViewThatFits(in: .vertical) {
-                    content(mika: PaywallStyle.offerMika, includes: true)
-                    content(mika: PaywallStyle.offerMika * 0.7, includes: true)
-                    content(mika: PaywallStyle.offerMika * 0.7, includes: false)
-                    content(mika: nil, includes: false)
+                    content(mika: PaywallStyle.offerMika * 0.8, percent: 1)
+                    content(mika: PaywallStyle.offerMika * 0.6, percent: 0.85)
+                    content(mika: PaywallStyle.offerMika * 0.42, percent: 0.7)
                     ScrollView {
-                        content(mika: nil, includes: true)
+                        content(mika: PaywallStyle.offerMika * 0.42, percent: 0.7)
                     }
                     .scrollIndicators(.hidden)
                     .scrollBounceBehavior(.basedOnSize)
@@ -75,7 +74,7 @@ struct DiscountOfferScreen: View {
                 footer(bottomGap: area.bottomGap)
             }
         }
-        .background(V3Color.bg.ignoresSafeArea())
+        .background(PaywallBackdrop(tone: PaywallStyle.yellow))
         .onAppear {
             guard animatesArrival, !arrived else { return }
             withAnimation(MicaboMotion.resolved(MicaboMotion.celebrate, reduceMotion: reduceMotion)) {
@@ -86,21 +85,32 @@ struct DiscountOfferScreen: View {
 
     // MARK: Le contenu
 
-    /// `mika` : la taille de Mika, ou `nil` quand l'écran est trop court pour lui ;
-    /// `includes` : la ligne qui rappelle ce que l'année Pro contient, la même que le
-    /// tableau du paywall qu'on vient de quitter.
-    private func content(mika: CGFloat?, includes: Bool) -> some View {
-        VStack(spacing: 0) {
-            Text(L10n.t("ios.pay10.offer.badge", locale: .resolved()))
-                .font(PaywallStyle.pillQuiet)
-                .foregroundStyle(V3Color.ink2)
-                .lineLimit(1)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(V3Color.surface, in: Capsule())
+    /// **Ce que Mika dit en arrivant** (lot 12) : la suite du paywall qu'on vient de refermer,
+    /// sans reproche — il a entendu « pas à ce prix-là », il en propose un autre.
+    static func mikaLine(name: String?, locale: UiLocale = .resolved()) -> PaywallEmphasis {
+        // Lot 17 : une phrase courte, dite par Mika dans sa bulle.
+        if let name {
+            return PaywallEmphasis(marked: L10n.t("ios.onb17.offer.say", locale: locale, vars: ["name": name]))
+        }
+        return PaywallEmphasis(marked: L10n.t("ios.onb17.offer.sayAnon", locale: locale))
+    }
 
-            DiscountPercent(savings: savings, isSettled: arrived || !animatesArrival)
-                .padding(.top, 10)
+    /// **Trois zones, comme le paywall** (lot 12, refonte) : Mika en grand sur un halo jaune,
+    /// « −40 % » géant et ce sur quoi il porte ; ce que Mika dit, en une phrase ; la carte du
+    /// prix. `mika` : sa taille ; `percent` : l'échelle du grand chiffre, plus petit sur un
+    /// écran court.
+    private func content(mika: CGFloat, percent: CGFloat) -> some View {
+        let line = Self.mikaLine(name: PaywallProfile.firstName(OnboardingPreferences.displayName))
+        // Lot 17 : Mika parle dans sa bulle, en haut — comme dans le parcours —, puis le grand
+        // pourcentage et ce sur quoi il porte. Sur un écran court, Mika rapetisse.
+        let marked = line.highlight.map { line.text.replacingOccurrences(of: $0, with: "**\($0)**") } ?? line.text
+        return VStack(spacing: 0) {
+            OnbMikaRow(say: OnbSay(marked, mood: .wink))
+                .environment(\.onbCompact, mika < PaywallStyle.offerMika * 0.7)
+                .padding(.bottom, 18)
+
+            DiscountPercent(savings: savings, isSettled: arrived || !animatesArrival, scale: percent)
+                .padding(.top, 6)
 
             Text(L10n.t("ios.pay10.offer.sub", locale: .resolved()))
                 .font(PaywallStyle.offerSub)
@@ -108,26 +118,11 @@ struct DiscountOfferScreen: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
 
-            if let mika {
-                MikaMascot(mood: .celebrate, size: mika)
-                    .padding(.top, 8)
-                    .accessibilityHidden(true)
-            }
-
             priceCard
-                .padding(.top, mika == nil ? 18 : 0)
-
-            if includes, prices == .ready {
-                Text(L10n.t("ios.pay11.offer.includes", locale: .resolved()))
-                    .font(PaywallStyle.offerIncludes)
-                    .foregroundStyle(V3Color.ink2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 10)
-            }
+                .padding(.top, 20)
         }
         .padding(.horizontal, V3Metric.screenMargin)
-        .padding(.top, 14)
+        .padding(.top, 8)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity)
     }
@@ -136,29 +131,38 @@ struct DiscountOfferScreen: View {
     private var priceCard: some View {
         switch prices {
         case .ready:
-            // Le prix et ce qu'il fait par mois, côte à côte ; sur un écran étroit, le
-            // second s'écrit plus petit pour rester à côté ; en très grand texte, il passe
-            // dessous. Aucun des deux ne se coupe.
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .bottom, spacing: 12) {
-                    priceColumn
-                    Spacer(minLength: 0)
-                    equivalentColumn(.trailing, font: PaywallStyle.offerEquivalent)
+            // **Lot 14 : le prix par semaine en avant** (« 0,58 € / semaine »), et dessous, au
+            // corps de lecture, ce qui est réellement facturé — l'ancien prix barré, puis
+            // « facturé 29,99 € par an ». Le montant facturé reste lisible d'un coup d'œil
+            // (App Store 3.1.2) ; la mention sous le bouton le redit.
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(plan.priceHeadline(for: .weekly))
+                        .font(PaywallStyle.offerPrice)
+                        .foregroundStyle(V3Color.ink)
+                    Text(plan.priceHeadlineUnit(for: .weekly))
+                        .font(PaywallStyle.offerPriceUnit)
+                        .foregroundStyle(V3Color.ink2)
                 }
-                HStack(alignment: .bottom, spacing: 10) {
-                    priceColumn
-                    Spacer(minLength: 0)
-                    equivalentColumn(.trailing, font: PaywallStyle.offerEquivalentNarrow)
-                }
-                VStack(alignment: .leading, spacing: 10) {
-                    priceColumn
-                    equivalentColumn(.leading, font: PaywallStyle.offerEquivalent)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                ViewThatFits(in: .horizontal) {
+                    billedLine
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(reference.displayPrice)
+                            .foregroundStyle(V3Color.ink3)
+                            .strikethrough(true, color: V3Color.ink3)
+                        Text(plan.caption)
+                            .foregroundStyle(V3Color.ink)
+                    }
+                    .font(PaywallStyle.planBilled)
                 }
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
             .v3Card()
+            .accessibilityElement(children: .combine)
         case .loading:
             HStack(alignment: .bottom, spacing: 12) {
                 VStack(alignment: .leading, spacing: 10) {
@@ -187,34 +191,17 @@ struct DiscountOfferScreen: View {
         }
     }
 
-    /// L'annuel plein, barré, et le tarif réduit dessous : la somme en grand, le reste de la
-    /// phrase en petit, dans l'ordre de la langue.
-    private var priceColumn: some View {
-        let phrase = PaywallPriceTemplate.split("ios.pay10.plan.perYear")
-        let old = L10n.t("ios.pay10.plan.perYear", locale: .resolved(), vars: ["price": reference.displayPrice])
-        return VStack(alignment: .leading, spacing: 2) {
-            Text(old)
-                .font(PaywallStyle.offerPriceUnit)
+    /// **Ce qui est facturé, sur une ligne** : l'ancien prix barré, puis « facturé 29,99 € par
+    /// an », au corps de lecture.
+    private var billedLine: some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text(reference.displayPrice)
                 .foregroundStyle(V3Color.ink3)
                 .strikethrough(true, color: V3Color.ink3)
-            (Text(phrase.before).font(PaywallStyle.offerPriceUnit).foregroundStyle(V3Color.ink2)
-                + Text(plan.displayPrice).font(PaywallStyle.offerPrice).foregroundStyle(V3Color.ink)
-                + Text(phrase.after).font(PaywallStyle.offerPriceUnit).foregroundStyle(V3Color.ink2))
+            Text(plan.caption)
+                .foregroundStyle(V3Color.ink)
         }
-        .lineLimit(1)
-        .fixedSize()
-    }
-
-    /// Ce que le tarif fait par mois ou par semaine, selon le test de prix.
-    private func equivalentColumn(_ alignment: HorizontalAlignment, font: Font) -> some View {
-        VStack(alignment: alignment, spacing: 0) {
-            Text(L10n.t("ios.pay10.offer.thatIs", locale: .resolved()))
-                .font(PaywallStyle.offerEquivalentLead)
-                .foregroundStyle(V3Color.ink2)
-            Text("\(plan.priceHeadline(for: .current)) \(plan.priceHeadlineUnit(for: .current))")
-                .font(font)
-                .foregroundStyle(PaywallStyle.keyword)
-        }
+        .font(PaywallStyle.planBilled)
         .lineLimit(1)
         .fixedSize()
     }
@@ -248,7 +235,6 @@ struct DiscountOfferScreen: View {
         .padding(.top, 8)
         .padding(.bottom, bottomGap)
         .frame(maxWidth: .infinity)
-        .background(V3Color.bg)
     }
 
     @ViewBuilder
@@ -281,10 +267,12 @@ struct DiscountPercent: View {
     let savings: String
     /// Vrai une fois le chiffre à sa taille.
     var isSettled = true
+    /// L'échelle du chiffre : plus petit sur un écran court.
+    var scale: CGFloat = 1
 
     var body: some View {
         Text(savings)
-            .font(PaywallStyle.percent)
+            .font(V3Font.display(PaywallStyle.percentSize * scale))
             .foregroundStyle(PaywallStyle.yellow)
             .lineLimit(1)
             .tracking(PaywallStyle.percentTracking)

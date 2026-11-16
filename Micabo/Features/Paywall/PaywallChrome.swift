@@ -14,56 +14,70 @@ import SwiftUI
 /// (`V3Font`, `V3Color`, `V3Metric`). Les écrans ne nomment ni police ni couleur ; changer la
 /// direction artistique du paywall et de l'offre se fait ici — et, pour tout ce que le paywall
 /// partage avec le reste de l'app (le bouton, la bulle de Mika, « PRO »), dans le composant V3.
+/// **Lot 15 (« le texte doit être principal »)** : le tableau à 16 pt (une ligne par offre, sur SE aussi), la
+/// somme facturée à 16 pt en couleur principale, les mentions à 15 pt, les liens obligatoires à
+/// 13 pt — plus rien à 11 ou 12 pt. Prix, offres et textes inchangés.
 enum PaywallStyle {
     // MARK: Les polices du paywall
 
     /// « Micabo [PRO] », en haut à gauche : la taille de la marque (`V3ProBadge`).
-    static let brandSize: CGFloat = 24
+    static let brandSize: CGFloat = 20
     /// « Pour Lina », sous la marque.
     static let brandFor = V3Font.eyebrow
-    /// Le titre de l'en-tête « essai » (`V3Title`), sur deux phrases : sa taille, et celle
-    /// qu'il prend quand l'écran est court.
-    static let titleSize: CGFloat = 32
-    static let titleMediumSize: CGFloat = 28
-    static let titleCompactSize: CGFloat = 25
+    /// Le grand titre du héros (`V3Title`) : sa taille, et celles qu'il prend quand l'écran
+    /// est plus court.
+    static let titleSize: CGFloat = 36
+    static let titleMediumSize: CGFloat = 31
+    static let titleCompactSize: CGFloat = 27
+    /// **La deuxième taille de l'écran** (lot 12, refonte) : la promesse sous le titre, les
+    /// bénéfices, la ligne de l'essai. La troisième est celle des légendes.
+    static let heroText = V3Font.text(.body, weight: .semibold)
+    static let trialLine = V3Font.text(.body, weight: .semibold)
+    /// Une carte de formule : son nom, son grand chiffre.
+    static let planName = V3Font.text(.subheadline, weight: .bold)
+    static var cardPrice: Font { V3Font.heading(24, relativeTo: .title2) }
     /// Les pastilles de ce que l'élève a déclaré (`PaywallFactsRow`).
-    static let fact = V3Font.text(.footnote, weight: .semibold)
+    static let fact = V3Font.text(.subheadline, weight: .semibold)
     static let factIcon = V3Font.text(.caption, weight: .bold)
     static let factHeight: CGFloat = 30
     /// Le tableau Gratuit / PRO (`PaywallFeatureTable`) : son en-tête, ses lignes, la ligne
     /// de la porte, ses valeurs et sa coche.
-    static let tableHeader = V3Font.text(.caption, weight: .bold)
-    static let tableRowTitle = V3Font.text(.subheadline, weight: .semibold)
-    static let tableRowLead = V3Font.text(.subheadline, weight: .bold)
-    static let tableValue = V3Font.text(.subheadline, weight: .bold)
+    static let tableHeader = V3Font.text(.footnote, weight: .bold)
+    static let tableRowTitle = V3Font.text(.callout, weight: .semibold)
+    static let tableRowLead = V3Font.text(.callout, weight: .bold)
+    static let tableValue = V3Font.text(.callout, weight: .bold)
     static let tableCheck: CGFloat = 20
     static let tableGlyph: CGFloat = 18
     static let tableGlyphColumn: CGFloat = 24
     /// La chronologie sur une rangée (`PaywallTimelineStrip`) : la date, sa ligne.
-    static let stepTitle = V3Font.text(.footnote, weight: .bold)
-    static let stepDetail = V3Font.text(.caption, weight: .medium)
-    static let stepDetailTight = V3Font.text(.caption2, weight: .medium)
+    static let stepTitle = V3Font.text(.subheadline, weight: .bold)
+    static let stepDetail = V3Font.text(.subheadline, weight: .medium)
+    static let stepDetailTight = V3Font.text(.footnote, weight: .medium)
     static let stepDot: CGFloat = 26
     /// Une rangée de la chronologie ou d'un bénéfice : son titre, sa ligne.
     static let rowTitle = V3Font.option
     static let rowDetail = V3Font.support
     /// La même ligne, sur un écran serré (`PaywallDensity.tight`).
-    static let rowDetailTight = V3Font.caption
+    static let rowDetailTight = V3Font.text(.subheadline, weight: .medium)
     /// Une offre : son nom, sa ligne, son prix et l'unité du prix.
     static let planTitle = V3Font.option
-    static let planDetail = V3Font.caption
-    static let price = V3Font.title
+    static let planDetail = V3Font.text(.subheadline, weight: .medium)
+    /// **La somme réellement facturée**, sous le prix à la semaine (lot 14) : au corps de
+    /// lecture (15 pt), en couleur secondaire contrastée — jamais en gris minuscule (App Store
+    /// 3.1.2 : le montant facturé doit rester clairement lisible).
+    static let planBilled = V3Font.text(.callout, weight: .medium)
+    static var price: Font { V3Font.title }
     /// Le prix de l'offre qui n'est pas recommandée : un cran plus petit.
-    static let priceSecondary = V3Font.heading(19, relativeTo: .headline)
-    static let priceUnit = V3Font.caption
+    static var priceSecondary: Font { V3Font.heading(19, relativeTo: .headline) }
+    static let priceUnit = V3Font.text(.subheadline, weight: .medium)
     /// La pastille de la remise, à côté du nom de l'offre.
-    static let badge = V3Font.text(.caption, weight: .heavy)
+    static let badge = V3Font.text(.footnote, weight: .heavy)
     /// « Rien à payer aujourd'hui », au-dessus du bouton.
     static let assurance = V3Font.label
     /// La mention sous le bouton, le message d'un achat qui n'a pas abouti, les liens.
-    static let legal = V3Font.text(.caption, weight: .medium)
-    static let notice = V3Font.caption
-    static let link = V3Font.text(.caption, weight: .semibold)
+    static let legal = V3Font.text(.subheadline, weight: .regular)
+    static let notice = V3Font.text(.footnote, weight: .medium)
+    static let link = V3Font.text(.footnote, weight: .semibold)
 
     // MARK: Les polices de l'offre et de la bienvenue
 
@@ -71,16 +85,17 @@ enum PaywallStyle {
     static let momentSize: CGFloat = 40
     static let momentSub = V3Font.body
     /// « −40 % », en géant, et son interlettrage.
-    static let percent = V3Font.display(132)
+    static var percent: Font { V3Font.display(percentSize) }
+    static let percentSize: CGFloat = 120
     static let percentTracking: CGFloat = -2
     /// « sur ton année Micabo Pro ».
-    static let offerSub = V3Font.h2
+    static var offerSub: Font { V3Font.h2 }
     /// « Tout Pro : leçons, Mika, examens blancs, entraînements », sous la carte du prix.
     static let offerIncludes = V3Font.support
     /// Le tarif réduit, dans sa carte, et ce qui l'entoure.
-    static let offerPrice = V3Font.display(34)
+    static var offerPrice: Font { V3Font.display(34) }
     static let offerPriceUnit = V3Font.support
-    static let offerEquivalent = V3Font.figure
+    static var offerEquivalent: Font { V3Font.figure }
     /// Le même, sur un écran étroit : il reste à côté du prix au lieu de passer dessous.
     static let offerEquivalentNarrow = V3Font.label
     static let offerEquivalentLead = V3Font.caption
@@ -106,10 +121,17 @@ enum PaywallStyle {
     static let secondaryPlanHeight: CGFloat = V3Metric.optionHeight
     static let secondaryPlanTight: CGFloat = 50
     static let planRadius: CGFloat = V3Metric.radiusInner
+    /// La hauteur d'une carte de formule, au moins (le chargement et l'échec la gardent).
+    static let planCardHeight: CGFloat = 92
+    /// La hauteur d'une ligne de formule (lot 17), à taille de texte normale.
+    static let planRowHeight: CGFloat = 66
+    /// Le pictogramme d'un bénéfice, et sa colonne.
+    static let benefitGlyph: CGFloat = 19
+    static let benefitGlyphColumn: CGFloat = 30
     static let planSpacing: CGFloat = 10
     /// Le tableau : ses lignes, son en-tête, ses colonnes, ses rayons.
-    static let tableRow: CGFloat = 32
-    static let tableRowTight: CGFloat = 30
+    static let tableRow: CGFloat = 40
+    static let tableRowTight: CGFloat = 36
     static let tableHeaderHeight: CGFloat = 28
     static let freeColumn: CGFloat = 62
     static let proColumn: CGFloat = 52
@@ -128,7 +150,12 @@ enum PaywallStyle {
     static let disabledOpacity: Double = 0.35
     /// Mika en fête : sur l'offre, et à la bienvenue.
     static let offerMika: CGFloat = 150
+    /// Mika et sa réplique, en tête de l'offre et du paywall d'essai (lot 12).
+    static let offerMikaLine: CGFloat = 76
+    static let trialMika: CGFloat = 64
     static let welcomeMika: CGFloat = 200
+    /// Mika en grand, en tête du paywall (lot 12, refonte).
+    static let heroMika: CGFloat = 128
 
     // MARK: Les couleurs
 
@@ -233,7 +260,7 @@ struct PaywallBrand: View {
 /// **La barre du haut du paywall** : la marque à gauche, la croix à droite. La croix s'éteint
 /// pendant un achat.
 struct PaywallTopBar: View {
-    var name: String?
+    var name: String? = nil
     var isBusy: Bool
     var onClose: () -> Void
 
@@ -241,7 +268,8 @@ struct PaywallTopBar: View {
         HStack(alignment: .center, spacing: 12) {
             PaywallBrand(name: name)
             Spacer(minLength: 0)
-            PaywallCloseButton(action: onClose)
+            // La croix est là, discrète : la couleur secondaire du texte.
+            PaywallCloseButton(tint: V3Color.ink2, action: onClose)
                 .disabled(isBusy)
                 .padding(.trailing, closeOverhang)
         }
@@ -311,6 +339,43 @@ struct PaywallMikaLine: View {
 
     var body: some View {
         MikaAsk(line.text, highlight: line.highlight, mood: mood)
+    }
+}
+
+/// **Mika et sa réplique, en tête de l'offre** (lot 12) : il parle d'abord, le grand
+/// pourcentage vient ensuite. La bulle est celle du parcours d'accueil : une surface, le
+/// petit coin du côté de Mika, le texte en corps gras secondaire.
+struct DiscountMikaLine: View {
+    let line: PaywallEmphasis
+    var mood: MikaMood = .wink
+    var size: CGFloat = PaywallStyle.offerMikaLine
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 8) {
+            MikaMascot(mood: mood, size: size)
+                .frame(width: size, height: size)
+                .accessibilityHidden(true)
+            Text(v3: line.text, highlight: line.highlight)
+                .font(size < 70 ? V3Font.support : V3Font.bodyStrong)
+                .foregroundStyle(V3Color.ink)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 14)
+                .padding(.vertical, size < 70 ? 8 : 11)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(
+                    V3Color.surface,
+                    in: UnevenRoundedRectangle(
+                        topLeadingRadius: V3Metric.radiusBubbleTail,
+                        bottomLeadingRadius: V3Metric.radiusBubble,
+                        bottomTrailingRadius: V3Metric.radiusBubble,
+                        topTrailingRadius: V3Metric.radiusBubble,
+                        style: .continuous
+                    )
+                )
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(line.text))
     }
 }
 

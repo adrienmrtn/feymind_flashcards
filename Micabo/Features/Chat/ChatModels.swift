@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 import UIKit
 
 // MARK: - Ce qui se garde
@@ -60,10 +61,17 @@ final class ChatMessage {
     var cardAdded: Bool = false
     /// L'exercice scanné que ce message porte (son énoncé, ou la réponse de Mika).
     var exerciseID: UUID?
+    /// Lot 12 — le mode de la caméra qui a fait ce message (`ScanMode`), vide sinon. La
+    /// consigne du mode se refait à partir de lui à chaque relance.
+    var scanModeRaw: String = ""
+    /// La langue cible d'une traduction (`UiLocale`), vide sinon.
+    var scanTargetRaw: String = ""
+    /// Lot 12 — les cartes que la réponse propose (un vocabulaire, des cartes mémoire), en JSON.
+    var cardsRaw: String = ""
 
     static let separator = "\u{1E}"
 
-    init(threadID: UUID, role: MikaTurn.Role, text: String, photoNames: [String] = [], photoTexts: [String] = [], card: GeneratedFlashcard? = nil, exerciseID: UUID? = nil, createdAt: Date = Date()) {
+    init(threadID: UUID, role: MikaTurn.Role, text: String, photoNames: [String] = [], photoTexts: [String] = [], card: GeneratedFlashcard? = nil, exerciseID: UUID? = nil, scanMode: ScanMode? = nil, scanTarget: UiLocale? = nil, cards: [GeneratedFlashcard] = [], createdAt: Date = Date()) {
         self.id = UUID()
         self.threadID = threadID
         self.createdAt = createdAt
@@ -74,6 +82,21 @@ final class ChatMessage {
         self.cardFront = card?.front
         self.cardBack = card?.back
         self.exerciseID = exerciseID
+        self.scanModeRaw = scanMode?.rawValue ?? ""
+        self.scanTargetRaw = scanTarget?.rawValue ?? ""
+        self.cardsRaw = Self.encode(cards)
+    }
+
+    var scanMode: ScanMode? { ScanMode(rawValue: scanModeRaw) }
+    var scanTarget: UiLocale? { UiLocale(rawValue: scanTargetRaw) }
+    var cards: [GeneratedFlashcard] {
+        guard !cardsRaw.isEmpty, let data = cardsRaw.data(using: .utf8) else { return [] }
+        return (try? JSONDecoder().decode([GeneratedFlashcard].self, from: data)) ?? []
+    }
+
+    static func encode(_ cards: [GeneratedFlashcard]) -> String {
+        guard !cards.isEmpty, let data = try? JSONEncoder().encode(cards) else { return "" }
+        return String(data: data, encoding: .utf8) ?? ""
     }
 
     var role: MikaTurn.Role { MikaTurn.Role(rawValue: roleRaw) ?? .user }
@@ -112,6 +135,42 @@ enum ChatOrigin: String, CaseIterable, Codable {
         case .quiz: "checklist"
         case .scan: "viewfinder"
         }
+    }
+
+    /// **Trois familles pour le tiroir** (lot 12) : une question à Mika, une page passée à la
+    /// caméra, une leçon. Une icône par famille : l'œil trie d'un regard.
+    var family: ChatFamily {
+        switch self {
+        case .home, .legacy, .camera: .chat
+        case .scan: .scan
+        case .lesson, .card, .quiz: .lesson
+        }
+    }
+}
+
+enum ChatFamily: String {
+    case chat
+    case scan
+    case lesson
+
+    var symbol: String {
+        switch self {
+        case .chat: "bubble.left.fill"
+        case .scan: "camera.viewfinder"
+        case .lesson: "book.closed.fill"
+        }
+    }
+
+    var tone: Color {
+        switch self {
+        case .chat: V3Color.iconBlue
+        case .scan: V3Color.iconPink
+        case .lesson: V3Color.iconGreen
+        }
+    }
+
+    func spoken(locale: UiLocale = .resolved()) -> String {
+        L10n.t("ios.chat12.family.\(rawValue)", locale: locale)
     }
 }
 
@@ -315,18 +374,25 @@ enum ChatStore {
         photoTexts: [String] = [],
         card: GeneratedFlashcard? = nil,
         exerciseID: UUID? = nil,
+        scanMode: ScanMode? = nil,
+        scanTarget: UiLocale? = nil,
+        cards: [GeneratedFlashcard] = [],
         to thread: ChatThread,
         in context: ModelContext,
         now: Date = Date()
     ) -> ChatMessage {
-        let message = ChatMessage(threadID: thread.id, role: role, text: text, photoNames: photoNames, photoTexts: photoTexts, card: card, exerciseID: exerciseID, createdAt: now)
+        let message = ChatMessage(threadID: thread.id, role: role, text: text, photoNames: photoNames, photoTexts: photoTexts, card: card, exerciseID: exerciseID, scanMode: scanMode, scanTarget: scanTarget, cards: cards, createdAt: now)
         context.insert(message)
         thread.updatedAt = now
         thread.messageCount += 1
         let flat = KeywordText.plain(text.replacingOccurrences(of: "\n", with: " ")).trimmingCharacters(in: .whitespaces)
         if !flat.isEmpty { thread.preview = String(flat.prefix(160)) }
         if role == .user, !thread.titleIsCustom, thread.title.isEmpty {
-            thread.title = ChatTitle.make(question: text, photoCount: photoNames.count, courseTitle: thread.courseTitle)
+            if let scanMode {
+                thread.title = ScanPrompts.threadTitle(scanMode, target: scanTarget, firstText: photoTexts.first(where: { !$0.isEmpty }) ?? text)
+            } else {
+                thread.title = ChatTitle.make(question: text, photoCount: photoNames.count, courseTitle: thread.courseTitle)
+            }
         }
         try? context.save()
         return message
@@ -384,37 +450,28 @@ enum ChatStore {
 
 // MARK: - L'historique, par jour
 
-/// Les sections de l'historique : aujourd'hui, hier, les sept derniers jours, puis par mois.
+/// Les sections de l'historique (lot 12, le tiroir) : aujourd'hui, hier, les sept derniers
+/// jours, plus ancien. Quatre en tout : un tiroir se parcourt d'un coup d'œil.
 enum ChatHistorySection: Hashable {
     case today
     case yesterday
     case week
-    case month(year: Int, month: Int)
+    case older
 
     static func of(_ date: Date, now: Date = Date(), calendar: Calendar = .current) -> ChatHistorySection {
         if calendar.isDate(date, inSameDayAs: now) { return .today }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) { return .yesterday }
         let startOfToday = calendar.startOfDay(for: now)
         if let weekAgo = calendar.date(byAdding: .day, value: -7, to: startOfToday), date >= weekAgo { return .week }
-        let parts = calendar.dateComponents([.year, .month], from: date)
-        return .month(year: parts.year ?? 0, month: parts.month ?? 0)
+        return .older
     }
 
-    func title(locale: UiLocale = .resolved(), calendar: Calendar = .current) -> String {
+    func title(locale: UiLocale = .resolved()) -> String {
         switch self {
-        case .today: return L10n.t("ios.chat11.history.today", locale: locale)
-        case .yesterday: return L10n.t("ios.chat11.history.yesterday", locale: locale)
-        case .week: return L10n.t("ios.chat11.history.week", locale: locale)
-        case .month(let year, let month):
-            var parts = DateComponents()
-            parts.year = year
-            parts.month = month
-            parts.day = 1
-            let date = calendar.date(from: parts) ?? Date()
-            let formatter = DateFormatter()
-            formatter.locale = Locale(identifier: locale.bcp47)
-            formatter.setLocalizedDateFormatFromTemplate("MMMMyyyy")
-            return formatter.string(from: date).capitalized(with: Locale(identifier: locale.bcp47))
+        case .today: L10n.t("ios.chat11.history.today", locale: locale)
+        case .yesterday: L10n.t("ios.chat11.history.yesterday", locale: locale)
+        case .week: L10n.t("ios.chat11.history.week", locale: locale)
+        case .older: L10n.t("ios.chat12.history.older", locale: locale)
         }
     }
 

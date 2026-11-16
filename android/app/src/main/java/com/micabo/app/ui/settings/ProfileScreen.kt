@@ -163,7 +163,7 @@ fun ProfileScreen() {
                 Divider()
                 Item(stringResource(R.string.x_settings_level), tierName(profile.tier)) { picker = "tier" }
                 Divider()
-                Item(stringResource(R.string.lesson_profile_theme), themeName(profile.theme)) { picker = "theme" }
+                Item(stringResource(R.string.lesson_profile_theme), themeName(if (profile.themeChosen) profile.theme else "dark")) { picker = "theme" }
             }
 
             // Le même compte sur le site : les leçons, les cartes et les examens y sont déjà.
@@ -224,12 +224,12 @@ fun ProfileScreen() {
         )
         "theme" -> Picker(
             options = listOf("system", "light", "dark"),
-            selected = profile.theme,
+            selected = if (profile.themeChosen) profile.theme else "dark",
             label = { themeName(it) },
             onDismiss = { picker = null },
             onPick = { theme ->
                 picker = null
-                app.prefs.update { it.copy(theme = theme) }
+                app.prefs.update { it.copy(theme = theme, themeChosen = true) }
             },
         )
         "tier" -> Picker(

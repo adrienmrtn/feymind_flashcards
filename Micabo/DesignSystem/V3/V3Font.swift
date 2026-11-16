@@ -31,6 +31,59 @@ enum V3Typeface {
     static func isStrong(_ weight: Font.Weight) -> Bool {
         weight == .semibold || weight == .bold || weight == .heavy || weight == .black
     }
+
+    /// **Les titres d'une langue que la police d'affichage n'écrit pas** (lot 13).
+    ///
+    /// Sofia Sans Condensed écrit le latin, le cyrillique et le grec. L'hébreu, le japonais et le
+    /// coréen n'y sont pas : leurs titres passent **entiers** en police système (SF Hebrew,
+    /// Hiragino Sans, Apple SD Gothic Neo, que le système choisit à la graisse demandée), un
+    /// cran sous le Black, un peu plus petits — un idéogramme occupe tout son cadratin, là où
+    /// une capitale condensée en laisse un quart —, et l'interligne normal en japonais et en
+    /// coréen, dont les caractères touchent le haut et le bas de la ligne. L'arabe garde le
+    /// repli d'iOS validé aux lots précédents.
+    struct SystemDisplay: Equatable {
+        /// La taille d'un titre, rapportée à celle de la condensée.
+        let scale: CGFloat
+        /// L'interligne serré des titres latins, ou celui du système.
+        let tightLeading: Bool
+
+        func font(_ size: CGFloat, weight: Font.Weight, relativeTo style: Font.TextStyle) -> Font {
+            // `Font.system(size:)` ne suit pas « Taille du texte » : la taille est mise à l'échelle
+            // ici, comme `Font.custom(relativeTo:)` le fait pour la condensée.
+            let scaled = UIFontMetrics(forTextStyle: style.uiKit).scaledValue(for: size * scale)
+            let font = Font.system(size: scaled, weight: weight == .black ? .heavy : .bold)
+            return tightLeading ? font.leading(.tight) : font
+        }
+    }
+
+    /// La police système des titres de cette langue, ou `nil` quand la condensée l'écrit.
+    static func systemDisplay(for locale: UiLocale) -> SystemDisplay? {
+        switch locale {
+        case .ja, .ko: SystemDisplay(scale: 0.84, tightLeading: false)
+        case .he: SystemDisplay(scale: 0.95, tightLeading: true)
+        default: nil
+        }
+    }
+}
+
+extension Font.TextStyle {
+    /// Le même style côté UIKit, pour `UIFontMetrics`.
+    var uiKit: UIFont.TextStyle {
+        switch self {
+        case .largeTitle: .largeTitle
+        case .title: .title1
+        case .title2: .title2
+        case .title3: .title3
+        case .headline: .headline
+        case .subheadline: .subheadline
+        case .body: .body
+        case .callout: .callout
+        case .footnote: .footnote
+        case .caption: .caption1
+        case .caption2: .caption2
+        @unknown default: .body
+        }
+    }
 }
 
 /// **L'échelle typographique de l'app** (V3.3, lot 10), et la fabrique de toutes ses polices.
@@ -55,23 +108,23 @@ enum V3Font {
     }
 
     /// Titre de page.
-    static let h1 = heading(32, relativeTo: .largeTitle)
+    static var h1: Font { heading(32, relativeTo: .largeTitle) }
     /// Titre d'un écran secondaire, d'une feuille.
-    static let h2 = heading(25, relativeTo: .title)
+    static var h2: Font { heading(25, relativeTo: .title) }
     /// La bulle de Mika, un titre de carte mis en avant.
-    static let title = heading(24, relativeTo: .title2)
+    static var title: Font { heading(24, relativeTo: .title2) }
     /// Titre de section (« Le parcours »).
-    static let section = heading(22, relativeTo: .title2)
+    static var section: Font { heading(22, relativeTo: .title2) }
     /// Titre d'une carte dans une liste.
-    static let cardTitle = heading(21, relativeTo: .title3)
+    static var cardTitle: Font { heading(21, relativeTo: .title3) }
     /// Le libellé du bouton principal.
-    static let button = heading(21, relativeTo: .title3)
+    static var button: Font { heading(21, relativeTo: .title3) }
     /// Le libellé d'un bouton secondaire : un cran moins noir.
-    static let buttonSecondary = heading(21, weight: .heavy, relativeTo: .title3)
+    static var buttonSecondary: Font { heading(21, weight: .heavy, relativeTo: .title3) }
     /// Le libellé d'un bouton discret (« Plus tard »).
-    static let ghost = heading(18, weight: .heavy, relativeTo: .body)
+    static var ghost: Font { heading(18, weight: .heavy, relativeTo: .body) }
     /// Un chiffre dans un en-tête (la série, l'XP), un prix.
-    static let figure = heading(22, relativeTo: .title2)
+    static var figure: Font { heading(22, relativeTo: .title2) }
 
     // MARK: Le texte — police système
 
@@ -98,8 +151,17 @@ enum V3Font {
 
     /// **Un titre** : Sofia Sans Condensed à la taille voulue (Black, sauf mention), l'interligne
     /// serré. Il grossit avec « Taille du texte », relativement au style donné.
+    ///
+    /// **En hébreu, en japonais et en coréen, un titre est en police système** (lot 13) : Sofia
+    /// Sans Condensed n'a pas ces écritures : le repli glyphe par glyphe d'iOS choisit une police
+    /// sans tenir la graisse ni la taille apparente, et laisse le latin de « Mika » en condensée
+    /// au milieu de la phrase. Voir `V3Typeface.systemDisplay`.
     static func heading(_ size: CGFloat, weight: Font.Weight = .black, relativeTo style: Font.TextStyle? = nil) -> Font {
-        Font.custom(V3Typeface.displayName(for: weight), size: size, relativeTo: style ?? textStyle(for: size))
+        let style = style ?? textStyle(for: size)
+        if let system = V3Typeface.systemDisplay(for: .resolved()) {
+            return system.font(size, weight: weight, relativeTo: style)
+        }
+        return Font.custom(V3Typeface.displayName(for: weight), size: size, relativeTo: style)
             .leading(.tight)
     }
 

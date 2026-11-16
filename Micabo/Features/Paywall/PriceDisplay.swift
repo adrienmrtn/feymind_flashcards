@@ -21,14 +21,13 @@ enum PriceDisplay: String, CaseIterable, Sendable {
     static let assignmentKey = "micabo.ab.priceDisplay"
     static let overrideKey = "micabo.ab.priceDisplay.override"
 
-    /// La variante de cette installation : la variante forcée s'il y en a une, sinon le tirage.
+    /// **La variante servie : la semaine** (lot 14, décision du fondateur : « le prix par
+    /// semaine en avant »). Une variante forcée depuis la section de test des Réglages passe
+    /// devant ; le tirage n'est plus servi (il reste lisible pour les installations qui l'ont
+    /// gardé, et pour les tests).
     static var current: PriceDisplay {
-        forced(in: .standard) ?? assigned
+        forced(in: .standard) ?? .weekly
     }
-
-    /// Tiré une seule fois par lancement, et une seule fois par installation : un `static
-    /// let` se calcule une fois, à l'abri des appels simultanés.
-    private static let assigned: PriceDisplay = assignment(in: .standard)
 
     /// **Le tirage de l'installation**, et le seul endroit où il s'écrit. Une valeur gardée
     /// gagne ; sinon `coin` décide (vrai : la semaine) et la réponse est gardée.

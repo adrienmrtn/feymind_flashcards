@@ -9,6 +9,54 @@
         <item quantity="one">%1$d carta</item>
         <item quantity="other">%1$d carte</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">La tua materia</item>
+        <item quantity="other">Le tue %1$d materie</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d punto: una vera sfida. Andiamo passo dopo passo</item>
+        <item quantity="other">+%1$d punti: una vera sfida. Andiamo passo dopo passo</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d punto: ambizioso, ma fattibile</item>
+        <item quantity="other">+%1$d punti: ambizioso, ma fattibile</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d punto: un piccolo passo, assolutamente fattibile</item>
+        <item quantity="other">+%1$d punti: un piccolo passo, assolutamente fattibile</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d giorno</item>
+        <item quantity="other">%1$d giorni</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d giorno gratis, poi %2$s a settimana. Annulli quando vuoi.</item>
+        <item quantity="other">%1$d giorni gratis, poi %2$s a settimana. Annulli quando vuoi.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d giorno gratis, poi %2$s all\'anno. Annulli quando vuoi.</item>
+        <item quantity="other">%1$d giorni gratis, poi %2$s all\'anno. Annulli quando vuoi.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d giorno gratis</item>
+        <item quantity="other">%1$d giorni gratis</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Provalo gratis per %1$d giorno.</item>
+        <item quantity="other">Provalo gratis per %1$d giorni.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Inizia il mio giorno gratis</item>
+        <item quantity="other">Inizia i miei %1$d giorni gratis</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d giorno gratis, poi ogni settimana</item>
+        <item quantity="other">%1$d giorni gratis, poi ogni settimana</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d giorno gratis, poi %2$s all\'anno</item>
+        <item quantity="other">%1$d giorni gratis, poi %2$s all\'anno</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d giorno di fila</item>
         <item quantity="other">%1$d giorni di fila</item>
@@ -36,6 +84,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Aggiungi il mio errore alle flashcard</item>
         <item quantity="other">Aggiungi i miei %1$d errori alle flashcard</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d domande</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">C\'è %1$d domanda senza risposta. Consegnare comunque?</item>

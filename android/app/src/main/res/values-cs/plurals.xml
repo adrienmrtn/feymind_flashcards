@@ -9,6 +9,66 @@
         <item quantity="one">%1$d kartička</item>
         <item quantity="other">kartičky: %1$d</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Tvůj předmět</item>
+        <item quantity="few">Tvoje %1$d předměty</item>
+        <item quantity="other">Tvých %1$d předmětů</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d bod: pořádná výzva. Půjdeme na to krok za krokem</item>
+        <item quantity="few">+%1$d body: pořádná výzva. Půjdeme na to krok za krokem</item>
+        <item quantity="other">+%1$d bodů: pořádná výzva. Půjdeme na to krok za krokem</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d bod: ambiciózní, ale zvládnutelné</item>
+        <item quantity="few">+%1$d body: ambiciózní, ale zvládnutelné</item>
+        <item quantity="other">+%1$d bodů: ambiciózní, ale zvládnutelné</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d bod: malý krok, úplně zvládnutelný</item>
+        <item quantity="few">+%1$d body: malý krok, úplně zvládnutelný</item>
+        <item quantity="other">+%1$d bodů: malý krok, úplně zvládnutelný</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d den</item>
+        <item quantity="few">%1$d dny</item>
+        <item quantity="other">%1$d dní</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d den zdarma, potom %2$s týdně. Zrušit můžeš kdykoli.</item>
+        <item quantity="few">%1$d dny zdarma, potom %2$s týdně. Zrušit můžeš kdykoli.</item>
+        <item quantity="other">%1$d dní zdarma, potom %2$s týdně. Zrušit můžeš kdykoli.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d den zdarma, potom %2$s ročně. Zrušit můžeš kdykoli.</item>
+        <item quantity="few">%1$d dny zdarma, potom %2$s ročně. Zrušit můžeš kdykoli.</item>
+        <item quantity="other">%1$d dní zdarma, potom %2$s ročně. Zrušit můžeš kdykoli.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d den zdarma</item>
+        <item quantity="few">%1$d dny zdarma</item>
+        <item quantity="other">%1$d dní zdarma</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Vyzkoušej ho %1$d den zdarma.</item>
+        <item quantity="few">Vyzkoušej ho %1$d dny zdarma.</item>
+        <item quantity="other">Vyzkoušej ho %1$d dní zdarma.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Začít můj den zdarma</item>
+        <item quantity="few">Začít mé %1$d dny zdarma</item>
+        <item quantity="other">Začít mých %1$d dní zdarma</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d den zdarma, potom každý týden</item>
+        <item quantity="few">%1$d dny zdarma, potom každý týden</item>
+        <item quantity="other">%1$d dní zdarma, potom každý týden</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d den zdarma, potom %2$s ročně</item>
+        <item quantity="few">%1$d dny zdarma, potom %2$s ročně</item>
+        <item quantity="other">%1$d dní zdarma, potom %2$s ročně</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d den v řadě</item>
         <item quantity="other">Dní v řadě: %1$d</item>
@@ -41,6 +101,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Přidat moji chybu do kartiček</item>
         <item quantity="other">Přidat moje chyby (%1$d) do kartiček</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">Otázky: %1$d</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d otázka je bez odpovědi. Přesto odevzdat?</item>

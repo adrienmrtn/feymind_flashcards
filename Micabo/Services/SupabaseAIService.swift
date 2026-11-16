@@ -114,6 +114,9 @@ struct SupabaseAIService: AIService {
             "language": request.language.rawValue,
             "level": request.level?.rawValue ?? ""
         ]
+        if let mode = request.mode {
+            payload["mode"] = mode
+        }
         // Le document ne part que quand il y en a un : une clé vide se lirait comme un
         // document vide.
         if let attachment = request.attachment {

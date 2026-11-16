@@ -50,6 +50,17 @@ enum Haptics {
         rigidGenerator.impactOccurred()
     }
 
+    /// **Une vibration qui monte** (lot 12) : `level` de 0 à 1, du coup léger au coup sec. Le
+    /// doigt sent l'engagement se remplir sous lui.
+    static func ramp(_ level: Double) {
+        let value = CGFloat(min(1, max(0, level)))
+        if value < 0.7 {
+            lightGenerator.impactOccurred(intensity: 0.35 + value * 0.6)
+        } else {
+            rigidGenerator.impactOccurred(intensity: 0.6 + (value - 0.7) * 1.3)
+        }
+    }
+
     static func success() {
         notificationGenerator.notificationOccurred(.success)
     }

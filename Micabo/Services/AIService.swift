@@ -138,6 +138,10 @@ struct MikaChatRequest {
     var language: ContentLanguage = .fr
     /// Le registre de l'élève, quand le profil le connaît.
     var level: StudyLevel? = nil
+    /// Lot 12 — le geste de la caméra (`ScanMode.rawValue`). La fonction déployée l'ignore ; la
+    /// version écrite dans le dépôt (`_shared/mika.ts`, pas encore en ligne) donne alors à une
+    /// traduction la place d'une page entière.
+    var mode: String? = nil
 
     /// Les tours tels qu'ils partent : les derniers, chacun borné.
     var trimmedTurns: [MikaTurn] {

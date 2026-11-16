@@ -121,7 +121,7 @@ final class OnboardingContentTests: XCTestCase {
                 XCTAssertTrue(title.contains("**"), "\(locale.rawValue) \(story) : une story a son mot-clé")
             }
         }
-        XCTAssertEqual(OnboardingStory.allCases.map(\.index), [1, 2, 3, 4])
+        XCTAssertEqual(OnboardingStory.allCases.map(\.index), [1, 2, 3, 4, 5], "Lot 16 : « Tous tes cours, simplifiés. » en premier")
     }
 
     /// Les textes de la spécification, tels qu'ils s'affichent en français.
@@ -137,7 +137,7 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(french("ios.onb10.q.exam"), "Qu'est-ce qui arrive en premier ?")
         XCTAssertEqual(french("ios.onb10.react.subjects"), "Noté ! Je prépare tes leçons là-dessus.")
         XCTAssertEqual(french("ios.onb10.q.goal"), "Ton **objectif n°1** cette année ?")
-        XCTAssertEqual(french("ios.onb10.q.worries"), "Qu'est-ce qui te **bloque** le plus ?")
+        XCTAssertEqual(french("ios.onb16.q.worries"), "Quand tu révises, qu'est-ce qui est le plus **difficile** ?")
         XCTAssertEqual(french("ios.onb10.solutions.title", ["name": "Lina"]), "Voilà comment je t'aide, **Lina**")
         XCTAssertEqual(french("ios.onb10.q.target"), "Et tu **vises** combien ?")
         XCTAssertEqual(french("ios.onb10.start.commit"), "Je m'engage")
@@ -146,14 +146,14 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(french("ios.onb10.plan.title", ["name": "Lina"]), "Lina, ton plan est **prêt**")
         XCTAssertEqual(french("ios.onb10.trial.cancel"), "Tu annules en 2 touches, quand tu veux")
         XCTAssertEqual(OnboardingDailyTime.fifteen.title(locale: .fr), "15 min · Sérieux")
-        XCTAssertEqual(DailyTimeStepView.advised, .fifteen, "Quinze minutes est le cran conseillé")
+        XCTAssertEqual(DailyTimeStepView.advised, 15, "Quinze minutes est le cran proposé d'abord")
     }
 
     // MARK: - Vrai partout
 
     /// **Aucun chiffre d'utilisateurs, aucune note, aucun pourcentage, aucune étude** dans les
-    /// phrases du lot : la seule étude du parcours est celle de la question d'essai, et ses
-    /// deux chiffres sont écrits une fois, avec leur source.
+    /// phrases du lot : la seule étude du parcours (lot 14) est celle de Kestin et al., sur son
+    /// écran, avec sa source écrite en clair ; la question d'essai et Karpicke sont partis.
     func testNoStudyAndNoFigureOutsideTheSampleCard() throws {
         let bigNumber = try NSRegularExpression(pattern: #"[0-9]{3,}"#)
         for locale in Self.languages {
@@ -172,11 +172,16 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(SampleCard.retainedByRereading, 36)
         XCTAssertTrue(L10n.t("ios.journey.source", locale: .fr).contains("Karpicke"))
 
-        // La source et la phrase de l'étude ne sont appelées que par la question d'essai.
-        for (path, text) in try Self.onboardingSources() where !path.hasSuffix("SampleCardStepView.swift") {
+        // L'étude de Karpicke n'est plus citée ; celle de Kestin l'est une fois, sur son écran.
+        var citing: [String] = []
+        for (path, text) in try Self.onboardingSources() {
             XCTAssertFalse(text.contains("ios.journey.source"), path)
             XCTAssertFalse(text.contains("ios.onb7.card.proof"), path)
+            // Lot 15 : l'écran de la recherche cite sa source en clair (`ios.onb15.research.source`).
+            if text.contains("\"ios.onb15.research.source\"") { citing.append(path) }
         }
+        XCTAssertEqual(citing.count, 1, "\(citing)")
+        XCTAssertTrue(citing.first?.hasSuffix("ChapterStepViews.swift") == true)
     }
 
     /// **Rien de ce que l'élève tape ne part dans les statistiques** : ni le sujet de sa
@@ -208,7 +213,8 @@ final class OnboardingContentTests: XCTestCase {
                     XCTAssertFalse(line.contains(waiting), "\(path):\(number + 1) attend : \(waiting)")
                 }
                 for clock in ["Timer.", "TimelineView(", "CADisplayLink("] where line.contains(clock) {
-                    XCTAssertTrue(path.hasSuffix("Steps/PlanStepViews.swift"), "\(path):\(number + 1) a une horloge")
+                    // Le chargement du plan, et l'anneau de l'engagement le temps que le doigt est posé.
+                    XCTAssertTrue(path.hasSuffix("Steps/PlanStepViews.swift") || path.hasSuffix("Steps/CommitmentStepView.swift"), "\(path):\(number + 1) a une horloge")
                 }
             }
         }
@@ -222,8 +228,8 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(PlanBuildingStepView.progress(elapsed: 0), 0)
         XCTAssertEqual(PlanBuildingStepView.progress(elapsed: PlanBuildingStepView.duration), 1)
         XCTAssertEqual(PlanBuildingStepView.progress(elapsed: 60), 1, "L'app revenue de l'arrière-plan ne dépasse pas cent")
-        XCTAssertGreaterThan(PlanBuildingStepView.progress(elapsed: PlanBuildingStepView.duration / 2), 0.5,
-                             "La course part vite et se pose")
+        XCTAssertEqual(PlanBuildingStepView.progress(elapsed: PlanBuildingStepView.duration / 2), 0.5, accuracy: 0.0001,
+                             "Une course régulière, sans à-coup (lot 12)")
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0, lines: 5), 0)
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0.2, lines: 5), 1)
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 0.62, lines: 5), 3)
@@ -232,27 +238,6 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(PlanBuildingStepView.checkedCount(progress: 1, lines: 0), 0)
     }
 
-    /// **Un rappel n'est promis que s'il peut être envoyé** : notifications refusées, ou essai
-    /// trop court pour avoir une veille, l'écran dit ce qui reste vrai.
-    func testNoReminderIsPromisedWithoutScheduling() {
-        XCTAssertTrue(TrialOfferStepView.canPromise(notificationsAllowed: true, trialDays: 3, now: Self.now))
-        XCTAssertFalse(TrialOfferStepView.canPromise(notificationsAllowed: false, trialDays: 3, now: Self.now))
-        XCTAssertFalse(TrialOfferStepView.canPromise(notificationsAllowed: true, trialDays: 1, now: Self.now),
-                       "Un essai d'un jour n'a pas de veille : rien ne serait posé")
-
-        XCTAssertEqual(TrialOfferStepView.titleKey(canRemind: true), "ios.onb10.trial.remind")
-        XCTAssertEqual(TrialOfferStepView.titleKey(canRemind: false), "ios.onb10.trial.anytime")
-        XCTAssertEqual(TrialOfferStepView.reassuranceKey(canRemind: false), "ios.onb5.trial.noCharge")
-
-        let refused = L10n.t(TrialOfferStepView.titleKey(canRemind: false), locale: .fr)
-        XCTAssertFalse(refused.localizedCaseInsensitiveContains("préviens"), refused)
-        XCTAssertFalse(refused.localizedCaseInsensitiveContains("rappel"), refused)
-        XCTAssertTrue(L10n.t(TrialOfferStepView.titleKey(canRemind: true), locale: .fr).contains("préviens"))
-
-        // La durée annoncée est celle du produit, et le rappel de cet essai-là se pose bien.
-        XCTAssertEqual(OnboardingTrial.days, PaywallCatalog.yearly.trialDays)
-        XCTAssertNotNil(TrialEndReminder.fireDate(purchasedAt: Self.now, trialDays: OnboardingTrial.days))
-    }
 
     // MARK: - Adapté au pays et au niveau
 
@@ -287,13 +272,13 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(lina.planLines(locale: .fr).map { plain($0) ?? "" }, [
             "Le programme de Terminale",
             "Tes 3 matières",
+            "Ton objectif : 12/20 → 16/20",
             "Bac, le 15 juin",
             "15 min par jour, à \(hour)",
             "Ta première leçon : La guerre froide",
         ])
         XCTAssertEqual(lina.planSummary(locale: .fr).map(\.id), ["exam", "subjects", "daily", "goal", "lesson"])
         XCTAssertEqual(lina.planSummary(locale: .fr).first { $0.id == "goal" }?.value, "12/20 → 16/20")
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: lina, locale: .fr), "Les fonctions affines")
     }
 
     /// **Une plage de notes se lit de gauche à droite, comme une équation**, en arabe aussi :
@@ -323,7 +308,6 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertFalse(goals.contains(.dreamSchool))
         XCTAssertFalse(goals.contains(.passYear))
         XCTAssertEqual(FirstLessonStepView.band(for: tom.tier), "lower")
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: tom, locale: .fr), "La Révolution française")
         XCTAssertEqual(SampleCard.pick(for: tom.subjects).card, .history)
         XCTAssertTrue(NotificationsStepView.message(for: tom, locale: .fr).hasPrefix("Tom, "))
     }
@@ -339,7 +323,6 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(ines.classLabel, "Licence 1")
         XCTAssertTrue(LearningGoal.offered(for: ines.tier).contains(.passYear))
         XCTAssertEqual(FirstLessonStepView.band(for: ines.tier), "higher")
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: ines, locale: .fr), "Les matrices")
         let reaction = try XCTUnwrap(ExamStepView.reaction(choice: ines.examChoice, date: ines.examDate, now: Self.now, locale: .fr))
         XCTAssertTrue(reaction.hasPrefix("Partiels dans "), reaction)
     }
@@ -368,7 +351,6 @@ final class OnboardingContentTests: XCTestCase {
         XCTAssertEqual(sam.targetLabel(locale: .en), "3.7")
         XCTAssertEqual(sam.gradeGap(locale: .en)?.title(locale: .en), "+0.7: ambitious, and doable")
         XCTAssertEqual(SampleCard.pick(for: sam.subjects).card, .chemistry)
-        XCTAssertEqual(FirstLessonStepView.exampleTopic(for: sam, locale: .en), "Acid-base reactions")
     }
 
     /// **L'Espagne, l'Italie, le Maroc** : la PAU, la Maturità, le Bac national.
@@ -497,11 +479,11 @@ final class OnboardingContentTests: XCTestCase {
 
         lina.currentScore = nil
         lina.targetScore = nil
-        XCTAssertEqual(StartingPointStepView.title(for: lina, locale: .fr), "On vise **haut**")
+        XCTAssertEqual(StartingPointStepView.title(for: lina, locale: .fr), "Ton **objectif** est fixé")
 
         let exam = try XCTUnwrap(lina.examChoices.first)
         lina.choose(exam: exam, now: Self.now)
-        XCTAssertEqual(StartingPointStepView.title(for: lina, locale: .fr), "**Bac** : on vise haut")
+        XCTAssertEqual(StartingPointStepView.title(for: lina, locale: .fr), "**Bac** : ton objectif est fixé")
     }
 
     /// Mika réagit à ce qui arrive en premier : loin, bientôt, un contrôle, ou rien.
@@ -636,8 +618,11 @@ final class OnboardingContentTests: XCTestCase {
         calendar.timeZone = try XCTUnwrap(TimeZone(identifier: "Europe/Paris"))
         let start = try XCTUnwrap(calendar.date(from: DateComponents(year: 2026, month: 11, day: 11, hour: 18)))
         let steps = TrialTimeline.milestones(from: start, calendar: calendar, locale: .fr)
-        XCTAssertEqual(steps[1].title, "13 novembre : un rappel", "Le rappel part la veille de la fin, comme TrialEndReminder")
-        XCTAssertEqual(steps[2].title, "14 novembre : ton abonnement commence")
+        // Lot 17 : la date seule en titre ; ce qui s'y passe est dans le détail.
+        XCTAssertEqual(steps[1].title, "13 novembre", "Le rappel part la veille de la fin, comme TrialEndReminder")
+        XCTAssertEqual(steps[1].detail, "Le rappel : ton essai finit demain.")
+        XCTAssertEqual(steps[2].title, "14 novembre")
+        XCTAssertTrue(steps[2].detail.hasPrefix("Ton abonnement commence"), steps[2].detail)
 
         let fire = try XCTUnwrap(TrialEndReminder.fireDate(purchasedAt: start, trialDays: TrialTimeline.freeDays))
         XCTAssertEqual(calendar.component(.day, from: fire), 13, "La date affichée et celle du rappel sont la même")

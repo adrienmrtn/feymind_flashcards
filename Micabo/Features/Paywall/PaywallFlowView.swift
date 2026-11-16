@@ -197,6 +197,10 @@ struct PaywallFlowView: View {
         case paywall
         case offer
         case welcome
+        /// **La sortie propre** (lot 12) : à la fin du parcours d'accueil, l'offre refusée, Mika
+        /// dit au revoir sans reproche — la première leçon reste offerte, l'offre attend sur
+        /// l'accueil — et ouvre l'app.
+        case farewell
     }
 
     /// Ce qui a mené à l'offre : c'est ce que les statistiques en retiennent.
@@ -241,15 +245,30 @@ struct PaywallFlowView: View {
     /// L'instant d'origine de la fenêtre de l'offre : celui de son premier affichage.
     @State private var startedAt: Date? = nil
     @State private var showsConfetti = false
+    /// Les jours d'essai de la formule achetée : la bienvenue dit quand l'essai finit.
+    @State private var boughtTrialDays: Int?
+    /// L'instant de l'achat, d'où partent les dates de l'essai.
+    @State private var boughtAt = Date()
+    /// **Vrai à la fin du parcours d'accueil** : l'offre refusée mène à la sortie propre
+    /// (`Stage.farewell`) au lieu de refermer l'écran d'un coup.
+    var showsFarewell = false
+    /// **L'aperçu d'un compte déjà Pro** (lot 12, constructions internes) : mêmes écrans, vrais
+    /// prix, mais aucun achat ni restauration ne part ; une mention le dit sous le bouton, et
+    /// la croix mène à l'offre puis à l'app, comme pour un élève sans abonnement.
+    var previewsPro = false
 
     /// **Le paywall**, ouvert par une porte de l'app (`trigger`) ou par la fin du parcours
-    /// d'accueil (sans `trigger`).
+    /// d'accueil (sans `trigger`, `showsFarewell` vrai).
     init(
         trigger: PaywallTrigger? = nil,
+        showsFarewell: Bool = false,
+        previewsPro: Bool = false,
         onDismiss: @escaping () -> Void,
         onSubscribed: @escaping () -> Void
     ) {
         self.trigger = trigger
+        self.showsFarewell = showsFarewell
+        self.previewsPro = previewsPro
         self.onDismiss = onDismiss
         self.onSubscribed = onSubscribed
         _stage = State(initialValue: .paywall)
@@ -293,6 +312,9 @@ struct PaywallFlowView: View {
                 offerStage.transition(.opacity)
             case .welcome:
                 welcomeStage.transition(.opacity)
+            case .farewell:
+                PaywallFarewellScreen(name: firstName, topic: PaywallContext.current().topic, onContinue: onDismiss)
+                    .transition(.opacity)
             }
 
             if showsConfetti {
@@ -302,6 +324,15 @@ struct PaywallFlowView: View {
                     .accessibilityHidden(true)
             }
         }
+        // **Le glissement vers le bas fait exactement comme la croix** (lot 13) : le paywall
+        // laisse la place à l'offre, l'offre à la sortie, la sortie à l'app. Jamais un écran
+        // vide, jamais un retour dans le parcours.
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 24).onEnded { drag in
+                guard Self.isDismissSwipe(translation: drag.translation, startY: drag.startLocation.y) else { return }
+                swipedDown()
+            }
+        )
         .task { await loadPrices() }
         .onAppear(perform: opened)
         // **Un achat confirmé après coup mène à la bienvenue.** Un achat en attente (une
@@ -309,7 +340,7 @@ struct PaywallFlowView: View {
         // par le flux du SDK (`ProAccess.observePurchases`) : l'écran encore ouvert passe
         // alors à la bienvenue, au lieu de rester devant quelqu'un d'abonné.
         .onChange(of: pro?.isPro == true) { _, isPro in
-            guard isPro, !didSubscribe else { return }
+            guard isPro, !didSubscribe, !previewsPro else { return }
             subscribed()
         }
     }
@@ -349,12 +380,21 @@ struct PaywallFlowView: View {
     }
 
     private var welcomeStage: some View {
-        PaywallWelcomeScreen(name: firstName, onContinue: onSubscribed)
+        PaywallWelcomeScreen(
+            name: firstName,
+            trialEnd: boughtTrialDays.map { PaywallTimeline.endDate(from: boughtAt, trialDays: $0) },
+            onContinue: onSubscribed
+        )
+    }
+
+    /// La mention de l'aperçu, sous le bouton.
+    private var previewNotice: PaywallNotice? {
+        previewsPro ? .info(L10n.t("ios.pay12.preview", locale: .resolved())) : nil
     }
 
     /// Passe à un autre temps, en fondu. Le message d'une boutique qui a buté ne suit pas.
     private func show(_ next: Stage) {
-        notice = nil
+        notice = previewNotice
         withAnimation(motion(MicaboMotion.standard)) { stage = next }
     }
 
@@ -362,6 +402,7 @@ struct PaywallFlowView: View {
 
     private func opened() {
         openedAt = Date()
+        notice = previewNotice
         switch stage {
         case .paywall:
             Analytics.track(.paywallOpened, [
@@ -370,7 +411,7 @@ struct PaywallFlowView: View {
             ])
         case .offer:
             offerShown()
-        case .welcome:
+        case .welcome, .farewell:
             break
         }
     }
@@ -399,6 +440,45 @@ struct PaywallFlowView: View {
         ])
     }
 
+    /// **Ce que fait la croix de chaque temps**, et donc le glissement vers le bas.
+    enum Close: Equatable {
+        /// La croix du paywall : l'offre si elle est due, sinon la sortie.
+        case paywall
+        /// La croix de l'offre : la sortie (au revoir à la fin du parcours), puis l'app.
+        case offer
+        /// « Continuer » de l'au revoir : l'app.
+        case farewell
+        /// La bienvenue après l'achat : son bouton seul la referme.
+        case none
+    }
+
+    static func close(for stage: Stage) -> Close {
+        switch stage {
+        case .paywall: .paywall
+        case .offer: .offer
+        case .farewell: .farewell
+        case .welcome: .none
+        }
+    }
+
+    /// **Un glissement qui ferme** : franchement vers le bas (plus de 120 points, plus vertical
+    /// qu'horizontal), parti du haut de l'écran — un défilement vers le haut dans un paywall
+    /// qui défile (iPhone SE) part plus bas et ne ferme rien.
+    static func isDismissSwipe(translation: CGSize, startY: CGFloat) -> Bool {
+        translation.height > 120 && abs(translation.width) < translation.height && startY < 320
+    }
+
+    /// Le glissement vers le bas : la même chose que la croix du temps en cours.
+    private func swipedDown() {
+        guard !isPurchasing else { return }
+        switch Self.close(for: stage) {
+        case .paywall: closePaywall()
+        case .offer: declineOffer()
+        case .farewell: onDismiss()
+        case .none: break
+        }
+    }
+
     /// **La croix du paywall.** Refermé sans achat, il laisse la place à l'offre de réduction
     /// quand elle est due — dans le même écran, sans se refermer d'abord. Sinon il sort.
     private func closePaywall() {
@@ -420,7 +500,7 @@ struct PaywallFlowView: View {
         // sont arrivés de la boutique. Une offre qui s'ouvrirait sur une attente serait pire
         // que pas d'offre.
         guard PaywallPriceLoading.hasPrices(for: Self.offerProducts),
-              DiscountOffer.paywallClosed(isPro: isPro)
+              DiscountOffer.paywallClosed(isPro: isPro && !previewsPro)
         else {
             onDismiss()
             return
@@ -442,6 +522,12 @@ struct PaywallFlowView: View {
             "source": .text(offerSource.rawValue),
             "seconds": .number((Date().timeIntervalSince(openedAt) * 10).rounded() / 10),
         ])
+        // À la fin du parcours d'accueil, l'offre refusée mène à la sortie propre : Mika dit ce
+        // qui reste (la leçon offerte, l'offre sur l'accueil), puis l'app s'ouvre.
+        if showsFarewell, offerSource == .paywall {
+            show(.farewell)
+            return
+        }
         onDismiss()
     }
 
@@ -487,6 +573,12 @@ struct PaywallFlowView: View {
     @MainActor
     private func buy(_ plan: PaywallPlan, door: String) async {
         guard !isPurchasing else { return }
+        // L'aperçu ne vend rien : la mention le redit, et rien ne part chez la boutique.
+        guard !previewsPro else {
+            Haptics.warning()
+            notice = previewNotice
+            return
+        }
         isPurchasing = true
         notice = nil
         // L'essai tel qu'il était promis au moment d'acheter : la boutique peut répondre
@@ -502,6 +594,10 @@ struct PaywallFlowView: View {
         let outcome = await PaywallPurchases.buy(plan)
         isPurchasing = false
         lastOutcome = outcome
+        if outcome == .purchased, promisedTrial {
+            boughtTrialDays = plan.trialDays
+            boughtAt = Date()
+        }
 
         switch outcome {
         case .purchased:
@@ -554,6 +650,10 @@ struct PaywallFlowView: View {
     @MainActor
     private func restore() async {
         guard !isPurchasing else { return }
+        guard !previewsPro else {
+            notice = previewNotice
+            return
+        }
         isPurchasing = true
         notice = nil
 

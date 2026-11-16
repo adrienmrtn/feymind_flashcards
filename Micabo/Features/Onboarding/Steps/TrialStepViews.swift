@@ -37,71 +37,69 @@ enum TrialTimeline {
     /// Aujourd'hui, le rappel, le premier prélèvement. `remindersOn` dit si le rappel partira
     /// vraiment (notifications permises) : sinon l'étape dit comment l'activer, plutôt que de
     /// promettre un rappel qui ne viendra pas.
+    ///
+    /// **Les mêmes dates que le paywall qui suit** (lot 13) : la durée de l'essai est celle du
+    /// produit (`trialDays`, lue sur la boutique), la fin vient de `PaywallTimeline.endDate`, le
+    /// rappel de `TrialEndReminder.fireDate`, et les deux s'écrivent par
+    /// `PaywallTimeline.dayText`. Une seule source, un seul calcul.
     static func milestones(
         from date: Date = .now,
         calendar: Calendar = .current,
         locale: UiLocale = .fr,
-        remindersOn: Bool = true
+        remindersOn: Bool = true,
+        trialDays: Int = OnboardingTrial.days
     ) -> [Milestone] {
-        let dateText = billingDateText(from: date, calendar: calendar, locale: locale)
-        let reminderText = dayText(reminderDay, from: date, calendar: calendar, locale: locale)
+        let dateText = billingDateText(from: date, calendar: calendar, locale: locale, trialDays: trialDays)
+        let reminderText = reminderDateText(from: date, calendar: calendar, locale: locale, trialDays: trialDays)
         return [
             Milestone(
                 title: L10n.t("ios.onb5.trial.today", locale: locale),
-                detail: L10n.t("ios.onb5.trial.todayDetail", locale: locale),
+                // Lot 14 : sans « illimitées » — le serveur plafonne.
+                detail: L10n.t("ios.onb17.tl.today", locale: locale),
                 systemImage: "lock.open.fill",
                 tone: .current
             ),
             Milestone(
                 // **Des dates, plus des « jour 2 / jour 3 »** (lot 7) : « Jour 2 » se lisait le
                 // lendemain, alors que le rappel part le surlendemain, la veille de la fin.
-                title: L10n.t("ios.onb7.trial.reminder", locale: locale, vars: ["date": reminderText]),
-                detail: L10n.t(remindersOn ? "ios.onb5.trial.reminderDetail" : "ios.onb5.trial.reminderOff", locale: locale),
+                // Lot 17 : la date seule en titre, ce qui s'y passe dessous.
+                title: reminderText,
+                // Le rappel part 24 h avant la fin (`TrialEndReminder.fireDate`) : « demain » est
+                // exact. Sans notifications, l'étape dit comment l'activer.
+                detail: L10n.t(remindersOn ? "ios.onb17.tl.reminder" : "ios.onb5.trial.reminderOff", locale: locale),
                 systemImage: "bell.fill",
                 tone: .upcoming
             ),
             Milestone(
-                title: L10n.t("ios.onb7.trial.billing", locale: locale, vars: ["date": dateText]),
-                detail: L10n.t("ios.onb7.trial.billingDetail", locale: locale),
+                title: dateText,
+                detail: L10n.t("ios.onb17.tl.billing", locale: locale),
                 systemImage: "star.fill",
                 tone: .upcoming
             ),
         ]
     }
 
-    /// Le jour du premier prélèvement, écrit comme on le dirait : « 28 août ».
+    /// Le jour du premier prélèvement, écrit comme on le dirait : « 28 août ». Le même calcul
+    /// que la chronologie du paywall (`PaywallTimeline.endDate`).
     static func billingDateText(
         from date: Date = .now,
         calendar: Calendar = .current,
-        locale: UiLocale = .fr
+        locale: UiLocale = .fr,
+        trialDays: Int = OnboardingTrial.days
     ) -> String {
-        dayText(freeDays, from: date, calendar: calendar, locale: locale)
+        PaywallTimeline.dayText(PaywallTimeline.endDate(from: date, trialDays: trialDays), locale: locale, calendar: calendar)
     }
 
-    /// Le jour du rappel, la veille de la fin : « 27 août ».
+    /// Le jour du rappel, la veille de la fin : « 27 août ». Le jour exact où le rappel est
+    /// posé (`TrialEndReminder.fireDate`).
     static func reminderDateText(
         from date: Date = .now,
         calendar: Calendar = .current,
-        locale: UiLocale = .fr
+        locale: UiLocale = .fr,
+        trialDays: Int = OnboardingTrial.days
     ) -> String {
-        dayText(reminderDay, from: date, calendar: calendar, locale: locale)
-    }
-
-    /// Un jour, `days` jours après `date`, écrit comme on le dirait.
-    private static func dayText(
-        _ days: Int,
-        from date: Date,
-        calendar: Calendar,
-        locale: UiLocale
-    ) -> String {
-        let billingDate = calendar.date(byAdding: .day, value: days, to: date) ?? date
-        let formatter = DateFormatter()
-        formatter.locale = locale.foundation
-        formatter.calendar = calendar
-        // Le fuseau vient du calendrier, et pas du système : sans lui, un minuit calculé à
-        // Paris s'écrit « la veille » dès que l'appareil est réglé plus à l'ouest.
-        formatter.timeZone = calendar.timeZone
-        formatter.setLocalizedDateFormatFromTemplate("d MMMM")
-        return formatter.string(from: billingDate)
+        let end = PaywallTimeline.endDate(from: date, trialDays: trialDays)
+        let fire = TrialEndReminder.fireDate(purchasedAt: date, trialDays: trialDays) ?? end.addingTimeInterval(-86_400)
+        return PaywallTimeline.dayText(fire, locale: locale, calendar: calendar)
     }
 }

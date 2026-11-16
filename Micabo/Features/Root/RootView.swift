@@ -106,25 +106,20 @@ struct RootView: View {
         }
         .overlay {
             if showsCurtain {
-                LaunchCurtain()
-                    .transition(.opacity)
+                // **L'écran de lancement animé** (retour testeur du build 179) : il part de
+                // l'image exacte de l'écran de lancement du système, Mika rebondit une fois et
+                // le nom apparaît, puis le rideau se lève — pendant que l'app se pose dessous.
+                LaunchCurtain(isPlaying: true) {
+                    withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
+                        showsCurtain = false
+                    }
+                }
+                .transition(.opacity)
             }
         }
-        // **Le rideau se lève au tour suivant de la boucle**, une fois la première image de
-        // l'écran posée dessous : l'écran de lancement (le même marine, le même Mika) cède la
-        // place sans blanc intermédiaire, par un fondu court.
-        .task {
-            guard showsCurtain else { return }
-            // Une seule fois par lancement : changer de langue recrée `RootView`
-            // (`.id(uiLocale.locale)`), et le bleu n'a pas à repasser sur l'app.
-            LaunchCurtain.hasLifted = true
-            // Le tour de boucle suffit : la tâche part une fois la première image posée, et
-            // attendre soixante millisecondes de plus ne faisait que retarder l'app.
-            await Task.yield()
-            withAnimation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion)) {
-                showsCurtain = false
-            }
-        }
+        // Une seule fois par lancement : changer de langue recrée `RootView`
+        // (`.id(uiLocale.locale)`), et le rideau n'a pas à repasser sur l'app.
+        .onAppear { LaunchCurtain.hasLifted = true }
         // Le passage d'un écran racine à l'autre : la courbe commune, un fondu bref si le
         // mouvement est réduit.
         .animation(MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: reduceMotion), value: didCompleteOnboarding)
@@ -146,20 +141,109 @@ struct RootView: View {
 /// (`LaunchMika`, 200 points). La première image de SwiftUI doit lui être identique : ce
 /// rideau repose le même fond et la même image, à sa taille, au centre de l'écran entier
 /// (pas de la zone sûre), puis s'efface en fondu sur l'écran qui suit.
+///
+/// **Animé depuis le build 180** (`isPlaying`) : la première image reste celle de l'écran de
+/// lancement, au point près ; puis Mika, **sans sauter ni rebondir** (il ne décolle jamais),
+/// passe en fondu à son clin d'œil en grandissant à peine, et « Micabo » monte sous lui. Le
+/// rideau rend la main (`onFinished`) **à la fin de ce geste, sans minuterie** : six dixièmes
+/// de seconde, pendant lesquels l'app se pose dessous. « Réduire les animations » : ni mise à
+/// l'échelle ni montée, un fondu bref, et le rideau se lève aussitôt.
+///
+/// **À la toute première ouverture, il dure plus longtemps** (lot 16, demande du fondateur) :
+/// le clin d'œil et le nom se posent plus lentement (1,2 s), puis Mika reste à l'écran le temps
+/// d'être vu (1,4 s), soit environ 2,6 s avant le fondu. Toujours sans minuterie : c'est la fin
+/// de la seconde animation (une respiration à peine visible, Mika ne bouge pas de son centre)
+/// qui rend la main. Les ouvertures suivantes gardent les six dixièmes de seconde.
 struct LaunchCurtain: View {
     /// Vrai une fois le rideau levé pendant ce lancement.
     nonisolated(unsafe) static var hasLifted = false
 
+    /// Le drapeau « l'écran de lancement long a déjà été joué » : il part avec l'app.
+    static let firstOpenKey = "micabo.launch.firstOpenPlayed"
+
+    /// **Vrai à la toute première ouverture** de cette installation : le rideau dure plus
+    /// longtemps. Les tests et les rendus le voient faux (le rideau n'y joue pas).
+    static var isFirstOpen: Bool {
+        !UserDefaults.standard.bool(forKey: firstOpenKey)
+    }
+
+    /// Le geste du clin d'œil, puis la pause, à la première ouverture.
+    static let firstOpenGesture: Double = 1.2
+    static let firstOpenHold: Double = 1.4
+
     /// L'image de l'écran de lancement, dans le catalogue.
     static let mika = "LaunchMika"
+
+    /// Faux : l'image fixe de l'écran de lancement (les rendus, les tests).
+    var isPlaying = false
+    var onFinished: () -> Void = {}
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Le geste a commencé : Mika fait son clin d'œil, le nom monte.
+    @State private var played = false
+    /// La pause de la première ouverture : une respiration à peine visible.
+    @State private var lingered = false
+
+    /// La taille de Mika sur l'écran de lancement (`LaunchMika`, 200 points).
+    static let size: CGFloat = 200
 
     var body: some View {
         ZStack {
             MicaboBrand.launch
-            Image(Self.mika)
+            LaunchMikaWink(isWinking: played)
+                // Une légère mise à l'échelle, sur place : Mika ne quitte pas son centre.
+                .scaleEffect(played && !reduceMotion ? (lingered ? 1.05 : 1.04) : 1)
+            Text(verbatim: "Micabo")
+                .font(V3Font.display(40))
+                .foregroundStyle(.white)
+                .opacity(played ? 1 : 0)
+                .offset(y: played || reduceMotion ? 132 : 148)
         }
         .ignoresSafeArea()
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+        .onAppear(perform: play)
+    }
+
+    private func play() {
+        guard isPlaying, !played else { return }
+        let firstOpen = Self.isFirstOpen
+        UserDefaults.standard.set(true, forKey: Self.firstOpenKey)
+        // Le nom monte pendant que Mika fait son clin d'œil (six dixièmes de seconde, 1,2 s à la
+        // première ouverture) ; mouvement réduit, un fondu bref.
+        let curve = reduceMotion
+            ? MicaboMotion.resolved(MicaboMotion.standard, reduceMotion: true)
+            : MicaboMotion.fill(seconds: firstOpen ? Self.firstOpenGesture : 0.6)
+        withAnimation(curve, completionCriteria: .logicallyComplete) {
+            played = true
+        } completion: {
+            guard firstOpen else {
+                onFinished()
+                return
+            }
+            // La première fois, Mika reste le temps d'être vu : une seconde animation, très
+            // lente, dont la fin lève le rideau.
+            withAnimation(MicaboMotion.hold(seconds: Self.firstOpenHold), completionCriteria: .logicallyComplete) {
+                lingered = true
+            } completion: {
+                onFinished()
+            }
+        }
+    }
+}
+
+/// **Mika au lancement** : l'image de l'écran de lancement, puis, en fondu à la même place et
+/// à la même taille, son clin d'œil. Aucun déplacement.
+private struct LaunchMikaWink: View {
+    let isWinking: Bool
+
+    var body: some View {
+        ZStack {
+            Image(LaunchCurtain.mika)
+                .opacity(isWinking ? 0 : 1)
+            MikaMascot(mood: .wink, size: LaunchCurtain.size)
+                .opacity(isWinking ? 1 : 0)
+        }
+        .frame(width: LaunchCurtain.size, height: LaunchCurtain.size)
     }
 }

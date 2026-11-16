@@ -64,6 +64,9 @@ class MicaboApplication : Application() {
 
     lateinit var sync: CloudSync
         private set
+    /** Les conversations avec Mika, hors leçon. */
+    lateinit var chats: com.micabo.app.data.ChatStore
+        private set
     lateinit var social: Social
         private set
 
@@ -176,16 +179,18 @@ class MicaboApplication : Application() {
         exams.reset(tombstones = true)
         val language = prefs.profile.value.language
         val theme = prefs.profile.value.theme
+        val themeChosen = prefs.profile.value.themeChosen
         prefs.reset()
         prefs.profileErased = true
         auth.reload()
         sync.erased()
         billing.follow(auth.guestId, fromGuest = false)
-        prefs.update { it.copy(language = language, theme = theme) }
+        prefs.update { it.copy(language = language, theme = theme, themeChosen = themeChosen) }
         streak.reset()
         xp.reset()
         focus.reload()
         mika.exercise.clear()
+        chats.clear()
         composer.reset()
     }
 
@@ -212,6 +217,7 @@ class MicaboApplication : Application() {
         focus = FocusTimer(this, xp)
         lessons = LessonRepository(this, functions, prefs, streak, xp)
         mika = MikaChat(functions, lessons, prefs, xp)
+        chats = com.micabo.app.data.ChatStore(this)
         exams = ExamRepository(this, prefs)
         // Avant les événements : chacun lit `isPro`, et un `lateinit` encore vide ferait planter.
         billing = Billing(this) {
@@ -221,7 +227,7 @@ class MicaboApplication : Application() {
         // **RevenueCat tout de suite**, sans attendre l'invité du réseau : sous l'identifiant déjà
         // gardé, ou anonyme au tout premier lancement. Le paywall a ses prix dès qu'il s'ouvre ;
         // l'invité suit par `logIn` plus bas, et l'achat ne part que sous lui (`Billing.identify`).
-        billing.start(auth.userId.ifEmpty { null })
+        if (!underTest) billing.start(auth.userId.ifEmpty { null })
         gift = GiftOffer(this)
         analytics = Analytics(this, prefs, auth) { billing.isPro.value }
         // Une synchro qui échoue se compte : avant, elle finissait dans un `Log.w` que personne
@@ -239,6 +245,8 @@ class MicaboApplication : Application() {
         auth.onAccountLost = { account -> sync.park(account) }
         social = Social(auth)
         composer = LessonComposer(this, YouTubeImport(functions)) { name, props -> analytics.track(name, props) }
+        // **Sous les tests de rendu** (Robolectric) : ni réseau, ni achats, ni statistiques.
+        if (underTest) return
         analytics.start()
         // Le compte invité s'ouvre tout de suite : il doit exister avant un achat, pour que
         // l'abonnement ait un propriétaire. Sans réseau, il s'ouvrira au premier appel ; une fois
@@ -258,6 +266,9 @@ class MicaboApplication : Application() {
     companion object {
         lateinit var instance: MicaboApplication
             private set
+
+        /** Vrai sous Robolectric : les rendus des écrans n'appellent aucun service. */
+        val underTest: Boolean get() = android.os.Build.FINGERPRINT == "robolectric"
     }
 }
 

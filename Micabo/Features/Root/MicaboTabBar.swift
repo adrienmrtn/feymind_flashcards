@@ -85,6 +85,15 @@ struct MicaboTabButton: View {
     let isSelected: Bool
     let action: () -> Void
 
+    /// Le nom de l'onglet actif, à taille fixe : la condensée, ou la police système grasse dans
+    /// les langues qu'elle n'écrit pas (`V3Typeface.systemDisplay`).
+    static var labelFont: Font {
+        if let system = V3Typeface.systemDisplay(for: .resolved()) {
+            return .system(size: 19 * system.scale, weight: .bold)
+        }
+        return Font.custom(V3Typeface.displayName(for: .heavy), fixedSize: 19)
+    }
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 7) {
@@ -92,7 +101,7 @@ struct MicaboTabButton: View {
                     .font(.system(size: isSelected ? 21 : 23, weight: .semibold))
                 if isSelected {
                     Text(title)
-                        .font(Font.custom(V3Typeface.displayName(for: .heavy), fixedSize: 19))
+                        .font(Self.labelFont)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                         .fixedSize(horizontal: true, vertical: false)

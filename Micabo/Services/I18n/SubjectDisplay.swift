@@ -12,8 +12,29 @@ enum SubjectDisplay {
 
     /// Les cinq langues d'origine, complétées par celles des nouveaux marchés
     /// (`SubjectDisplay+Regional.swift`).
-    static let families: [String: [UiLocale: String]] = merged(baseFamilies, regionalFamilies)
-    static let subjects: [String: [UiLocale: String]] = merged(baseSubjects, regionalSubjects)
+    static let families: [String: [UiLocale: String]] = merged(merged(baseFamilies, regionalFamilies), byName(lot13Families))
+    static let subjects: [String: [UiLocale: String]] = merged(merged(baseSubjects, regionalSubjects), byName(lot13Subjects))
+
+    /// Les six langues du lot 13 portent leurs libellés dans leur propre fichier
+    /// (`Locales/I18n+nb.swift`…), une table par langue : trois traducteurs y travaillent en même
+    /// temps sans se marcher dessus dans `I18n+Regional.swift`.
+    private static let lot13Families: [UiLocale: [String: String]] = [
+        .nb: nbFamilies, .he: heFamilies, .ja: jaFamilies, .lt: ltFamilies, .lv: lvFamilies, .ko: koFamilies,
+    ]
+    private static let lot13Subjects: [UiLocale: [String: String]] = [
+        .nb: nbSubjects, .he: heSubjects, .ja: jaSubjects, .lt: ltSubjects, .lv: lvSubjects, .ko: koSubjects,
+    ]
+
+    /// D'une table par langue à une table par libellé, la forme de `families` et `subjects`.
+    private static func byName(_ tables: [UiLocale: [String: String]]) -> [String: [UiLocale: String]] {
+        var result: [String: [UiLocale: String]] = [:]
+        for (locale, table) in tables {
+            for (name, label) in table {
+                result[name, default: [:]][locale] = label
+            }
+        }
+        return result
+    }
 
     private static func merged(
         _ base: [String: [UiLocale: String]],

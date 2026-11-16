@@ -5,8 +5,22 @@ import XCTest
 /// l'essai et ses dates, et **aucune promesse d'essai à qui n'y a pas droit** — ni dans le
 /// titre, ni sur le bouton, ni dans la mention.
 final class PaywallTests: XCTestCase {
+    /// Les phrases attendues sont françaises : la langue de l'app est posée, puis rendue.
+    private var savedLocale: String?
+
+    override func setUp() {
+        super.setUp()
+        savedLocale = UserDefaults.standard.string(forKey: UiLocale.storageKey)
+        UserDefaults.standard.set(UiLocale.fr.rawValue, forKey: UiLocale.storageKey)
+    }
+
     override func tearDown() {
         PaywallStorePrices.clear()
+        if let savedLocale {
+            UserDefaults.standard.set(savedLocale, forKey: UiLocale.storageKey)
+        } else {
+            UserDefaults.standard.removeObject(forKey: UiLocale.storageKey)
+        }
         super.tearDown()
     }
 
@@ -175,7 +189,7 @@ final class PaywallTests: XCTestCase {
         XCTAssertFalse(title.text.lowercased().contains("gratuit"), title.text)
         XCTAssertFalse(title.text.contains("3"), title.text)
 
-        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .fr), "S'abonner · \(yearly.displayPrice) par an")
+        XCTAssertEqual(PaywallCopy.callToAction(for: yearly, locale: .fr), "S'abonner")
         XCTAssertFalse(PaywallCopy.planDetail(for: yearly, locale: .fr).contains("gratuit"))
 
         let legal = PaywallCopy.legal(for: yearly, locale: .fr)
@@ -198,14 +212,17 @@ final class PaywallTests: XCTestCase {
 
         let legal = PaywallCopy.legal(for: PaywallCatalog.yearly, locale: .fr)
         XCTAssertEqual(legal, "Payé aujourd'hui : \(yearly.displayPrice), puis chaque année. Annule quand tu veux.")
-        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "S'abonner · \(yearly.displayPrice) par an")
+        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, locale: .fr), "S'abonner")
+        // À la fin du parcours d'accueil, le bouton dit « Continuer » ; le prix reste dans la mention.
+        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, endsOnboarding: true, locale: .fr), "Continuer")
+        XCTAssertEqual(PaywallCopy.callToAction(for: PaywallCatalog.yearly, endsOnboarding: true, locale: .en), "Continue")
     }
 
     /// **Le tarif réduit n'a pas d'essai**, et rien sur son écran n'en promet : ni son
     /// bouton, ni sa mention, qui le dit en toutes lettres.
     func testTheDiscountNeverPromisesATrial() {
         let discount = PaywallCatalog.discount
-        XCTAssertEqual(PaywallCopy.callToAction(for: discount, locale: .fr), "S'abonner · \(discount.displayPrice) par an")
+        XCTAssertEqual(PaywallCopy.callToAction(for: discount, locale: .fr), "S'abonner", "Le bouton ne porte jamais de prix")
         XCTAssertFalse(PaywallCopy.legal(for: discount, locale: .fr).contains("gratuit"))
 
         let mention = L10n.t("ios.pay11.offer.legal", locale: .fr, vars: ["price": discount.displayPrice])
@@ -462,17 +479,23 @@ final class PaywallTests: XCTestCase {
         }
     }
 
-    /// **Cinq serrages, du plus aéré au plus serré** : les pastilles partent d'abord, puis
-    /// des lignes du tableau. La chronologie de l'essai d'accueil et les formules restent.
-    func testTheDensitiesDropFactsThenRows() {
-        XCTAssertEqual(PaywallDensity.allCases, [.regular, .compact, .tight, .minimal, .bare])
-        XCTAssertTrue(PaywallDensity.regular.showsFacts)
-        XCTAssertTrue(PaywallDensity.compact.showsFacts)
-        XCTAssertFalse(PaywallDensity.tight.showsFacts)
-        XCTAssertEqual(PaywallDensity.allCases.map(\.rowCount), [4, 4, 4, 3, 2])
-        XCTAssertGreaterThan(PaywallDensity.regular.planHeight, PaywallDensity.bare.planHeight)
+    /// **Cinq serrages, du plus aéré au plus serré** : Mika et le titre rapetissent, l'air se
+    /// resserre ; les trois bénéfices restent, et rien de ce qui est promis ne part.
+    func testTheDensitiesShrinkTheHeroAndKeepThePromises() {
+        XCTAssertEqual(PaywallDensity.allCases, [.regular, .comfortable, .compact, .tight, .tightest])
+        XCTAssertEqual(PaywallDensity.benefitCount, 3)
+        XCTAssertEqual(PaywallDensity.allCases.map(\.benefits), [3, 3, 3, 3, 2])
+        let sizes = PaywallDensity.allCases.map(\.mikaSize)
+        XCTAssertEqual(sizes, sizes.sorted(by: >))
+        XCTAssertGreaterThan(PaywallDensity.tightest.mikaSize, 0, "Mika reste, même sur un iPhone SE")
         XCTAssertGreaterThan(PaywallDensity.regular.titleSize, PaywallDensity.compact.titleSize)
-        XCTAssertGreaterThan(PaywallDensity.regular.planHeight, PaywallDensity.regular.secondaryPlanHeight)
+        XCTAssertGreaterThan(PaywallDensity.compact.titleSize, PaywallDensity.tight.titleSize)
+        XCTAssertGreaterThan(PaywallDensity.regular.sectionGap, PaywallDensity.tight.sectionGap)
+        for feature in PaywallFeature.allCases {
+            for locale in Self.written {
+                XCTAssertFalse(L10n.t(feature.benefitKey, locale: locale).hasPrefix("ios."), feature.rawValue)
+            }
+        }
     }
 
     /// Chaque phrase des lots 10 et 11 existe dans les six langues écrites.

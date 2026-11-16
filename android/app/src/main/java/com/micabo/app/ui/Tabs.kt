@@ -1,5 +1,10 @@
 package com.micabo.app.ui
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -94,43 +99,52 @@ fun TabsScreen(navigator: Navigator) {
     }
 }
 
+/**
+ * **La barre d'onglets du lot 11** (`MicaboTabBar`) : une pilule qui flotte, sans ombre floue ;
+ * l'onglet actif dit son nom dans sa pastille, les autres ne montrent que leur icône (et se
+ * nomment à TalkBack). Elle se pose au-dessus de la barre du système.
+ */
 @Composable
-private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) {
+private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) = com.micabo.app.ui.v3.CappedFontScale {
     val colors = Micabo.colors
     Row(
         modifier
             .navigationBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 10.dp)
+            .padding(horizontal = 20.dp, vertical = 8.dp)
             .fillMaxWidth()
-            .shadow(14.dp, RoundedCornerShape(28.dp), ambientColor = colors.ink.copy(alpha = 0.12f), spotColor = colors.ink.copy(alpha = 0.12f))
-            .clip(RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(percent = 50))
             .background(colors.surface)
-            .border(1.5.dp, colors.stroke, RoundedCornerShape(28.dp))
-            // Au moins 64 : avec un grand texte système, l'intitulé ne se coupe plus.
-            .heightIn(min = 64.dp),
+            .border(1.5.dp, colors.stroke, RoundedCornerShape(percent = 50))
+            .heightIn(min = 60.dp)
+            .padding(6.dp),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Tab.entries.forEach { tab ->
             val active = tab == selected
-            val tint by animateColorAsState(if (active) colors.accent else colors.inkTertiary, label = "tint")
-            Pressable(onClick = { onSelect(tab) }, modifier = Modifier.weight(1f)) {
-                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(if (active) colors.accentWash else colors.surface)
-                            .padding(horizontal = 16.dp, vertical = 3.dp),
-                    ) {
-                        Icon(tab.icon, null, tint = tint, modifier = Modifier.size(24.dp))
+            val name = stringResource(tab.title)
+            Pressable(
+                onClick = { onSelect(tab) },
+                modifier = Modifier
+                    .weight(if (active) 1.8f else 1f)
+                    .semantics { contentDescription = name; this.selected = active },
+            ) {
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clip(RoundedCornerShape(percent = 50))
+                        .background(if (active) colors.accentWash else colors.surface)
+                        .padding(horizontal = 10.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(tab.icon, null, tint = if (active) colors.accentBright else colors.inkTertiary, modifier = Modifier.size(24.dp))
+                    if (active) {
+                        Spacer(Modifier.width(6.dp))
+                        // Le nom tient sur une ligne : il rapetisse plutôt que de se couper (« Hom/e »).
+                        com.micabo.app.ui.v3.FitText(name, com.micabo.app.ui.theme.text(14.sp, FontWeight.Bold), colors.ink, minSize = 10)
                     }
-                    Spacer(Modifier.height(2.dp))
-                    Text(
-                        stringResource(tab.title),
-                        style = nunito(12.sp, if (active) FontWeight.ExtraBold else FontWeight.Bold),
-                        color = tint,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
                 }
             }
         }

@@ -89,8 +89,9 @@ fun rememberHaptics(): Haptics {
 // MARK: - Les boutons
 
 /**
- * **Le bouton plein**, en relief comme sur iPhone : une tranche plus sombre sous la face, qui
- * s'enfonce quand on appuie.
+ * **Le bouton principal V3.3** (`V3Button`) : une pilule blanche sur le marine (encre sur le
+ * clair), 56 dp, son libellé en Sofia Sans Condensed 21, une lèvre discrète qui s'enfonce à
+ * l'appui. Un libellé long passe à la ligne : il ne se coupe pas.
  */
 @Composable
 fun MicaboButton(
@@ -99,24 +100,25 @@ fun MicaboButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     loading: Boolean = false,
-    color: Color = Micabo.colors.accent,
-    contentColor: Color = Color.White,
+    color: Color = Micabo.colors.cta,
+    contentColor: Color = Micabo.colors.ctaInk,
     icon: ImageVector? = null,
+    lip: Color? = null,
 ) {
     val colors = Micabo.colors
     val haptics = rememberHaptics()
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
-    val face = if (enabled) color else colors.surfaceSunken
-    val edge = if (enabled) color.darken(0.22f) else colors.stroke
+    val face = if (enabled) color else colors.surfaceMuted
+    val edge = if (enabled) (lip ?: if (color == colors.cta) colors.ctaLip else color.darken(0.25f)) else colors.stroke
     val depth by animateFloatAsState(if (pressed && enabled) 0f else 4f, spring(stiffness = Spring.StiffnessHigh), label = "depth")
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .heightIn(min = 58.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .heightIn(min = 60.dp)
+            .clip(RoundedCornerShape(percent = 50))
             .background(edge)
-            .clickable(interactionSource = interaction, indication = null, enabled = enabled && !loading) {
+            .clickable(interactionSource = interaction, indication = null, enabled = enabled && !loading, role = androidx.compose.ui.semantics.Role.Button) {
                 haptics.tap()
                 onClick()
             },
@@ -124,11 +126,11 @@ fun MicaboButton(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 54.dp)
+                .heightIn(min = 56.dp)
                 .offset(y = (4 - depth).dp)
-                .clip(RoundedCornerShape(16.dp))
+                .clip(RoundedCornerShape(percent = 50))
                 .background(face)
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .padding(horizontal = 22.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -141,7 +143,7 @@ fun MicaboButton(
                 }
                 Text(
                     text = text,
-                    style = nunito(17.sp, FontWeight.ExtraBold),
+                    style = com.micabo.app.ui.theme.Type.button,
                     color = if (enabled) contentColor else colors.inkTertiary,
                     textAlign = TextAlign.Center,
                 )
@@ -150,9 +152,9 @@ fun MicaboButton(
     }
 }
 
-/** Le bouton secondaire : une carte blanche bordée, en relief elle aussi. */
+/** **Le bouton secondaire** : une pilule sur la surface, bordée d'un filet. */
 @Composable
-fun MicaboSecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = Micabo.colors.accent) {
+fun MicaboSecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = Micabo.colors.ink, enabled: Boolean = true) {
     val colors = Micabo.colors
     val haptics = rememberHaptics()
     val interaction = remember { MutableInteractionSource() }
@@ -162,18 +164,38 @@ fun MicaboSecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier 
         modifier = modifier
             .fillMaxWidth()
             .scale(scale)
-            .heightIn(min = 54.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .heightIn(min = 52.dp)
+            .clip(RoundedCornerShape(percent = 50))
             .background(colors.surface)
-            .border(2.dp, colors.stroke, RoundedCornerShape(16.dp))
-            .clickable(interactionSource = interaction, indication = null) {
+            .border(1.5.dp, colors.stroke, RoundedCornerShape(percent = 50))
+            .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = androidx.compose.ui.semantics.Role.Button) {
                 haptics.tap()
                 onClick()
             }
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+            .padding(horizontal = 20.dp, vertical = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, style = nunito(16.sp, FontWeight.ExtraBold), color = color, textAlign = TextAlign.Center)
+        Text(text, style = com.micabo.app.ui.theme.display(19.sp, FontWeight.ExtraBold, 1.1f), color = if (enabled) color else colors.inkTertiary, textAlign = TextAlign.Center)
+    }
+}
+
+/** **Le bouton discret** (`V3Button(kind: .ghost)`) : un lien, sans fond. */
+@Composable
+fun MicaboGhostButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, color: Color = Micabo.colors.inkSecondary, enabled: Boolean = true) {
+    val haptics = rememberHaptics()
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(min = 44.dp)
+            .clip(RoundedCornerShape(percent = 50))
+            .clickable(enabled = enabled, role = androidx.compose.ui.semantics.Role.Button) {
+                haptics.tap()
+                onClick()
+            }
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = com.micabo.app.ui.theme.text(17.sp, FontWeight.SemiBold), color = color, textAlign = TextAlign.Center)
     }
 }
 
@@ -245,44 +267,6 @@ fun ProgressBar(progress: Float, modifier: Modifier = Modifier, color: Color = M
 }
 
 // MARK: - Mika et les icônes
-
-enum class MikaMood(@DrawableRes val drawable: Int) {
-    IDLE(R.drawable.mika_idle),
-    HAPPY(R.drawable.mika_happy),
-    SAD(R.drawable.mika_sad),
-    THINK(R.drawable.mika_think),
-    CELEBRATE(R.drawable.mika_celebrate),
-    WAVE(R.drawable.mika_wave),
-    SLEEP(R.drawable.mika_sleep),
-    SURPRISE(R.drawable.mika_surprise),
-}
-
-/** **Mika**, la mascotte : il respire doucement ; heureux, il saute. */
-@Composable
-fun Mika(mood: MikaMood = MikaMood.IDLE, size: Dp = 120.dp, modifier: Modifier = Modifier) {
-    val transition = rememberInfiniteTransition(label = "mika")
-    val bounce = mood == MikaMood.HAPPY || mood == MikaMood.CELEBRATE
-    val breathe by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(if (bounce) 520 else 1800, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "breathe",
-    )
-    val entrance = remember(mood) { Animatable(0.85f) }
-    LaunchedEffect(mood) { entrance.animateTo(1f, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow)) }
-    Image(
-        painter = painterResource(mood.drawable),
-        contentDescription = null,
-        modifier = modifier
-            .size(size)
-            .graphicsLayer {
-                val lift = if (bounce) breathe * 0.08f else breathe * 0.02f
-                translationY = -size.toPx() * lift
-                scaleX = entrance.value * (1f + breathe * 0.015f)
-                scaleY = entrance.value * (1f - breathe * 0.01f + breathe * 0.03f)
-            },
-    )
-}
 
 /** L'icône 3D d'une leçon ou d'un thème, depuis son identifiant (`MicaboIcon.lessonCatalog`). */
 @DrawableRes

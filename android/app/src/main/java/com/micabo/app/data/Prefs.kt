@@ -28,6 +28,24 @@ data class Profile(
     val dailyMinutes: Int = 0,
     /** system, light ou dark : l'apparence, propre à ce téléphone. */
     val theme: String = "system",
+    /** Vrai seulement quand l'élève a choisi un thème dans le Profil : sinon, le marine. */
+    val themeChosen: Boolean = false,
+    // **La place de l'élève dans son système** (lot 11 de l'iPhone, `LessonAudience.place`) :
+    // le pays « autre » par son code ISO, la filière et l'année du catalogue, l'examen et son
+    // jour. Le serveur calibre les cours dessus (`calibration.ts`).
+    val region: String = "",
+    val trackId: String = "",
+    val yearId: String = "",
+    val stageTitle: String = "",
+    val examId: String = "",
+    /** Le jour de l'examen, en jours depuis 1970 ; -1 sans examen daté. */
+    val examDay: Long = -1L,
+    val hardestSubject: String = "",
+    /** La moyenne et l'objectif sur l'échelle 10–20 du produit (9 : en dessous) ; -1 sans réponse. */
+    val grade: Int = -1,
+    val gradeTarget: Int = -1,
+    /** L'heure du rappel quotidien. */
+    val studyHour: Int = 18,
 )
 
 /** Ce que la ligne `profiles` transporte : le reste (la langue, l'apparence, les notes) reste ici. */
@@ -52,6 +70,17 @@ class Prefs(context: Context) {
         goals = prefs.getStringSet("goals", emptySet()).orEmpty().toSet(),
         dailyMinutes = prefs.getInt("dailyMinutes", 0),
         theme = prefs.getString("theme", "system").orEmpty().ifEmpty { "system" },
+        themeChosen = prefs.getBoolean("theme.chosen", false),
+        region = prefs.getString("region", "").orEmpty(),
+        trackId = prefs.getString("trackId", "").orEmpty(),
+        yearId = prefs.getString("yearId", "").orEmpty(),
+        stageTitle = prefs.getString("stageTitle", "").orEmpty(),
+        examId = prefs.getString("examId", "").orEmpty(),
+        examDay = prefs.getLong("examDay", -1L),
+        hardestSubject = prefs.getString("hardestSubject", "").orEmpty(),
+        grade = prefs.getInt("grade", -1),
+        gradeTarget = prefs.getInt("gradeTarget", -1),
+        studyHour = prefs.getInt("studyHour", 18),
     )
 
     /**
@@ -79,6 +108,17 @@ class Prefs(context: Context) {
             putStringSet("goals", next.goals)
             putInt("dailyMinutes", next.dailyMinutes)
             putString("theme", next.theme)
+            putBoolean("theme.chosen", next.themeChosen)
+            putString("region", next.region)
+            putString("trackId", next.trackId)
+            putString("yearId", next.yearId)
+            putString("stageTitle", next.stageTitle)
+            putString("examId", next.examId)
+            putLong("examDay", next.examDay)
+            putString("hardestSubject", next.hardestSubject)
+            putInt("grade", next.grade)
+            putInt("gradeTarget", next.gradeTarget)
+            putInt("studyHour", next.studyHour)
         }
         _profile.value = next
     }

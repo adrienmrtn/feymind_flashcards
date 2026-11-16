@@ -9,6 +9,54 @@
         <item quantity="one">%1$d kaart</item>
         <item quantity="other">%1$d kaarti</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Sinu aine</item>
+        <item quantity="other">Sinu %1$d ainet</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d punkt: tõeline väljakutse. Liigume samm-sammult</item>
+        <item quantity="other">+%1$d punkti: tõeline väljakutse. Liigume samm-sammult</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d punkt: ambitsioonikas ja teostatav</item>
+        <item quantity="other">+%1$d punkti: ambitsioonikas ja teostatav</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d punkt: väike samm, täiesti teostatav</item>
+        <item quantity="other">+%1$d punkti: väike samm, täiesti teostatav</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d päev</item>
+        <item quantity="other">%1$d päeva</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d päev tasuta, seejärel %2$s nädalas. Tühista millal tahes.</item>
+        <item quantity="other">%1$d päeva tasuta, seejärel %2$s nädalas. Tühista millal tahes.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d päev tasuta, seejärel %2$s aastas. Tühista millal tahes.</item>
+        <item quantity="other">%1$d päeva tasuta, seejärel %2$s aastas. Tühista millal tahes.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d päev tasuta</item>
+        <item quantity="other">%1$d päeva tasuta</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Proovi seda %1$d päev tasuta.</item>
+        <item quantity="other">Proovi seda %1$d päeva tasuta.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Alusta mu tasuta päeva</item>
+        <item quantity="other">Alusta mu %1$d tasuta päeva</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d päev tasuta, seejärel iga nädal</item>
+        <item quantity="other">%1$d päeva tasuta, seejärel iga nädal</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d päev tasuta, seejärel %2$s aastas</item>
+        <item quantity="other">%1$d päeva tasuta, seejärel %2$s aastas</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d päev järjest</item>
         <item quantity="other">%1$d päeva järjest</item>
@@ -36,6 +84,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Lisa minu viga mälukaartidele</item>
         <item quantity="other">Lisa minu %1$d viga mälukaartidele</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d küsimust</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d küsimus on vastamata. Kas esitada ikkagi?</item>

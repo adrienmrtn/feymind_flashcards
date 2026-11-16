@@ -68,7 +68,7 @@ sealed interface Screen {
     /** Un examen à créer (`id` nul) ou à modifier. */
     data class ExamEdit(val id: String?) : Screen
     /** Un examen blanc, sur un examen déclaré ou non. */
-    data class Mock(val examId: String?) : Screen
+    data class Mock(val examId: String?, val lessonId: String? = null) : Screen
     /**
      * `reason` : le code du refus (`free_limit`, `import_pro`…), vide depuis les réglages.
      * `trigger` : la porte dans les événements quand l'écran la connaît (`mika`, `mockExam`…),
@@ -83,6 +83,8 @@ sealed interface Screen {
     data object League : Screen
     data object Exercise : Screen
     data object Focus : Screen
+    /** **Le chat avec Mika** (lot 12) : une conversation gardée, ou une nouvelle. */
+    data class Chat(val id: String? = null) : Screen
 
     /** Les écrans qui montent du bas, comme une feuille. */
     val isModal: Boolean get() = this is Paywall || this is Creating
@@ -162,6 +164,15 @@ fun MicaboRoot(app: MicaboApplication) {
                 // Le « +10 XP » qui monte à chaque gain, au-dessus de tous les écrans.
                 XpToastHost()
             }
+            // L'écran de lancement animé, une fois par lancement, par-dessus l'app qui se pose.
+            var curtain by remember { mutableStateOf(!LaunchCurtain.lifted) }
+            androidx.compose.animation.AnimatedVisibility(
+                visible = curtain,
+                enter = androidx.compose.animation.EnterTransition.None,
+                exit = fadeOut(tween(300)),
+            ) {
+                LaunchCurtainView(onFinished = { curtain = false })
+            }
         }
     }
 }
@@ -203,7 +214,7 @@ private fun MainScreens(navigator: Navigator) {
                         is Screen.Flashcards -> FlashcardsScreen(screen.id)
                         is Screen.Mika -> MikaScreen(screen.id)
                         is Screen.ExamEdit -> ExamEditScreen(screen.id)
-                        is Screen.Mock -> MockExamScreen(screen.examId)
+                        is Screen.Mock -> MockExamScreen(screen.examId, screen.lessonId)
                         is Screen.Paywall -> PaywallScreen(screen.reason, screen.trigger)
                         Screen.Friends -> FriendsScreen()
                         is Screen.FriendProfile -> FriendProfileScreen(screen.person)
@@ -211,6 +222,7 @@ private fun MainScreens(navigator: Navigator) {
                         Screen.League -> LeagueScreen()
                         Screen.Exercise -> ExerciseScreen()
                         Screen.Focus -> FocusScreen()
+                        is Screen.Chat -> com.micabo.app.ui.chat.ChatScreen(screen.id)
                     }
                 }
             }

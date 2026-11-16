@@ -6,7 +6,7 @@ import android.os.LocaleList
 import java.util.Locale
 
 /**
- * **Les 26 langues de Micabo**, les mêmes que l'app iPhone (`UiLocale`). Le code est celui de
+ * **Les 32 langues de Micabo**, les mêmes que l'app iPhone (`UiLocale`). Le code est celui de
  * l'app ; `content` est celui qui part au serveur (`ContentLanguage`) : le portugais du Portugal
  * s'y écrit `pt`.
  */
@@ -36,7 +36,13 @@ enum class AppLocale(val code: String, val label: String, val content: String) {
     EL("el", "Ελληνικά", "el"),
     RU("ru", "Русский", "ru"),
     TR("tr", "Türkçe", "tr"),
-    AR("ar", "العربية", "ar");
+    AR("ar", "العربية", "ar"),
+    NB("nb", "Norsk bokmål", "nb"),
+    HE("he", "עברית", "he"),
+    JA("ja", "日本語", "ja"),
+    LT("lt", "Lietuvių", "lt"),
+    LV("lv", "Latviešu", "lv"),
+    KO("ko", "한국어", "ko");
 
     val locale: Locale get() = Locale.forLanguageTag(code)
 
@@ -53,7 +59,10 @@ enum class AppLocale(val code: String, val label: String, val content: String) {
                 val match = when (language) {
                     "es" -> if (region.isEmpty() || region == "ES") ES else ES419
                     "pt" -> if (region == "BR") PTBR else PT
-                    "nb", "no", "nn" -> DA
+                    // Le norvégien arrive en `nb`, en `no` ou en `nn` (servi en bokmål) ; l'hébreu
+                    // aussi en `iw`, le code qu'Android lui donne encore.
+                    "nb", "no", "nn" -> NB
+                    "he", "iw" -> HE
                     // Comme l'iPhone (`UiLocale.fromPreferredLanguages`) : le bosnien et le
                     // monténégrin s'écrivent en ijékavien, comme le croate.
                     "sh", "bs", "cnr" -> HR
@@ -65,6 +74,18 @@ enum class AppLocale(val code: String, val label: String, val content: String) {
         }
 
         fun resolved(stored: String): AppLocale = of(stored) ?: fromDevice()
+
+        /** La langue de l'app d'une `Locale` Android (celle de la configuration en cours). */
+        fun ofLocale(locale: java.util.Locale): AppLocale {
+            val language = locale.language
+            return when (language) {
+                "es" -> if (locale.country.isEmpty() || locale.country == "ES") ES else ES419
+                "pt" -> if (locale.country == "BR") PTBR else PT
+                "iw", "he" -> HE
+                "nb", "no", "nn" -> NB
+                else -> entries.firstOrNull { it.code == language } ?: EN
+            }
+        }
 
         /**
          * **Le pays de scolarisation le plus probable** (`SchoolingCountry.guessed` sur iPhone).

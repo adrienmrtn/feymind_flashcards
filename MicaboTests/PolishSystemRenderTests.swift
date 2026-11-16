@@ -240,7 +240,6 @@ final class PolishSystemRenderTests: XCTestCase {
                            subjects: ["Mathématiques", "Philosophie", "Physique-Chimie", "SVT"])
         try RenderGallery.render("pol-onb-fr-name", height: 852, night: true, page(.name, lina) { NameStepView() })
         try RenderGallery.render("pol-onb-fr-exam", height: 852, night: true, page(.exam, lina, reaction: true) { ExamStepView() })
-        try RenderGallery.render("pol-onb-fr-trial", height: 852, night: true, page(.trialOffer, lina) { TrialOfferStepView() })
         try RenderGallery.render("pol-onb-fr-paywall", height: 1_250, night: true, paywall())
 
         // Un lycéen marocain, en français : le bac national.
@@ -262,7 +261,6 @@ final class PolishSystemRenderTests: XCTestCase {
         try RenderGallery.render("pol-onb-de-exam-xl", width: small, height: 667, xl(page(.exam, jonas, reaction: true) { ExamStepView() }))
         try RenderGallery.render("pol-onb-de-subjects-xl", width: small, height: 667, xl(page(.subjects, jonas) { SubjectsStepView() }))
         try RenderGallery.render("pol-onb-de-current", width: small, height: 667, page(.currentAverage, jonas) { CurrentAverageStepView() })
-        try RenderGallery.render("pol-onb-de-trial-xl", width: small, height: 667, xl(page(.trialOffer, jonas) { TrialOfferStepView() }))
         try RenderGallery.render("pol-onb-de-paywall-xl", width: small, height: 1_900, xl(paywall()))
     }
 

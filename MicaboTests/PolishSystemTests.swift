@@ -205,14 +205,15 @@ final class PolishSystemTests: XCTestCase {
     }
 
     /// **Les dates proposées sont plausibles** : chaque examen à date fixe tombe dans l'année
-    /// qui vient, jamais dans le passé, jamais à plus d'un an.
+    /// qui vient, jamais dans le passé. Un examen à moins de 7 jours n'est pas proposé (on prend
+    /// celui de l'an prochain), d'où au plus 366 + 7 jours.
     func testEverySuggestedExamDateIsWithinTheComingYear() throws {
         let now = Date()
         for exam in SchoolExams.catalog.values where exam.month != nil {
             let date = try XCTUnwrap(SchoolExams.suggestedDate(for: .named(exam), from: now), exam.id)
             let days = SchoolExams.daysLeft(until: date, from: now)
             XCTAssertGreaterThanOrEqual(days, 0, exam.id)
-            XCTAssertLessThanOrEqual(days, 366, exam.id)
+            XCTAssertLessThanOrEqual(days, 366 + 7, exam.id)
         }
     }
 }

@@ -57,6 +57,8 @@ export interface MikaRequest {
   language?: string;
   /** Le registre de l'élève, quand le profil le connaît : « lycee », « superieur »… */
   level?: string;
+  /** Lot 12 : le geste de la caméra qui a fait le message, quand il y en a un. */
+  mode?: MikaMode;
 }
 
 export interface MikaCard {
@@ -157,6 +159,45 @@ export function readAttachments(single: unknown, list: unknown): MikaAttachment 
 }
 
 /**
+ * **Les gestes de la caméra** (lot 12 de l'app, PAS ENCORE DÉPLOYÉ). L'app envoie `mode`
+ * quand le message vient de la caméra à modes ; une fonction d'avant l'ignore, et l'app marche
+ * sans (la consigne du geste est déjà dans le message de l'élève).
+ *
+ * Ce que le mode change, et seulement ça : une traduction rend la page ligne par ligne, sans
+ * la borne de 250 mots d'une réponse de chat (sinon une page entière est coupée au premier
+ * tiers) ; un vocabulaire ou un résumé gardent leur format. Le coût reste borné par
+ * `mikaMaxTokens` et par le même plafond par jour : un geste reste une question.
+ */
+export type MikaMode = "solve" | "equation" | "explain" | "vocabulary" | "translate" | "flashcards" | "summary";
+
+const MIKA_MODES: readonly MikaMode[] = ["solve", "equation", "explain", "vocabulary", "translate", "flashcards", "summary"];
+
+/** Le mode envoyé par l'app, ou rien. */
+export function readMode(raw: unknown): MikaMode | undefined {
+  return typeof raw === "string" && (MIKA_MODES as readonly string[]).includes(raw) ? raw as MikaMode : undefined;
+}
+
+/** La longueur de la réponse selon le geste : une page traduite est plus longue qu'une réponse. */
+export function mikaMaxTokens(mode: MikaMode | undefined): number {
+  return mode === "translate" ? 1_800 : MIKA_MAX_TOKENS;
+}
+
+/** Ce que le geste ajoute aux règles de Mika, placé avant la conversation. */
+export function mikaModeBrief(mode: MikaMode | undefined): string {
+  switch (mode) {
+    case "translate":
+      return "GESTE : TRADUCTION. La borne de longueur d'une réponse ne s'applique pas ici : tu traduis tout le texte du document, ligne par ligne, une ligne par paragraphe, sans introduction ni commentaire. Tu ne proposes pas de carte.";
+    case "vocabulary":
+      return "GESTE : VOCABULAIRE. Un paragraphe par mot, qui commence par le mot en gras suivi de deux-points. Pas de carte : l'app fait les cartes à partir de tes paragraphes.";
+    case "equation":
+    case "solve":
+      return "GESTE : RÉSOLUTION. Une étape par paragraphe, les calculs en LaTeX entre $ et $. Jusqu'à douze phrases si la méthode l'exige.";
+    default:
+      return "";
+  }
+}
+
+/**
  * **La consigne de langue de Mika.** Elle diffère de celle des fiches : une fiche s'écrit
  * dans une seule langue, décidée d'avance ; une conversation suit l'élève. La langue de
  * l'interface est le défaut, et la langue dans laquelle il écrit l'emporte : un élève qui
@@ -196,6 +237,7 @@ export function buildMikaPrompt(request: MikaRequest): string {
 
   return [
     mikaLanguageBrief(request.language),
+    mikaModeBrief(request.mode),
     level ? `Niveau de l'élève : ${level}` : "",
     attachment,
     `CONVERSATION\n${transcript}`,
