@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="other">친구 %1$d명</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="other">카드 %1$d장</item>
+    </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="other">과목 %1$d개</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="other">+%1$d점: 큰 도전이에요. 한 단계씩 가요</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="other">+%1$d점: 도전적이지만 충분히 가능해요</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="other">+%1$d점: 작은 한 걸음, 충분히 가능해요</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="other">%1$d일</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="other">%1$d일 무료, 이후 주 %2$s. 언제든 해지할 수 있어요.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="other">%1$d일 무료, 이후 연 %2$s. 언제든 해지할 수 있어요.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="other">%1$d일 무료</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="other">%1$d일 동안 무료로 써 보세요.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="other">%1$d일 무료 체험 시작하기</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="other">%1$d일 무료, 이후 매주</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="other">%1$d일 무료, 이후 연 %2$s</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="other">%1$d일 연속</item>
+    </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">최고 기록은 %2$s. %1$d일만 더 하면 깨요.</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="other">%1$d일</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="other">일 연속</item>
+    </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="other">%1$d일 후 종료</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="other">복습할 카드 %1$d장</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="other">틀린 문제 %1$d개를 플래시카드에 추가</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d문제</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="other">답하지 않은 문제가 %1$d개 있어요. 그래도 제출할까요?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">D-%1$d</item>
+    </plurals>
+</resources>

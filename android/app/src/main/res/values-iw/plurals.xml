@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">חבר אחד</item>
+        <item quantity="other">%1$d חברים</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">כרטיסייה אחת</item>
+        <item quantity="other">%1$d כרטיסיות</item>
+    </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">המקצוע שלך</item>
+        <item quantity="other">%1$d המקצועות שלך</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d נקודה: אתגר אמיתי. נתקדם צעד אחר צעד</item>
+        <item quantity="other">+%1$d נקודות: אתגר אמיתי. נתקדם צעד אחר צעד</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d נקודה: שאפתני, ואפשרי</item>
+        <item quantity="other">+%1$d נקודות: שאפתני, ואפשרי</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d נקודה: צעד קטן, אפשרי לגמרי</item>
+        <item quantity="other">+%1$d נקודות: צעד קטן, אפשרי לגמרי</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">יום אחד</item>
+        <item quantity="two">יומיים</item>
+        <item quantity="other">%1$d ימים</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">יום אחד בחינם, ואז %2$s לשבוע. אפשר לבטל בכל עת.</item>
+        <item quantity="two">יומיים בחינם, ואז %2$s לשבוע. אפשר לבטל בכל עת.</item>
+        <item quantity="other">%1$d ימים בחינם, ואז %2$s לשבוע. אפשר לבטל בכל עת.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">יום אחד בחינם, ואז %2$s לשנה. אפשר לבטל בכל עת.</item>
+        <item quantity="two">יומיים בחינם, ואז %2$s לשנה. אפשר לבטל בכל עת.</item>
+        <item quantity="other">%1$d ימים בחינם, ואז %2$s לשנה. אפשר לבטל בכל עת.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">יום אחד בחינם</item>
+        <item quantity="two">יומיים בחינם</item>
+        <item quantity="other">%1$d ימים בחינם</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">לנסות בחינם יום אחד.</item>
+        <item quantity="two">לנסות בחינם יומיים.</item>
+        <item quantity="other">לנסות בחינם %1$d ימים.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">להתחיל את היום החינמי שלי</item>
+        <item quantity="other">להתחיל %1$d ימים בחינם</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">יום אחד בחינם, ואז כל שבוע</item>
+        <item quantity="two">יומיים בחינם, ואז כל שבוע</item>
+        <item quantity="other">%1$d ימים בחינם, ואז כל שבוע</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">יום אחד בחינם, ואז %2$s לשנה</item>
+        <item quantity="two">יומיים בחינם, ואז %2$s לשנה</item>
+        <item quantity="other">%1$d ימים בחינם, ואז %2$s לשנה</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">יום אחד ברצף</item>
+        <item quantity="other">%1$d ימים ברצף</item>
+    </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">השיא שלך הוא %2$s. עוד יום אחד והוא נשבר.</item>
+        <item quantity="other">השיא שלך הוא %2$s. עוד %1$d ימים והוא נשבר.</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">יום אחד</item>
+        <item quantity="two">יומיים</item>
+        <item quantity="other">%1$d ימים</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">יום ברצף</item>
+        <item quantity="other">ימים ברצף</item>
+    </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">מסתיימת בעוד יום אחד</item>
+        <item quantity="two">מסתיימת בעוד יומיים</item>
+        <item quantity="other">מסתיימת בעוד %1$d ימים</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">כרטיסייה אחת לחזרה</item>
+        <item quantity="two">%1$d כרטיסיות לחזרה</item>
+        <item quantity="other">%1$d כרטיסיות לחזרה</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">להוסיף את הטעות שלי לכרטיסיות</item>
+        <item quantity="other">להוסיף את %1$d הטעויות שלי לכרטיסיות</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d שאלות</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">נשארה שאלה אחת בלי תשובה. להגיש בכל זאת?</item>
+        <item quantity="other">נשארו %1$d שאלות בלי תשובה. להגיש בכל זאת?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="one">נותר יום אחד</item>
+        <item quantity="two">נותרו יומיים</item>
+        <item quantity="other">נותרו %1$d ימים</item>
+    </plurals>
+</resources>

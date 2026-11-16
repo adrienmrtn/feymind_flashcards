@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -251,16 +252,17 @@ private fun ExamDate(onClose: () -> Unit, onPick: (Long) -> Unit) {
 }
 
 @Composable
-private fun Generating(request: LessonRequest, stage: CreationStage, error: Throwable?, onClose: () -> Unit, onRetry: () -> Unit) {
+internal fun Generating(request: LessonRequest, stage: CreationStage, error: Throwable?, onClose: () -> Unit, onRetry: () -> Unit) {
     val colors = Micabo.colors
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
     Column(
-        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp),
+        Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).heightIn(min = maxHeight).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(Modifier.fillMaxWidth().height(44.dp)) {
             if (error != null) CloseButton(onClick = onClose)
         }
-        Spacer(Modifier.weight(0.6f))
         AnimatedContent(targetState = error, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "state") { failure ->
             if (failure == null) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -287,7 +289,26 @@ private fun Generating(request: LessonRequest, stage: CreationStage, error: Thro
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(16.dp))
+                    // « Étape 3 sur 4 · J'écris tes notes » : où en est le vrai travail (lot 13).
+                    val labels = listOf(
+                        if (request.topic != null) R.string.lesson_create_stageTopic else R.string.lesson_create_stageReading,
+                        R.string.lesson_create_stageCutting,
+                        R.string.lesson_create_stageWriting,
+                        R.string.lesson_create_stageQuestions,
+                    )
+                    Text(
+                        com.micabo.app.i18n.t(
+                            "ios.core13.gen.step",
+                            "n" to (stage.ordinal + 1).coerceAtMost(labels.size),
+                            "total" to labels.size,
+                            "step" to stringResource(labels[stage.ordinal.coerceIn(0, labels.lastIndex)]),
+                        ),
+                        style = com.micabo.app.ui.theme.Type.mention,
+                        color = colors.inkSecondary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(16.dp))
                     Stages(stage, fromTopic = request.topic != null)
                 }
             } else {
@@ -305,7 +326,6 @@ private fun Generating(request: LessonRequest, stage: CreationStage, error: Thro
                 }
             }
         }
-        Spacer(Modifier.weight(1f))
         if (error != null) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if ((error as? ApiException)?.isDailyLimit != true) {
@@ -313,7 +333,10 @@ private fun Generating(request: LessonRequest, stage: CreationStage, error: Thro
                 }
                 MicaboSecondaryButton(stringResource(R.string.lesson_create_cancel), onClick = onClose)
             }
+        } else {
+            Spacer(Modifier.height(44.dp))
         }
+    }
     }
 }
 
@@ -377,7 +400,7 @@ private fun Stages(stage: CreationStage, fromTopic: Boolean) {
                     }
                 }
                 Spacer(Modifier.width(12.dp))
-                Text(stringResource(label), style = nunito(16.sp, if (active) FontWeight.ExtraBold else FontWeight.SemiBold), color = ink)
+                Text(stringResource(label), style = nunito(16.sp, if (active) FontWeight.ExtraBold else FontWeight.SemiBold), color = ink, modifier = Modifier.weight(1f))
             }
         }
     }

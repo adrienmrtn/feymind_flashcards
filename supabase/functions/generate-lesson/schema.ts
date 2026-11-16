@@ -11,7 +11,7 @@ import { DEFAULT_ICON, LESSON_ICONS, normalizeIcon } from "../_shared/icons.ts";
 import { uniqueSymbols } from "../_shared/symbols.ts";
 import { normalizeFormula, protectedSpans } from "../_shared/sheet.ts";
 import { allowedRole, type Material, readMaterial, readRole, type ThemeRole } from "./material.ts";
-import { type ContentLanguage, resolveLanguage } from "../_shared/language.ts";
+import { type ContentLanguage, isSourceLanguage, resolveLanguage } from "../_shared/language.ts";
 
 // MARK: - Les nombres de la leçon
 
@@ -815,6 +815,12 @@ const TRUE_FALSE: Record<string, [string, string]> = {
   bg: ["Вярно", "Невярно"],
   ru: ["Верно", "Неверно"],
   ar: ["صحيح", "خطأ"],
+  nb: ["Sant", "Usant"],
+  he: ["נכון", "לא נכון"],
+  ja: ["正しい", "誤り"],
+  lt: ["Teisinga", "Neteisinga"],
+  lv: ["Pareizi", "Nepareizi"],
+  ko: ["참", "거짓"],
 };
 
 /**
@@ -850,6 +856,12 @@ const FALLBACK_LESSON_TITLES: Record<ContentLanguage, string> = {
   ru: "Мой урок",
   tr: "Dersim",
   ar: "درسي",
+  nb: "Min leksjon",
+  he: "השיעור שלי",
+  ja: "マイレッスン",
+  lt: "Mano pamoka",
+  lv: "Mana nodarbība",
+  ko: "내 레슨",
 };
 
 export function fallbackLessonTitle(language: string | undefined): string {
@@ -857,7 +869,11 @@ export function fallbackLessonTitle(language: string | undefined): string {
 }
 
 export function trueFalseLabels(language: string | undefined): [string, string] {
-  return TRUE_FALSE[(language ?? "").trim().toLowerCase().slice(0, 2)] ?? TRUE_FALSE.fr!;
+  const known = TRUE_FALSE[(language ?? "").trim().toLowerCase().slice(0, 2)];
+  if (known) return known;
+  // Une langue servie sous un autre code (« no », « iw ») ou pas servie : celle que
+  // `resolveLanguage` choisit pour les notes (l'anglais) ; le français si rien n'est demandé.
+  return TRUE_FALSE[resolveLanguage(isSourceLanguage(language) ? undefined : language).slice(0, 2)] ?? TRUE_FALSE.fr!;
 }
 
 /** Vrai quand la langue des notes est une de celles dont on connaît « vrai » et « faux ». */

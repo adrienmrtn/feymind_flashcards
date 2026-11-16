@@ -13,7 +13,19 @@
  */
 export type ContentLanguage = keyof typeof NAMES;
 
+/**
+ * **Rien de demandé : le français.** Une version de l'application antérieure au choix de la
+ * langue n'envoie rien, et ses fiches ont toujours été écrites en français : elles ne doivent pas
+ * changer de langue. C'est aussi la langue de « celle du document » quand un nom est attendu.
+ */
 const DEFAULT_LANGUAGE = "fr";
+
+/**
+ * **Une langue demandée mais pas servie : l'anglais**, comme l'application, qui ouvre en anglais
+ * un téléphone dont elle ne parle pas la langue. Un élève qui envoie « zh » lit l'app en anglais :
+ * lui écrire en français serait lui écrire dans une langue qu'il n'a jamais vue dans l'app.
+ */
+const UNKNOWN_LANGUAGE = "en";
 
 /**
  * Le nom de la langue, écrit en français, pour les consignes du modèle — et la liste des
@@ -49,10 +61,16 @@ const NAMES = {
   ru: "russe",
   tr: "turc",
   ar: "arabe standard moderne",
+  nb: "norvégien bokmål",
+  he: "hébreu",
+  ja: "japonais",
+  lt: "lituanien",
+  lv: "letton",
+  ko: "coréen",
 } as const;
 
 /**
- * Les vingt-six langues servies, dans l'ordre de `NAMES`. Exportées pour que chaque table
+ * Les trente-deux langues servies, dans l'ordre de `NAMES`. Exportées pour que chaque table
  * écrite à la main ailleurs (« Vrai » et « Faux », le titre de repli d'une leçon) se teste
  * contre la même liste : une langue ajoutée ici et oubliée là-bas se voit au test.
  */
@@ -86,6 +104,24 @@ const ENDONYMS: Record<ContentLanguage, string> = {
   ru: "русский",
   tr: "Türkçe",
   ar: "العربية الفصحى",
+  nb: "norsk bokmål",
+  he: "עברית",
+  ja: "日本語",
+  lt: "lietuvių",
+  lv: "latviešu",
+  ko: "한국어",
+};
+
+/**
+ * Les anciens codes et les variantes d'une langue servie : le norvégien arrive aussi en `no`
+ * (la macrolangue) ou en `nn` (le nynorsk, qu'on sert en bokmål, la norme écrite de neuf
+ * élèves sur dix), et l'hébreu en `iw`, son code d'avant 1989 que Java et de vieux iOS
+ * envoient encore.
+ */
+const ALIASES: Record<string, ContentLanguage> = {
+  no: "nb",
+  nn: "nb",
+  iw: "he",
 };
 
 /**
@@ -117,17 +153,22 @@ export function isSourceLanguage(code: string | undefined): boolean {
   return cleaned === "source" || cleaned === "auto" || cleaned === "document";
 }
 
-/** La langue demandée, ou le français quand la demande est absente ou inconnue. */
+/**
+ * La langue demandée ; le français quand rien n'est demandé (ou « celle du document »), l'anglais
+ * quand la langue demandée n'est pas servie.
+ */
 export function resolveLanguage(code: string | undefined): ContentLanguage {
   if (isSourceLanguage(code)) return DEFAULT_LANGUAGE;
   const raw = (code ?? "").trim().replace("_", "-");
+  if (raw === "") return DEFAULT_LANGUAGE;
   // La région d'abord : « pt-BR » et « es-419 » sont des langues à part entière. Une autre
   // région (« es-MX », « pt-AO ») retombe sur sa variante la plus proche.
   const lower = raw.toLowerCase();
   if (lower === "pt-br") return "pt-BR";
   if (lower === "es-419" || (lower.startsWith("es-") && lower !== "es-es")) return "es-419";
   const cleaned = lower.slice(0, 2);
-  return cleaned in NAMES ? cleaned as ContentLanguage : DEFAULT_LANGUAGE;
+  if (cleaned in ALIASES) return ALIASES[cleaned]!;
+  return cleaned in NAMES ? cleaned as ContentLanguage : UNKNOWN_LANGUAGE;
 }
 
 export function languageName(code: string | undefined): string {

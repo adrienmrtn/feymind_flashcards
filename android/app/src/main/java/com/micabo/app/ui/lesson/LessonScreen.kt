@@ -335,6 +335,13 @@ private fun LessonPath(lesson: Lesson) {
                         confirm = "visibility"
                     })
                 }
+                // **Un examen blanc sur cette leçon** (lot 13), depuis le menu ⋯.
+                if (lesson.readyThemes > 0) {
+                    DropdownMenuItem(text = { Text(com.micabo.app.i18n.t("ios.core13.lesson.mock"), style = nunito(16.sp, FontWeight.Bold)) }, onClick = {
+                        menu = false
+                        navigator.push(Screen.Mock(null, lesson.id))
+                    })
+                }
                 DropdownMenuItem(text = { Text(stringResource(R.string.lesson_menu_reset), style = nunito(16.sp, FontWeight.Bold)) }, onClick = {
                     menu = false
                     confirm = "reset"

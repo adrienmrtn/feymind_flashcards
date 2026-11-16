@@ -6,6 +6,8 @@ import SwiftUI
 struct MockExamStart: Identifiable {
     let id = UUID()
     var exam: Exam?
+    /// Lot 13 — les leçons cochées d'avance : celle d'où l'examen blanc est lancé.
+    var lessonIDs: [UUID] = []
 }
 
 /// **Un examen blanc, du début à la fin** : on choisit les leçons et la durée, Mika écrit la
@@ -78,7 +80,7 @@ struct MockExamFlow: View {
     private func load() {
         guard !loaded else { return }
         loaded = true
-        let wanted = Set(start.exam?.courseIDs ?? [])
+        let wanted = Set(start.exam?.courseIDs ?? []).union(start.lessonIDs)
         let preset = lessons.filter { wanted.contains($0.id) }.map(\.id)
         selected = Set(preset.isEmpty ? lessons.prefix(1).map(\.id) : preset)
     }

@@ -1,18 +1,25 @@
 import SwiftUI
 
+// MARK: - Ce que le parcours dit du pays
+
+extension OnboardingModel {
+    /// Le pays de l'élève, dans la langue de l'app : celui de la liste, ou celui de la recherche.
+    func countryName(locale: UiLocale) -> String {
+        if country == .other, let customCountry { return customCountry.name }
+        return country.localizedName(locale: locale)
+    }
+}
+
 // MARK: - Le pays
 
-/// **« Enchanté, {prénom} ! Tu étudies dans quel pays ? »**
+/// **« Tu étudies dans quel pays ? »**
 ///
 /// Le pays passe devant la classe, et cet ordre est tout l'intérêt de l'écran : ce sont les
 /// filières, les examens, les matières et le barème du pays choisi qui deviennent les
-/// réponses des questions suivantes.
+/// réponses des questions suivantes. Mika le dit, avec le prénom qu'il vient d'apprendre.
 ///
-/// **Une liste à drapeaux, le pays du téléphone en tête et déjà choisi** : dans presque tous
-/// les cas, la bonne réponse est celle que le téléphone connaît, et un appui avance. **La
-/// recherche couvre le monde entier** : un pays de la liste s'y retrouve, les autres aussi,
-/// et ceux dont on connaît le système scolaire (l'Autriche, le Brésil, l'Arabie saoudite…)
-/// ouvrent leurs propres filières.
+/// **Une liste à drapeaux, le pays du téléphone en tête et déjà choisi** ; **la recherche
+/// couvre le monde entier**. Un appui coche, et la page part à la fin du ressort.
 struct CountryStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -21,9 +28,11 @@ struct CountryStepView: View {
     @State private var query = ""
     @FocusState private var isSearching: Bool
 
-    private var ask: String {
-        guard let name = model.displayName.nilIfBlank else { return i18n.t("ios.onb5.q.country") }
-        return i18n.t("ios.onb10.q.country", ["name": name])
+    private var say: OnbSay {
+        guard let name = model.displayName.nilIfBlank else {
+            return OnbSay(i18n.t("ios.onb12.say.countryAny"), mood: .look)
+        }
+        return OnbSay(i18n.t("ios.onb12.say.country", ["name": name]), mood: .happy)
     }
 
     private var isQuerying: Bool {
@@ -43,23 +52,21 @@ struct CountryStepView: View {
     }
 
     var body: some View {
-        OnbQuestion(ask, mood: .happy, anchored: false) {
+        OnbQuestion(i18n.t("ios.onb12.q.country"), say: say) {
             VStack(spacing: OnbLayout.rowGap) {
                 searchField
 
                 if isQuerying {
                     results
                 } else {
-                    // Un pays trouvé par la recherche à un passage précédent reste en tête,
-                    // choisi.
                     if model.country == .other, let custom = model.customCountry {
-                        V3OptionRow(custom.name, emoji: custom.flag, isSelected: true) {
+                        OnbOption(title: custom.name, emoji: custom.flag, isSelected: true) {
                             model.advance()
                         }
                     }
                     ForEach(listed) { country in
-                        V3OptionRow(
-                            country.localizedName(locale: i18n.locale),
+                        OnbOption(
+                            title: country.localizedName(locale: i18n.locale),
                             emoji: country.flag,
                             isSelected: model.country == country
                         ) {
@@ -127,7 +134,7 @@ struct CountryStepView: View {
                 .padding(.top, 6)
         } else {
             ForEach(matches) { country in
-                V3OptionRow(country.name, emoji: country.flag, isSelected: false) {
+                OnbOption(title: country.name, emoji: country.flag, isSelected: false) {
                     choose(country)
                 }
             }
@@ -135,36 +142,37 @@ struct CountryStepView: View {
     }
 
     private func choose(_ country: SchoolingCountry) {
-        model.select(country: country)
-        model.advance()
+        OnbPick.choose(on: .country, model: model) {
+            model.select(country: country)
+        }
     }
 
     private func choose(_ country: WorldCountry) {
-        model.select(worldCountry: country)
         isSearching = false
-        model.advance()
+        OnbPick.choose(on: .country, model: model) {
+            model.select(worldCountry: country)
+        }
     }
 }
 
 // MARK: - La filière
 
-/// **« Tu es dans quelle filière ? »**
-///
-/// « Lycée » ne dit pas ce qu'on étudie : un élève de terminale technologique et un élève de
-/// terminale générale n'ont ni les mêmes matières, ni la même épreuve. L'écran ne s'affiche
-/// que dans les pays décrits assez finement pour qu'il ait de vraies réponses
-/// (`SchoolSystem`) ; ailleurs, il se saute et le palier large suffit.
+/// **« Tu es dans quelle filière ? »** Mika reprend le pays : il en connaît les filières, les
+/// examens et le barème. L'écran ne s'affiche que dans les pays décrits assez finement pour
+/// qu'il ait de vraies réponses (`SchoolSystem`).
 struct SchoolTypeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb10.q.schoolType")) {
+        OnbQuestion(
+            i18n.t("ios.onb12.q.schoolType"),
+            say: OnbSay(i18n.t("ios.onb12.react.country", ["country": model.countryName(locale: i18n.locale)]), mood: .happy)
+        ) {
             VStack(spacing: OnbLayout.rowGap) {
                 ForEach(model.tracks) { track in
-                    V3OptionRow(track.title, icon: track.tier.icon, isSelected: model.track?.id == track.id) {
-                        model.track = track
-                        model.advance()
+                    OnbOption(title: track.title, icon: track.tier.icon, isSelected: model.track?.id == track.id) {
+                        OnbPick.choose(on: .schoolType, model: model) { model.track = track }
                     }
                 }
             }
@@ -175,8 +183,7 @@ struct SchoolTypeStepView: View {
 // MARK: - L'année
 
 /// **« En quelle classe ? »** Elle décide des examens et des matières proposés ensuite, et du
-/// niveau d'écriture des leçons. Après le bac, on ne parle plus de classe : « Tu es en quelle
-/// année ? ».
+/// niveau d'écriture des leçons. Après le bac, « En quelle année ? ». Mika reprend la filière.
 struct SchoolYearStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -186,20 +193,24 @@ struct SchoolYearStepView: View {
     }
 
     /// Au collège et au lycée, une classe ; après, une année.
-    private var ask: String {
+    private var title: String {
         switch model.track?.tier {
-        case .lowerSecondary, .upperSecondary, nil: i18n.t("ios.onb10.q.year")
-        default: i18n.t("ios.onb10.q.yearHigher")
+        case .lowerSecondary, .upperSecondary, nil: i18n.t("ios.onb12.q.year")
+        default: i18n.t("ios.onb12.q.yearHigher")
         }
     }
 
+    private var say: OnbSay {
+        guard let track = model.track else { return OnbSay(i18n.t("ios.onb12.say.level"), mood: .idle) }
+        return OnbSay(i18n.t("ios.onb12.react.track", ["track": track.title]), mood: .happy)
+    }
+
     var body: some View {
-        OnbQuestion(ask) {
+        OnbQuestion(title, say: say) {
             VStack(spacing: OnbLayout.rowGap) {
                 ForEach(years) { year in
-                    V3OptionRow(year.title, isSelected: model.year?.id == year.id) {
-                        model.year = year
-                        model.advance()
+                    OnbOption(title: year.title, isSelected: model.year?.id == year.id) {
+                        OnbPick.choose(on: .year, model: model) { model.year = year }
                     }
                 }
             }
@@ -216,12 +227,14 @@ struct LevelStepView: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb5.q.level")) {
+        OnbQuestion(
+            i18n.t("ios.onb12.q.level"),
+            say: OnbSay(i18n.t("ios.onb12.react.countryAny", ["country": model.countryName(locale: i18n.locale)]), mood: .happy)
+        ) {
             VStack(spacing: OnbLayout.rowGap) {
                 ForEach(model.country.stages) { stage in
-                    V3OptionRow(stage.localizedTitle, icon: stage.tier.icon, isSelected: model.stage == stage) {
-                        model.stage = stage
-                        model.advance()
+                    OnbOption(title: stage.localizedTitle, icon: stage.tier.icon, isSelected: model.stage == stage) {
+                        OnbPick.choose(on: .level, model: model) { model.stage = stage }
                     }
                 }
             }

@@ -9,6 +9,43 @@
         <item quantity="one">%1$d kart</item>
         <item quantity="other">%1$d kart</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Dersin</item>
+        <item quantity="other">%1$d dersin</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="other">+%1$d puan: gerçek bir meydan okuma. Adım adım gideriz</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="other">+%1$d puan: iddialı ama yapılabilir</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="other">+%1$d puan: küçük bir adım, rahatça yapılır</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="other">%1$d gün</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="other">%1$d gün ücretsiz, sonra haftalık %2$s. İstediğin zaman iptal et.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="other">%1$d gün ücretsiz, sonra yıllık %2$s. İstediğin zaman iptal et.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="other">%1$d gün ücretsiz</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="other">%1$d gün ücretsiz dene.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="other">%1$d ücretsiz günümü başlat</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="other">%1$d gün ücretsiz, sonra haftalık</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="other">%1$d gün ücretsiz, sonra yıllık %2$s</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d gün üst üste</item>
         <item quantity="other">%1$d gün üst üste</item>
@@ -34,6 +71,9 @@
     </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="other">%1$d hatamı kartlara ekle</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d soru</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="other">%1$d soru cevapsız. Yine de teslim edilsin mi?</item>

@@ -1,54 +1,34 @@
 import SwiftUI
 
-// MARK: - Mika se présente
+// MARK: - Mika se présente, et pose le cadre
 
-/// **« Salut, moi c'est Mika ! »** Un moment, avant la première question : un grand Mika au
-/// centre, qui fait coucou, son nom, ce qu'il va faire, et un bouton. Rien ne défile tout
-/// seul.
+/// **« Faisons connaissance. »** L'ouverture du premier chapitre (lot 15) : la grille de tous
+/// les écrans, et Mika en grand qui fait coucou et se présente dans sa bulle (« Salut, moi
+/// c'est Mika ! … »).
 struct WelcomeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        OnbScreen {
-            // Mika prend d'abord sa place ; l'air qui reste se partage au-dessus et en dessous.
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
-
-            OnbHeroMika(mood: .wave, max: OnbLayout.heroWelcome)
-
-            VStack(spacing: 12) {
-                OnbTitle(i18n.t("ios.onb10.welcome.title"), size: OnbLayout.display, alignment: .center)
-                Text(i18n.t("ios.onb10.welcome.sub"))
-                    .font(V3Font.body)
-                    .foregroundStyle(V3Color.ink2)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity)
-            }
-            .padding(.top, 20)
-
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
-        } footer: {
-            V3Button(i18n.t("ios.onb10.go")) {
-                model.advance()
-            }
+        OnbChapterOpener(
+            title: i18n.t("ios.onb15.open.welcome.title"),
+            // Lot 16 : les mots du fondateur, et un bouton qui répond à sa question.
+            say: i18n.t("ios.onb16.welcome.say"),
+            mood: .wave,
+            cta: i18n.t("ios.onb16.welcome.cta")
+        ) {
+            model.advance()
         }
     }
 }
 
 // MARK: - Le prénom
 
-/// **« Comment je t'appelle ? »**
+/// **« Comment tu t'appelles ? »** (lot 15 : le titre ne dit jamais « je »)
 ///
-/// La première question, avant tout ce qui trie, et elle n'est pas facultative : tout ce qui
-/// suit s'adresse à quelqu'un. Le prénom se tape en très grand, au centre ; le clavier est
-/// ouvert d'emblée, et le bouton est actif dès la première lettre.
-///
-/// **Le clavier ne fait rien bouger.** La page est composée depuis le haut : la bulle, le
-/// prénom, le bouton juste dessous. Le clavier monte et redescend sous eux, que la page
-/// glisse ou non.
+/// La première question, et elle n'est pas facultative : tout ce qui suit s'adresse à
+/// quelqu'un. Le prénom se tape en très grand ; **Mika réagit dès la première lettre**
+/// (« Enchanté, Lina ! », il sourit) : la première réponse reçoit sa récompense tout de suite.
 ///
 /// **Le prénom ne sert à rien d'autre.** Il ne part pas au modèle, il ne part pas au
 /// serveur, il n'entre dans aucune consigne de génération.
@@ -63,26 +43,30 @@ struct NameStepView: View {
         model.displayName.nilIfBlank != nil
     }
 
+    private var say: OnbSay {
+        guard let name = model.displayName.nilIfBlank else {
+            return OnbSay(i18n.t("ios.onb12.say.name"), mood: .wave)
+        }
+        return OnbSay(i18n.t("ios.onb12.react.name", ["name": name]), mood: .happy)
+    }
+
     var body: some View {
         @Bindable var model = model
 
-        OnbQuestion(i18n.t("ios.onb10.q.name"), mood: .wave, anchored: false) {
-            VStack(spacing: 12) {
+        OnbQuestion(i18n.t("ios.onb15.q.name"), say: say) {
+            VStack(spacing: 0) {
                 field($model.displayName)
-                Text(i18n.t("ios.onb10.name.hint"))
-                    .font(V3Font.caption)
-                    .foregroundStyle(V3Color.ink2)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 24)
+                    .padding(.vertical, 18)
+                    .frame(maxWidth: .infinity)
+                    .v3Card(selected: canContinue)
 
-            V3Button(i18n.t("common.continue"), isEnabled: canContinue) {
-                advance()
-            }
-            .padding(.top, 36)
+                V3Button(i18n.t("common.continue"), isEnabled: canContinue) {
+                    advance()
+                }
+                .padding(.top, 20)
 
-            OnbKeyboardRoom(isActive: self.model.step == .name)
+                OnbKeyboardRoom(isActive: self.model.step == .name)
+            }
         }
         .onAppear { isFocused = true }
     }

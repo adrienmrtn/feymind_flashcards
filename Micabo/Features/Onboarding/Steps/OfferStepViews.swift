@@ -1,217 +1,232 @@
 import SwiftUI
+import UserNotifications
 
-// L'acte 4, avant le paywall : l'essai offert, puis le rappel promis. Deux écrans, une idée
-// chacun. Ils ne s'affichent que si la boutique propose encore l'essai à cet élève
-// (`OnboardingTrial.isOffered`) : on ne promet pas des jours qu'Apple ne donnera pas.
+// L'acte 7, avant le paywall (lot 13) : l'essai, en deux écrans, une idée chacun. Ils ne
+// s'affichent que si la boutique propose encore l'essai à cet élève (`OnboardingTrial.isOffered`) :
+// on ne promet pas des jours qu'Apple ne donnera pas. Les noms des statistiques restent ceux
+// d'avant (`freeTrialIntro`, `trialOffer`).
 
-// MARK: - Ce que l'essai débloque
+// MARK: - « On veut que tu essaies Micabo Pro gratuitement »
 
-/// **« {n jours} pour tout essayer »** (lot 11) : ce que l'essai ouvre, dit avec ce que
-/// l'élève vient de construire. Sa première leçon (offerte de toute façon : on le dit), ses
-/// matières, les quiz et les cartes, le scanner, son plan jusqu'à son examen, Mika. La durée
-/// est lue sur le produit (`OnboardingTrial.days`), jamais écrite ici.
+/// **« On veut que tu essaies Micabo Pro gratuitement »** (lot 13, mots de l'utilisateur).
 ///
-/// L'écran disait « Je t'offre 3 jours pour essayer ton plan » au-dessus d'un grand Mika :
-/// l'élève ne savait pas ce que « essayer » ouvrait. Le nom de l'étape reste `freeTrialIntro`.
+/// Lot 17 : **le cadeau, seul, sans prix** (le comment vient à l'écran suivant, le choix au
+/// paywall). Le titre, Mika et « 3 jours offerts » en grand, puis **trois choses que l'essai
+/// ouvre, tirées des réponses** : sa première leçon (citée seulement s'il a tapé un sujet),
+/// Mika dans sa matière la plus dure, les examens blancs de son examen. Au pied, « Rien à
+/// payer aujourd'hui », et « Je veux essayer ».
 struct FreeTrialIntroStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onbCompact) private var compact
 
-    private var title: String {
-        i18n.t("ios.onb11.unlock.title", ["days": OnbWords.duration(days: OnboardingTrial.days, locale: i18n.locale)])
-    }
-
-    /// Ce que l'essai ouvre, dans l'ordre où l'élève l'a vu passer.
-    struct Unlock: Identifiable {
+    /// Ce que l'essai ouvre : une icône, une phrase.
+    struct Unlock: Identifiable, Equatable {
         var id: String { text }
         let icon: MicaboIcon
         let text: String
-        /// Vrai pour la première leçon : elle reste offerte sans abonnement.
-        var isFree = false
     }
 
+    /// **Les trois choses**, dans l'ordre où l'élève les a dites : sa leçon, sa matière, son
+    /// examen. Une réponse absente prend la phrase de tout le monde (les vraies limites du
+    /// gratuit, `PaywallFeature`).
     static func unlocks(for model: OnboardingModel, locale: UiLocale) -> [Unlock] {
+        // Lot 17 : une leçon n'est citée que si l'élève a vraiment tapé son sujet ; sinon,
+        // « Ta première leçon, et toutes les suivantes » — jamais un titre inventé.
         let lesson: String = switch model.firstLessonChoice {
         case .topic:
-            model.firstLessonSubject.map { L10n.t("ios.onb11.unlock.lesson", locale: locale, vars: ["topic": $0]) }
-                ?? L10n.t("ios.onb11.unlock.lessonAny", locale: locale)
+            model.firstLessonSubject.map { L10n.t("ios.onb12.trial.unlock.lesson", locale: locale, vars: ["topic": $0]) }
+                ?? L10n.t("ios.onb17.trial.unlock.lessonAny", locale: locale)
         case .importSource:
-            L10n.t("ios.onb11.unlock.lessonImport", locale: locale)
+            L10n.t("ios.onb12.trial.unlock.import", locale: locale)
         case nil:
-            L10n.t("ios.onb11.unlock.lessonAny", locale: locale)
+            L10n.t("ios.onb17.trial.unlock.lessonAny", locale: locale)
         }
-        let plan = model.examName(locale: locale).map {
-            L10n.t("ios.onb11.unlock.plan", locale: locale, vars: ["exam": $0])
-        } ?? L10n.t("ios.onb11.unlock.planAny", locale: locale)
+        let mika = model.focusSubject.map {
+            L10n.t("ios.onb12.trial.unlock.mika", locale: locale, vars: ["subject": SubjectDisplay.subject($0, locale: locale)])
+        } ?? L10n.t("ios.pay11.row.mika", locale: locale)
+        // « pour le Bac », pas « pour Bac » : en français, l'examen prend son article.
+        let exam = model.examName(locale: locale).map {
+            L10n.t("ios.onb12.trial.unlock.exam", locale: locale, vars: ["exam": locale == .fr ? PaywallProfile.frenchArticled($0) : $0])
+        } ?? L10n.t("ios.pay11.row.exams", locale: locale)
         return [
-            Unlock(icon: .book, text: lesson, isFree: true),
-            Unlock(icon: .notes, text: L10n.t("ios.onb11.unlock.subjects", locale: locale)),
-            Unlock(icon: .quiz, text: L10n.t("ios.onb11.unlock.quiz", locale: locale)),
-            Unlock(icon: .photo, text: L10n.t("ios.onb11.unlock.scan", locale: locale)),
-            Unlock(icon: .exam, text: plan),
-            Unlock(icon: .mika, text: L10n.t("ios.onb11.unlock.mika", locale: locale)),
+            Unlock(icon: .book, text: lesson),
+            Unlock(icon: .mika, text: mika),
+            Unlock(icon: .exam, text: exam),
         ]
     }
 
     var body: some View {
+        // Lot 15 : la grille de tout le parcours — le titre en haut à gauche, les trois lignes
+        // au centre optique, au corps de lecture (20 pt, couleur principale).
         OnbScreen {
-            OnbTitle(title, size: OnbLayout.pageTitle + 2, alignment: .center, keyword: V3Color.yellow)
+            OnbTitle(i18n.t("ios.onb12.trial.wantTitle"), size: OnbLayout.questionTitle)
                 .padding(.top, OnbLayout.titleTop)
 
-            Spacer(minLength: OnbLayout.titleGap)
-                .layoutPriority(-1)
-
-            VStack(spacing: 0) {
-                ForEach(Array(Self.unlocks(for: model, locale: i18n.locale).enumerated()), id: \.element.id) { index, unlock in
-                    if index > 0 {
-                        Rectangle()
-                            .fill(V3Color.line)
-                            .frame(height: 1.5)
+            OnbCentered {
+                VStack(alignment: .leading, spacing: compact ? 18 : 24) {
+                    gift
+                        .padding(.bottom, compact ? 4 : 10)
+                    ForEach(Self.unlocks(for: model, locale: i18n.locale)) { unlock in
+                        HStack(spacing: 16) {
+                            OnbIcon(icon: unlock.icon, size: 30)
+                                .frame(width: 56, height: 56)
+                                .background(V3Color.surface, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
+                            Text(unlock.text)
+                                .font(OnbType.body)
+                                .lineSpacing(OnbType.bodySpacing)
+                                .foregroundStyle(V3Color.ink)
+                                .multilineTextAlignment(.leading)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .accessibilityElement(children: .combine)
                     }
-                    row(unlock)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 4)
-            .frame(maxWidth: .infinity)
-            .v3Card()
-
-            Text(i18n.t("ios.onb11.unlock.freeNote"))
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.ink2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 10)
-
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
         } footer: {
-            OnbReassurance(text: i18n.t("ios.onb5.trial.noCharge"))
-            V3Button(i18n.t("common.continue")) {
+            OnbReassurance(text: i18n.t("ios.pay10.nothingToday"))
+            V3Button(i18n.t("ios.onb17.trial.cta")) {
                 model.advance()
             }
         }
     }
 
-    private func row(_ unlock: Unlock) -> some View {
-        HStack(spacing: 12) {
-            OnbIcon(icon: unlock.icon, size: 26)
-            Text(unlock.text)
-                .font(V3Font.bodyStrong)
-                .foregroundStyle(V3Color.ink)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            if unlock.isFree {
-                StoryTag(text: i18n.t("ios.onb11.unlock.free"), tone: V3Color.green)
-            } else {
-                Image(systemName: "checkmark")
-                    .font(V3Font.label)
-                    .foregroundStyle(V3Color.green)
-                    .accessibilityHidden(true)
+    /// **Le cadeau** (lot 17) : Mika content, « 3 jours » en très grand, « offerts, tout
+    /// compris » dessous. La durée est celle que la boutique accorde (`OnboardingTrial.days`).
+    private var gift: some View {
+        HStack(alignment: .center, spacing: 14) {
+            MikaMascot(mood: .happy, size: compact ? 72 : 100)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(i18n.t("ios.onb17.trial.days", ["n": "\(OnboardingTrial.days)"]))
+                    .font(V3Font.display(compact ? 48 : 60))
+                    .foregroundStyle(V3Color.yellow)
+                    .lineLimit(1)
+                    // Toute sa taille : « 3 jours », « 3 Tage », « 3 päivää » tiennent à côté de Mika.
+                    .fixedSize()
+                Text(i18n.t("ios.onb17.trial.daysSub"))
+                    .font(OnbType.body.weight(.bold))
+                    .foregroundStyle(V3Color.ink)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 11)
         .accessibilityElement(children: .combine)
     }
 }
 
-// MARK: - Le rappel promis
+// MARK: - « On t'enverra un rappel avant la fin de ton essai »
 
-/// **« Je te préviens avant la fin de ton essai »** : la promesse d'un rappel, faite seulement
-/// si elle peut être tenue.
+/// **« On t'enverra un rappel avant la fin de ton essai »** (lot 13) : une cloche, la
+/// chronologie aux vraies dates — aujourd'hui tout s'ouvre, la veille de la fin le rappel, puis
+/// l'abonnement commence sauf annulation —, et l'autorisation des notifications.
 ///
-/// Le rappel est une notification locale, posée à l'achat de l'essai (`TrialEndReminder`). Si
-/// l'élève n'a jamais vu la demande d'iOS, « Continuer » l'ouvre ici, pour ce rappel-là. S'il
-/// a refusé les notifications, l'écran ne promet plus rien qu'il ne puisse envoyer : le titre
-/// devient « Tu annules quand tu veux, en 2 touches », et la ligne du rappel dit comment
-/// l'activer.
-///
-/// **Ce qui se passe à la fin de l'essai, en dates** (lot 11) : la chronologie remplace la
-/// cloche dessinée à côté de Mika, que les élèves ne reliaient pas à l'abonnement.
+/// - **Jamais demandée** : « Activer le rappel » ouvre la demande d'iOS, puis le paywall, quoi
+///   qu'elle réponde.
+/// - **Déjà accordée** : une simple confirmation, et « Continuer ».
+/// - **Refusée** : l'écran ne promet plus de rappel qu'il ne pourrait pas envoyer ; le titre dit
+///   ce qui reste vrai (« Tu annules quand tu veux »), et comment le réactiver.
 struct TrialOfferStepView: View {
-    /// Pour les rendus : l'écran tel que le voit quelqu'un qui a refusé les notifications.
-    var previewDenied: Bool?
+    /// L'état de l'autorisation des notifications.
+    enum Permission: Equatable {
+        case ask
+        case granted
+        case denied
+    }
+
+    /// Pour les rendus : l'état à montrer, sans le demander à iOS.
+    var previewPermission: Permission?
+    /// **L'instant d'où partent les dates**, le même que celui du paywall qui suit (les rendus
+    /// posent le leur, celui des rendus du paywall).
+    var now = Date()
 
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onbCompact) private var compact
 
-    /// Vrai tant que le rappel peut partir : notifications permises, ou jamais demandées.
-    @State private var canRemind = true
+    @State private var permission: Permission = .ask
     /// Vrai le temps que la boîte du système soit à l'écran.
     @State private var isAsking = false
 
+    private var current: Permission { previewPermission ?? permission }
+
+    /// **Le rappel peut-il être promis ?** Pas avec des notifications refusées, ni pour un
+    /// essai trop court pour avoir une veille (`TrialEndReminder` ne pose rien alors).
+    static func promises(_ permission: Permission, trialDays: Int, now: Date = Date()) -> Bool {
+        permission != .denied && TrialEndReminder.fireDate(purchasedAt: now, trialDays: trialDays) != nil
+    }
+
     private var promises: Bool {
-        previewDenied.map { !$0 } ?? canRemind
-    }
-
-    /// **Le rappel peut-il être promis ?** Il faut que les notifications ne soient pas
-    /// refusées, et que l'essai soit assez long pour avoir une veille (`TrialEndReminder`
-    /// ne pose rien pour un essai d'un jour).
-    static func canPromise(notificationsAllowed: Bool, trialDays: Int, now: Date = Date()) -> Bool {
-        notificationsAllowed && TrialEndReminder.fireDate(purchasedAt: now, trialDays: trialDays) != nil
-    }
-
-    /// **Le titre, selon que le rappel peut partir ou non.** Refusé, l'écran ne parle plus de
-    /// prévenir : il dit ce qui reste vrai, qu'on annule quand on veut.
-    static func titleKey(canRemind: Bool) -> String {
-        canRemind ? "ios.onb10.trial.remind" : "ios.onb10.trial.anytime"
-    }
-
-    /// La ligne verte au-dessus du bouton. Refusé, le titre dit déjà qu'on annule quand on
-    /// veut ; la ligne dit le reste.
-    static func reassuranceKey(canRemind: Bool) -> String {
-        canRemind ? "ios.onb10.trial.cancel" : "ios.onb5.trial.noCharge"
+        Self.promises(current, trialDays: OnboardingTrial.days, now: now)
     }
 
     var body: some View {
+        // Lot 15 : la grille de tout le parcours — le titre en haut à gauche, la frise datée au
+        // centre optique, au corps de lecture.
         OnbScreen {
-            OnbTitle(i18n.t(Self.titleKey(canRemind: promises)), size: OnbLayout.pageTitle + 2, alignment: .center)
-                .padding(.top, OnbLayout.titleTop)
+            OnbTitle(
+                i18n.t(promises ? "ios.onb12.trial.remindTitle" : "ios.onb12.trialOffer.anytime"),
+                size: OnbLayout.questionTitle
+            )
+            .padding(.top, OnbLayout.titleTop)
 
-            Spacer(minLength: OnbLayout.titleGap)
-                .layoutPriority(-1)
-
-            OnbTrialTimeline(milestones: TrialTimeline.milestones(locale: i18n.locale, remindersOn: promises))
-
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
+            OnbCentered {
+                OnbTrialTimeline(milestones: TrialTimeline.milestones(from: now, locale: i18n.locale, remindersOn: promises))
+            }
         } footer: {
-            OnbReassurance(text: i18n.t(Self.reassuranceKey(canRemind: promises)))
-            V3Button(i18n.t("common.continue"), isLoading: isAsking) {
-                Task { await proceed() }
+            switch current {
+            case .granted:
+                OnbReassurance(text: i18n.t("ios.onb12.trial.granted"))
+                V3Button(i18n.t("common.continue")) { model.advance() }
+            case .ask:
+                // Lot 17 : une seule ligne pour rassurer, au-dessus du bouton.
+                Text(i18n.t("ios.onb17.trial.cancel"))
+                    .font(OnbType.mention)
+                    .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+                V3Button(i18n.t("ios.onb12.trial.enable"), isLoading: isAsking) {
+                    Task { await ask() }
+                }
+            case .denied:
+                OnbReassurance(text: i18n.t("ios.onb12.trial.denied"))
+                V3Button(i18n.t("common.continue")) { model.advance() }
             }
         }
         .task {
-            guard previewDenied == nil else { return }
-            let allowed = await TrialEndReminder.canBeKept()
-            canRemind = Self.canPromise(notificationsAllowed: allowed, trialDays: OnboardingTrial.days)
+            guard previewPermission == nil else { return }
+            permission = await Self.currentPermission()
         }
     }
 
-    /// **« Continuer »** : si la demande d'iOS n'a jamais été montrée, elle s'ouvre ici (le
-    /// rappel en dépend) ; déjà tranchée, rien ne s'affiche. Puis le parcours avance, quoi
-    /// qu'elle réponde : le paywall, lui non plus, ne promet pas un rappel refusé.
-    private func proceed() async {
-        guard !isAsking else { return }
-        guard promises, previewDenied == nil else {
-            model.advance()
-            return
+    /// L'autorisation, telle qu'iOS la donne.
+    static func currentPermission() async -> Permission {
+        switch await UNUserNotificationCenter.current().notificationSettings().authorizationStatus {
+        case .notDetermined: .ask
+        case .denied: .denied
+        default: .granted
         }
+    }
+
+    /// **« Activer le rappel »** : la demande d'iOS, puis le paywall, quoi qu'elle réponde (le
+    /// paywall, lui non plus, ne promet pas un rappel refusé).
+    private func ask() async {
+        guard !isAsking else { return }
         isAsking = true
         let outcome = await NotificationPermission.request()
         isAsking = false
-        if case .denied = outcome { canRemind = false }
+        if case .denied = outcome { permission = .denied }
         model.advance()
     }
 }
 
 // MARK: - La chronologie de l'essai
 
-/// **Ce qui se passe, jour par jour, avec de vraies dates** (repris du lot 7, où « Jour 2 » se
-/// lisait le lendemain) : aujourd'hui tout s'ouvre, la veille de la fin un rappel (ou comment
-/// l'activer), puis le jour où l'abonnement commence, sauf si l'élève a annulé.
+/// **Ce qui se passe, jour par jour, avec de vraies dates** : aujourd'hui tout s'ouvre, la
+/// veille de la fin un rappel (ou comment l'activer), puis le jour où l'abonnement commence,
+/// sauf si l'élève a annulé.
 struct OnbTrialTimeline: View {
     let milestones: [TrialTimeline.Milestone]
 
@@ -221,9 +236,9 @@ struct OnbTrialTimeline: View {
                 HStack(alignment: .top, spacing: 14) {
                     VStack(spacing: 0) {
                         Image(systemName: milestone.systemImage)
-                            .font(V3Font.label)
+                            .font(.system(size: 20, weight: .bold))
                             .foregroundStyle(tint(milestone.tone))
-                            .frame(width: 40, height: 40)
+                            .frame(width: 46, height: 46)
                             .background(V3Color.wash(of: tint(milestone.tone)), in: Circle())
                         if index < milestones.count - 1 {
                             Rectangle()
@@ -234,26 +249,29 @@ struct OnbTrialTimeline: View {
                     }
                     .accessibilityHidden(true)
 
-                    VStack(alignment: .leading, spacing: 3) {
+                    // Lot 15 : le titre de l'étape à 20 pt, son détail à 17 pt, en couleur
+                    // principale — c'est ce qu'on lit avant de payer.
+                    VStack(alignment: .leading, spacing: 4) {
                         Text(milestone.title)
-                            .font(V3Font.cardTitle)
+                            .font(.system(.title3, design: .default, weight: .bold))
                             .foregroundStyle(V3Color.ink)
                         Text(milestone.detail)
-                            .font(V3Font.support)
-                            .foregroundStyle(V3Color.ink2)
+                            .font(OnbType.detail)
+                            .foregroundStyle(V3Color.ink)
                     }
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.top, 8)
-                    .padding(.bottom, index < milestones.count - 1 ? 18 : 0)
+                    .padding(.top, 10)
+                    .padding(.bottom, index < milestones.count - 1 ? 22 : 0)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityElement(children: .combine)
                 }
             }
         }
-        .padding(18)
+        // Lot 14 : la chronologie se lit sans carte autour, à sa hauteur naturelle.
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.horizontal, 6)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .v3Card()
     }
 
     private func tint(_ tone: TrialTimeline.Tone) -> Color {
@@ -261,111 +279,6 @@ struct OnbTrialTimeline: View {
         case .done: V3Color.green
         case .current: V3Color.accentBright
         case .upcoming: V3Color.yellow
-        }
-    }
-}
-
-// MARK: - Pourquoi maintenant
-
-/// **Le dernier écran avant l'offre : pourquoi commencer ce soir** (lot 11). Rien d'inventé :
-/// le temps qu'il reste avant son examen, les séances que ça laisse à sa durée (une par jour,
-/// à partir d'aujourd'hui), sa première leçon prête, son rappel. Sans examen daté : la
-/// première séance de ce soir.
-struct WhyNowStepView: View {
-    var now = Date()
-
-    @Environment(OnboardingModel.self) private var model
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-
-    /// Les séances d'ici l'examen, une par jour à partir d'aujourd'hui : rien sans examen daté
-    /// ou le jour même, ni quand l'examen est loin (`countsSessionsUpTo`).
-    static func sessionsLeft(daysLeft: Int?) -> Int? {
-        guard let daysLeft, daysLeft > 1, daysLeft <= countsSessionsUpTo else { return nil }
-        return daysLeft
-    }
-
-    /// **Au-delà de huit semaines, on ne compte plus les séances** : « 215 séances » décourage.
-    /// On dit le temps qu'il reste, et ce qu'il permet.
-    static let countsSessionsUpTo = 56
-
-    /// Vrai quand l'examen est assez loin pour parler en semaines ou en mois.
-    static func isFar(daysLeft: Int?) -> Bool {
-        guard let daysLeft else { return false }
-        return daysLeft > countsSessionsUpTo
-    }
-
-    private var daysLeft: Int? { model.examDaysLeft(now: now) }
-
-    private var title: String {
-        if let exam = model.examName(locale: i18n.locale), let days = daysLeft, days > 0 {
-            return i18n.t("ios.onb11.now.title", [
-                "exam": exam,
-                "time": OnbWords.duration(days: days, locale: i18n.locale),
-            ])
-        }
-        return i18n.t("ios.onb11.now.titleAny")
-    }
-
-    private var rows: [(icon: MicaboIcon, text: String)] {
-        let minutes = "\(model.minutesPerDay)"
-        let hour = OnbWords.hour(model.reminderHour, locale: i18n.locale)
-        var rows: [(icon: MicaboIcon, text: String)] = []
-        if let sessions = Self.sessionsLeft(daysLeft: daysLeft) {
-            rows.append((icon: .flame, text: i18n.t("ios.onb11.now.sessions", ["n": "\(sessions)", "min": minutes])))
-        } else if Self.isFar(daysLeft: daysLeft), let days = daysLeft {
-            rows.append((icon: .flame, text: i18n.t("ios.onb11.now.long", [
-                "time": OnbWords.duration(days: days, locale: i18n.locale),
-                "min": minutes,
-            ])))
-        }
-        switch model.firstLessonChoice {
-        case .topic:
-            if let topic = model.firstLessonSubject {
-                rows.append((icon: .book, text: i18n.t("ios.onb11.now.lesson", ["topic": topic])))
-            }
-        case .importSource:
-            rows.append((icon: .photo, text: i18n.t("ios.onb11.now.import")))
-        case nil:
-            break
-        }
-        rows.append((icon: .alarm, text: i18n.t("ios.onb11.now.tonight", ["hour": hour, "min": minutes])))
-        return rows
-    }
-
-    var body: some View {
-        OnbScreen {
-            OnbTitle(title, size: OnbLayout.display, alignment: .center, keyword: V3Color.yellow)
-                .padding(.top, OnbLayout.titleTop)
-
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
-
-            OnbHeroMika(mood: .happy, max: 150, min: 90)
-
-            Spacer(minLength: 12)
-                .layoutPriority(-1)
-
-            VStack(alignment: .leading, spacing: 14) {
-                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                    HStack(alignment: .center, spacing: 12) {
-                        OnbIcon(icon: row.icon, size: 28)
-                        Text(row.text)
-                            .font(V3Font.bodyStrong)
-                            .foregroundStyle(V3Color.ink)
-                            .multilineTextAlignment(.leading)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .accessibilityElement(children: .combine)
-                }
-            }
-            .padding(18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .v3Card()
-        } footer: {
-            V3Button(i18n.t(OnboardingTrial.isOffered ? "ios.onb11.now.cta" : "common.continue")) {
-                model.advance()
-            }
         }
     }
 }

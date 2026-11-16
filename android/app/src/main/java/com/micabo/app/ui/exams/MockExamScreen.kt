@@ -91,7 +91,7 @@ private val DURATIONS = listOf(15, 30, 45, 60)
  * barème du pays, leçon par leçon, et le corrigé. Le premier est offert, puis Pro.
  */
 @Composable
-fun MockExamScreen(examId: String?) {
+fun MockExamScreen(examId: String?, lessonId: String? = null) {
     val app = LocalApp.current
     val navigator = LocalNavigator.current
     val scope = rememberCoroutineScope()
@@ -147,7 +147,7 @@ fun MockExamScreen(examId: String?) {
         when (shown) {
             "setup" -> Setup(
                 exam?.name,
-                lastLessons.ifEmpty { exam?.lessonIds.orEmpty() },
+                lastLessons.ifEmpty { listOfNotNull(lessonId).ifEmpty { exam?.lessonIds.orEmpty() } },
                 lastMinutes,
                 showsFree = !isPro && !app.prefs.mockFreeUsed,
                 onClose = { navigator.back() },
@@ -212,7 +212,7 @@ private fun Setup(examName: String?, examLessons: List<String>, initialMinutes: 
                     }
                 }
             }
-            Text(stringResource(R.string.lesson_exam_questionCount, Paper.questionCount(minutes).toString()), style = nunito(14.sp, FontWeight.Bold), color = colors.inkSecondary)
+            Text(pluralStringResource(R.plurals.lesson_exam_questionCount, Paper.questionCount(minutes), Paper.questionCount(minutes)), style = nunito(14.sp, FontWeight.Bold), color = colors.inkSecondary)
             Text(stringResource(R.string.lesson_exam_lessons), style = nunito(15.sp, FontWeight.ExtraBold), color = colors.inkSecondary, modifier = Modifier.padding(top = 8.dp))
             if (ready.isEmpty()) NoLessons()
             ready.forEach { lesson ->

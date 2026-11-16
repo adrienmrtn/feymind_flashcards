@@ -66,6 +66,8 @@ enum HomeMoment: String, Equatable, CaseIterable {
     case waiting
     case failed
     case locked
+    /// Lot 13 — des supports déposés : Mika les lit, puis propose d'en faire une leçon.
+    case composing
     case session
     case cards
     case lesson
@@ -113,6 +115,8 @@ struct HomeAction: Equatable {
         case unlock
         /// « Réessayer » une leçon qui n'a pas pu s'écrire, ou qui attend le réseau.
         case retry
+        /// Lot 13 — « Écrire ma leçon » : les supports déposés sont lus, la leçon peut partir.
+        case write
     }
 
     var kind: Kind
@@ -125,6 +129,20 @@ struct HomeAction: Equatable {
     var analyticsStep: String {
         kind == .first ? "create" : kind.rawValue
     }
+
+    /// **Lot 13 — l'action qui écrit une leçon est le bouton principal de l'écran** (la pilule
+    /// blanche), pas une puce : c'est la fonction principale de l'app. Les autres actions de la
+    /// journée gardent leur puce.
+    var isPrimary: Bool {
+        kind == .first || kind == .write
+    }
+}
+
+/// **Lot 13 — ce que la barre porte quand des supports y sont déposés** : en lecture, ou prêts
+/// à devenir une leçon.
+enum HomeComposing: Equatable {
+    case reading
+    case ready
 }
 
 /// **L'issue discrète sous l'action** : abandonner la leçon qui s'écrit, ou remettre à plus
@@ -154,6 +172,14 @@ struct HomeBoardInput: Equatable {
     var locked: HomeLockedLesson?
     /// Une leçon peut s'ouvrir pour « Réviser quand même ».
     var hasLesson = false
+    /// Lot 13 — des supports déposés dans la barre, hors écriture.
+    var composing: HomeComposing? = nil
+    /// **Le sujet choisi dans le parcours d'accueil** (lot 13), proposé en grand tant que
+    /// l'élève n'a aucun cours : « Écris ta première leçon : La guerre froide ». Il reste sur
+    /// l'appareil.
+    var firstTopic: String? = nil
+    /// Vrai quand la leçon gratuite n'a pas servi : la Home le dit simplement, sous l'action.
+    var firstIsFree = false
 }
 
 /// **La Home, comme une valeur** : le moment, la phrase, et l'action — ou la jauge, pendant
@@ -191,11 +217,18 @@ struct HomeBoard: Equatable {
             let subject = input.subject?.nilIfBlank.map { clip($0) }
             let marked = subject.map { t("ios.home10.ask.generating", ["topic": $0]) } ?? t("ios.home10.ask.generatingAnon")
             let stage = input.stage ?? .reading
+            let steps = LessonBuilder.Stage.allCases
+            let number = (steps.firstIndex(of: stage) ?? 0) + 1
             return HomeBoard(
                 moment: moment,
                 phrase: HomePhrase(marked: marked, mood: .write),
                 progress: progress(for: input.stage),
-                caption: t(GenerationSteps.key(for: stage, hasSupports: input.hasSupports)),
+                // « Étape 3 sur 4 · J'écris tes notes » : où en est le vrai travail.
+                caption: t("ios.core13.gen.step", [
+                    "n": String(number),
+                    "total": String(steps.count),
+                    "step": t(GenerationSteps.key(for: stage, hasSupports: input.hasSupports)),
+                ]),
                 exit: cancel
             )
         case .waiting:
@@ -222,6 +255,20 @@ struct HomeBoard: Equatable {
                 action: HomeAction(kind: .unlock, title: t("ios.conv.locked.unlock"), symbol: "lock.open.fill"),
                 caption: input.locked?.detail(locale: locale),
                 exit: HomeExit(kind: .later, title: t("ios.home10.cta.later"))
+            )
+        case .composing:
+            if input.composing == .reading {
+                return HomeBoard(
+                    moment: moment,
+                    phrase: HomePhrase(marked: t("ios.core13.home.reading"), mood: .look),
+                    caption: t("ios.core13.home.readingCaption")
+                )
+            }
+            return HomeBoard(
+                moment: moment,
+                phrase: HomePhrase(marked: t("ios.core13.home.ready"), mood: .happy),
+                action: HomeAction(kind: .write, title: t("ios.core13.cta.write"), symbol: "sparkles"),
+                caption: t("ios.core13.home.promise")
             )
         case .session:
             let session = day.session
@@ -273,11 +320,22 @@ struct HomeBoard: Equatable {
                     : HomeAction(kind: .create, title: t("lesson.lessons.new"), symbol: "plus")
             )
         case .newcomer:
+            // Lot 13 — l'élève sans leçon : tout pousse à écrire la première, et le sujet
+            // choisi au parcours d'accueil revient tant qu'il n'est pas écrit.
+            if let topic = input.firstTopic?.nilIfBlank {
+                return HomeBoard(
+                    moment: moment,
+                    phrase: HomePhrase(marked: t("ios.home13.ask.firstTopic", ["topic": clip(topic)]), mood: .write),
+                    action: HomeAction(kind: .first, title: t("ios.home13.cta.firstTopic"), symbol: "sparkles"),
+                    caption: input.firstIsFree ? t("ios.home13.firstFree") : nil
+                )
+            }
             let marked = name.map { t("ios.home10.ask.newcomer", ["name": $0]) } ?? t("ios.home10.ask.newcomerAnon")
             return HomeBoard(
                 moment: moment,
                 phrase: HomePhrase(marked: marked, mood: .wave),
-                action: HomeAction(kind: .first, title: t("ios.home10.cta.first"), symbol: "sparkles")
+                action: HomeAction(kind: .first, title: t("ios.home10.cta.first"), symbol: "sparkles"),
+                caption: t("ios.core13.home.promise")
             )
         }
     }
@@ -291,6 +349,10 @@ struct HomeBoard: Equatable {
         case .idle: break
         }
         if input.locked != nil { return .locked }
+        // Des supports déposés : Mika les lit, puis propose d'en faire une leçon (lot 13).
+        if input.composing != nil { return .composing }
+        // Le sujet choisi dans le parcours passe devant la journée : c'est la première leçon.
+        if !input.day.hasCourses, input.firstTopic?.nilIfBlank != nil { return .newcomer }
         switch input.day.proposal {
         case .session: return .session
         case .cards: return .cards
@@ -389,6 +451,9 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
     case youtube
     /// Les conversations avec Mika (lot 11) : l'historique, en un geste.
     case chats
+    /// Lot 13 — « Nouvelle leçon » : la feuille qui écrit une leçon (un sujet ou un support),
+    /// en tête de la rangée et dans l'accent. C'est la fonction principale de l'app.
+    case newLesson = "new_lesson"
 
     var id: String { rawValue }
 
@@ -397,15 +462,21 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
 
     /// Ce que la Home propose, dans l'ordre. Le quiz demande une leçon ouverte, les cartes des
     /// cartes dues.
-    static func available(isNewcomer: Bool, hasLesson: Bool, dueCount: Int, hasChats: Bool = false) -> [HomeShortcut] {
+    ///
+    /// Les conversations avec Mika ne sont plus une puce (lot 12) : elles ont leur tiroir, au
+    /// bouton menu de l'en-tête.
+    static func available(isNewcomer: Bool, hasLesson: Bool, dueCount: Int) -> [HomeShortcut] {
         if isNewcomer {
-            return hasChats ? [.photo, .pdf, .youtube, .chats, .focus, .scan] : [.photo, .pdf, .youtube, .focus, .scan]
+            // Le nouvel élève a déjà « Écrire ma première leçon » en bouton principal : la
+            // rangée lui donne les supports en direct.
+            return [.photo, .pdf, .youtube, .focus, .scan]
         }
-        // Les conversations avec Mika juste après Focus, dès qu'il y en a une.
-        var shortcuts: [HomeShortcut] = hasChats ? [.focus, .chats, .scan] : [.focus, .scan]
+        var shortcuts: [HomeShortcut] = [.newLesson, .focus, .scan]
         if hasLesson { shortcuts.append(.quiz) }
         if dueCount > 0 { shortcuts.append(.cards) }
-        shortcuts.append(contentsOf: [.importSource, .writing, .mock])
+        // « Importer » a laissé sa place à « Nouvelle leçon », en tête : la même feuille, un
+        // seul nom (lot 13).
+        shortcuts.append(contentsOf: [.writing, .mock])
         return shortcuts
     }
 
@@ -423,6 +494,7 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
         case .pdf: L10n.t("ios.home10.tool.pdf", locale: locale)
         case .youtube: "YouTube"
         case .chats: L10n.t("ios.chat11.home.chip", locale: locale)
+        case .newLesson: L10n.t("lesson.lessons.new", locale: locale)
         }
     }
 

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="other">友だち%1$d人</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="other">カード%1$d枚</item>
+    </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="other">%1$d教科</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="other">+%1$d点：大きな挑戦。一歩ずつ進もう</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="other">+%1$d点：意欲的だけど、達成できる</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="other">+%1$d点：小さな一歩、十分できるよ</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="other">%1$d日間</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="other">%1$d日間無料、その後は週%2$s。いつでも解約できます。</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="other">%1$d日間無料、その後は年%2$s。いつでも解約できます。</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="other">%1$d日間無料</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="other">%1$d日間、無料で試してみよう。</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="other">%1$d日間の無料体験を始める</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="other">%1$d日間無料、その後は毎週</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="other">%1$d日間無料、その後は年%2$s</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="other">%1$d日連続</item>
+    </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="other">自己ベストは%2$s。あと%1$d日で更新！</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="other">%1$d日</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="other">日連続</item>
+    </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="other">あと%1$d日で終了</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="other">復習するカード %1$d枚</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="other">まちがえた%1$d問をカードに追加</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d問</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="other">未回答の問題が%1$d問あります。それでも提出しますか？</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="other">あと%1$d日</item>
+    </plurals>
+</resources>

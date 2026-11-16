@@ -91,6 +91,21 @@ class MikaChat(
         return text
     }
 
+    /**
+     * **Mika, dans un chat autonome** (lot 12) : les derniers tours de la conversation, et le
+     * texte lu sur ses photos (plusieurs, lues sur le téléphone) comme document joint. La même
+     * porte et le même compte du jour que les autres questions. Rend la conversation complétée.
+     */
+    suspend fun answerConversation(conversation: Conversation, title: String, isPro: Boolean): Conversation {
+        val turns = conversation.messages.takeLast(TURNS)
+        check(turns.lastOrNull()?.role == "user")
+        val language = com.micabo.app.i18n.AppLocale.resolved(prefs.profile.value.language).content
+        val reply = ask(turns, language, title, conversation.attachment)
+        counted(isPro)
+        xp?.award(XpReason.MIKA_ANSWER)
+        return conversation.copy(messages = conversation.messages + ChatMessage(role = "assistant", text = reply.str("reply")))
+    }
+
     /** L'appel lui-même : les derniers tours, la langue, le niveau et le document joint. */
     private suspend fun ask(turns: List<ChatMessage>, language: String, title: String, attachment: String): JsonObject {
         val profile = prefs.profile.value

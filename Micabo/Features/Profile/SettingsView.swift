@@ -37,6 +37,9 @@ struct SettingsView: View {
 
     @Environment(ProAccess.self) private var pro: ProAccess?
     @State private var paywall: PaywallTrigger?
+    /// Lot 13 — « Restaurer mes achats » : en cours, puis ce que la boutique a répondu.
+    @State private var isRestoring = false
+    @State private var restoreReport: String?
     /// La variante du test de prix montrée par les paywalls (`PriceDisplay`), relue pour que
     /// la rangée de test suive l'appui.
     @State private var priceDisplay = PriceDisplay.current
@@ -160,6 +163,14 @@ struct SettingsView: View {
             Text(notificationReport ?? "")
         }
         .alert(
+            i18n.t("ios.core13.restore.title"),
+            isPresented: Binding(get: { restoreReport != nil }, set: { if !$0 { restoreReport = nil } })
+        ) {
+            Button(i18n.t("ios.ok"), role: .cancel) {}
+        } message: {
+            Text(restoreReport ?? "")
+        }
+        .alert(
             i18n.t("app.common.oops"),
             isPresented: Binding(get: { leaveFailure != nil }, set: { if !$0 { leaveFailure = nil } })
         ) {
@@ -244,6 +255,18 @@ struct SettingsView: View {
                         action: { paywall = .upgrade }
                     )
 
+                    // Lot 13 — **la restauration a sa place hors du paywall** : un élève qui
+                    // réinstalle l'app, ou change d'iPhone, la cherche ici (App Review aussi).
+                    MicaboHairline(inset: 72)
+
+                    MicaboRow(
+                        tile: MicaboTile(glyph: .symbol("arrow.clockwise"), background: MicaboColor.surfaceMuted),
+                        title: i18n.t("ios.core13.restore.title"),
+                        subtitle: i18n.t("ios.core13.restore.help"),
+                        accessory: isRestoring ? .none : .chevron,
+                        action: { Task { await restorePurchases() } }
+                    )
+
                     if DiscountOffer.isReachable(isPro: isSubscribed, courseCount: ownedCourseCount) {
                         MicaboHairline(inset: 72)
 
@@ -258,6 +281,27 @@ struct SettingsView: View {
                 }
             }
             .micaboGroup()
+        }
+    }
+
+    /// **Restaurer les achats** depuis les Réglages, comme le paywall le fait : un abonnement
+    /// retrouvé ouvre Pro ; sinon la réponse se dit (rien à restaurer, ou la panne).
+    @MainActor
+    private func restorePurchases() async {
+        guard !isRestoring else { return }
+        isRestoring = true
+        let outcome = await PaywallPurchases.restore()
+        isRestoring = false
+        switch outcome {
+        case .purchased:
+            Analytics.track(.paywallRestored)
+            pro?.unlock()
+            Haptics.success()
+            restoreReport = i18n.t("ios.core13.restore.done")
+        case .failed(let cause):
+            restoreReport = cause.message
+        default:
+            restoreReport = i18n.t("ios.paywallNoRestore")
         }
     }
 

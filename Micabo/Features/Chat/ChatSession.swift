@@ -21,6 +21,8 @@ struct ChatLaunch: Identifiable, Hashable {
     var autoSend: String?
     /// L'appareil photo en rafale s'ouvre dès l'arrivée.
     var opensCamera = false
+    /// Lot 12 — une capture de la caméra à modes, envoyée dès l'arrivée.
+    var scan: ScanPayload?
 
     /// La conversation d'une leçon : la dernière reprise, sinon une nouvelle.
     static func lesson(_ courseID: UUID, origin: ChatOrigin = .lesson, prefill: String? = nil) -> ChatLaunch {
@@ -37,8 +39,13 @@ struct ChatBubble: Identifiable, Equatable {
     var card: GeneratedFlashcard?
     var cardAdded = false
     var exerciseID: UUID?
+    /// Lot 12 — le geste de la caméra (la bulle de l'élève le nomme), et sa langue cible.
+    var scanMode: ScanMode?
+    var scanTarget: UiLocale?
+    /// Lot 12 — les cartes d'un vocabulaire ou de cartes mémoire, à ranger d'un geste.
+    var cards: [GeneratedFlashcard] = []
 
-    init(id: UUID = UUID(), role: MikaTurn.Role, text: String, photoNames: [String] = [], card: GeneratedFlashcard? = nil, cardAdded: Bool = false, exerciseID: UUID? = nil) {
+    init(id: UUID = UUID(), role: MikaTurn.Role, text: String, photoNames: [String] = [], card: GeneratedFlashcard? = nil, cardAdded: Bool = false, exerciseID: UUID? = nil, scanMode: ScanMode? = nil, scanTarget: UiLocale? = nil, cards: [GeneratedFlashcard] = []) {
         self.id = id
         self.role = role
         self.text = text
@@ -46,10 +53,13 @@ struct ChatBubble: Identifiable, Equatable {
         self.card = card
         self.cardAdded = cardAdded
         self.exerciseID = exerciseID
+        self.scanMode = scanMode
+        self.scanTarget = scanTarget
+        self.cards = cards
     }
 
     init(_ message: ChatMessage) {
-        self.init(id: message.id, role: message.role, text: message.text, photoNames: message.photoNames, card: message.card, cardAdded: message.cardAdded, exerciseID: message.exerciseID)
+        self.init(id: message.id, role: message.role, text: message.text, photoNames: message.photoNames, card: message.card, cardAdded: message.cardAdded, exerciseID: message.exerciseID, scanMode: message.scanMode, scanTarget: message.scanTarget, cards: message.cards)
     }
 }
 
@@ -70,6 +80,14 @@ struct ChatPendingPhoto: Identifiable, Equatable {
         if case .read(let text) = state { return text }
         return ""
     }
+}
+
+/// **« En faire une leçon »**, depuis une conversation : le sujet, un titre, et le texte des
+/// pages passées à la caméra quand il y en a.
+struct ChatLessonSeed: Equatable {
+    var topic: String
+    var title: String
+    var text: String?
 }
 
 // MARK: - La conversation
@@ -101,6 +119,10 @@ final class ChatSession {
     /// La question offerte est passée : la limite se dit dans le fil, avec la porte du paywall.
     private(set) var limitReached = false
     var paywall: PaywallTrigger? = nil
+    /// Lot 12 — le geste de la caméra qui attend son envoi avec les photos en attente
+    /// (« Traduire en anglais ») : il part avec elles, en une question.
+    private(set) var pendingMode: ScanMode? = nil
+    private(set) var pendingTarget: UiLocale? = nil
 
     let origin: ChatOrigin
     private(set) var courseID: UUID? = nil
@@ -143,7 +165,7 @@ final class ChatSession {
     }
 
     /// Une conversation dessinée telle quelle (les rendus) : sans base ni réseau.
-    init(preview bubbles: [ChatBubble], title: String? = nil, courseTitle: String? = nil, pending: [ChatPendingPhoto] = [], draft: String = "", thinking: Bool = false, failure: String? = nil, limitReached: Bool = false, capReached: Bool = false) {
+    init(preview bubbles: [ChatBubble], title: String? = nil, courseTitle: String? = nil, pending: [ChatPendingPhoto] = [], pendingMode: ScanMode? = nil, draft: String = "", thinking: Bool = false, failure: String? = nil, limitReached: Bool = false, capReached: Bool = false) {
         self.origin = .home
         self.quota = MikaQuota()
         self.xp = nil
@@ -153,6 +175,7 @@ final class ChatSession {
         self.courseTitle = courseTitle
         self.courseID = courseTitle == nil ? nil : UUID()
         self.pending = pending
+        self.pendingMode = pendingMode
         self.draft = draft
         self.thinking = thinking
         self.failure = failure
@@ -178,11 +201,20 @@ final class ChatSession {
         return !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !pending.isEmpty
     }
 
+    /// Le geste en attente, tel que la barre de saisie le montre.
+    var pendingLabel: String? {
+        pendingMode.map { ScanPrompts.label($0, target: pendingTarget) }
+    }
+
     var canRetry: Bool { failure != nil && bubbles.last?.role == .user && !thinking }
 
     /// « En faire une leçon » : hors leçon, et quand il y a une question à en tirer.
     var lessonTopic: String? {
         guard courseID == nil, bubbles.contains(where: { $0.role == .mika }) else { return nil }
+        if let pageText = scannedText, !pageText.isEmpty {
+            // Une page passée à la caméra : son début dit le sujet mieux que « Résumer ».
+            return String(pageText.prefix(300))
+        }
         let question = bubbles.first(where: { $0.role == .user && !$0.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty })?.text
         let topic = (question ?? thread?.title ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return topic.isEmpty ? nil : String(topic.prefix(300))
@@ -212,6 +244,39 @@ final class ChatSession {
 
     func remove(photo id: UUID) {
         pending.removeAll { $0.id == id }
+        if pending.isEmpty, draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { clearPendingMode() }
+    }
+
+    func clearPendingMode() {
+        pendingMode = nil
+        pendingTarget = nil
+    }
+
+    /// Le texte lu sur les pages passées à la caméra dans cette conversation, à la suite.
+    var scannedText: String? {
+        let texts = bubbles.filter { $0.role == .user && $0.scanMode != nil }.flatMap { storedTexts[$0.id] ?? [] }.filter { !$0.isEmpty }
+        return texts.isEmpty ? nil : texts.joined(separator: "\n\n")
+    }
+
+    /// **« En faire une leçon »** : le sujet, et le texte des pages quand il y en a — la Home
+    /// en fait un support de leçon plutôt qu'un sujet de trois cents caractères.
+    var lessonSeed: ChatLessonSeed? {
+        guard let topic = lessonTopic else { return nil }
+        return ChatLessonSeed(topic: topic, title: thread?.title ?? topic, text: scannedText)
+    }
+
+    // MARK: La caméra à modes
+
+    /// **Une capture de la caméra arrive** (lot 12) : ses pages, déjà lues sur l'appareil,
+    /// deviennent les photos en attente, avec leur geste ; le texte tapé à la place d'une photo
+    /// va dans le champ. Puis tout part, en une question.
+    func queueScan(_ capture: ScanCapture) {
+        pending = capture.pages.prefix(Self.maxPhotos).map { page in
+            ChatPendingPhoto(image: page.image, state: page.text.isEmpty ? .unreadable : .read(page.text))
+        }
+        pendingMode = capture.mode
+        pendingTarget = capture.mode == .translate ? capture.target : nil
+        if !capture.typed.isEmpty { draft = String(capture.typed.prefix(MikaLimits.messageCharacters)) }
     }
 
     // MARK: Envoyer
@@ -242,17 +307,20 @@ final class ChatSession {
             draft = ""
             pending = []
         }
+        let mode = text == nil ? pendingMode : nil
+        let target = text == nil ? pendingTarget : nil
+        if text == nil { clearPendingMode() }
         let names = photosToSend.compactMap { photos.save($0.image) }
         let texts = photosToSend.map(\.text)
         let clipped = String(message.prefix(MikaLimits.messageCharacters))
         if let context {
-            let thread = self.thread ?? ChatStore.createThread(origin: origin, courseID: courseID, courseTitle: courseTitle, exerciseID: exerciseID, in: context)
+            let thread = self.thread ?? ChatStore.createThread(origin: mode != nil && bubbles.isEmpty ? .scan : origin, courseID: courseID, courseTitle: courseTitle, exerciseID: exerciseID, in: context)
             self.thread = thread
-            let stored = ChatStore.append(.user, text: clipped, photoNames: names, photoTexts: names.count == texts.count ? texts : [], to: thread, in: context)
+            let stored = ChatStore.append(.user, text: clipped, photoNames: names, photoTexts: names.count == texts.count ? texts : [], scanMode: mode, scanTarget: target, to: thread, in: context)
             bubbles.append(ChatBubble(stored))
             storedTexts[stored.id] = texts
         } else {
-            let bubble = ChatBubble(role: .user, text: clipped, photoNames: names)
+            let bubble = ChatBubble(role: .user, text: clipped, photoNames: names, scanMode: mode, scanTarget: target)
             bubbles.append(bubble)
             storedTexts[bubble.id] = texts
         }
@@ -260,6 +328,7 @@ final class ChatSession {
             "origin": .text(origin.rawValue),
             "photos": .number(Double(photosToSend.count)),
             "linked": .flag(courseID != nil || exerciseID != nil),
+            "mode": .text(mode?.analyticsName ?? "none"),
         ])
         await ask(isPro: isPro, service: service, context: context)
     }
@@ -277,13 +346,30 @@ final class ChatSession {
         thinking = true
         defer { thinking = false }
         do {
-            let reply = try await service.chat(request())
-            guard reply.isUsable else { throw AIServiceError.invalidResponse }
+            let asked = bubbles.last(where: { $0.role == .user })
+            let text: String
+            var card: GeneratedFlashcard? = nil
+            var cards: [GeneratedFlashcard] = []
+            if asked?.scanMode == .flashcards, let asked {
+                // Les cartes mémoire : `generate-flashcards`, la fonction des cartes d'une leçon.
+                cards = try await service.generateFlashcards(flashcardRequest(for: asked))
+                    .filter { !$0.front.isEmpty && !$0.back.isEmpty }
+                guard !cards.isEmpty else { throw AIServiceError.invalidResponse }
+                text = L10n.t("ios.scan12.cards.reply", locale: .resolved(), vars: ["count": "\(cards.count)"])
+            } else {
+                let reply = try await service.chat(request())
+                guard reply.isUsable else { throw AIServiceError.invalidResponse }
+                text = reply.reply
+                if asked?.scanMode == .vocabulary {
+                    cards = ScanCardParser.vocabulary(from: reply.reply)
+                }
+                if cards.isEmpty { card = reply.card }
+            }
             if let context, let thread {
-                let stored = ChatStore.append(.mika, text: reply.reply, card: reply.card, to: thread, in: context)
+                let stored = ChatStore.append(.mika, text: text, card: card, cards: cards, to: thread, in: context)
                 bubbles.append(ChatBubble(stored))
             } else {
-                bubbles.append(ChatBubble(role: .mika, text: reply.reply, card: reply.card))
+                bubbles.append(ChatBubble(role: .mika, text: text, card: card, cards: cards))
             }
             quota.noteAnswered()
             xp?.award(.mikaAnswer)
@@ -296,6 +382,20 @@ final class ChatSession {
 
     private var hasPhotos: Bool { bubbles.contains { !$0.photoNames.isEmpty } }
 
+    /// La demande de cartes : le texte des pages (et ce que l'élève a tapé), huit cartes simples
+    /// dans la langue de l'app.
+    func flashcardRequest(for bubble: ChatBubble) -> FlashcardGenerationRequest {
+        let pages = (storedTexts[bubble.id] ?? []).filter { !$0.isEmpty }
+        let context = (pages + [bubble.text]).filter { !$0.isEmpty }.joined(separator: "\n\n")
+        return FlashcardGenerationRequest(
+            courseTitle: thread?.title ?? ScanPrompts.label(.flashcards),
+            courseContext: String(context.prefix(MikaLimits.attachmentCharacters)),
+            existingFronts: [],
+            quota: QuestionQuota(basic: ScanMode.cardCount, cloze: 0, choice: 0),
+            language: UiLocale.resolved().contentLanguage
+        )
+    }
+
     /// **La demande** : les huit derniers tours (une question faite de photos seules dit « Explique-
     /// moi ce qu'il y a sur la photo »), et le document joint — le texte des photos de ces tours,
     /// puis la leçon ou l'exercice.
@@ -303,7 +403,10 @@ final class ChatSession {
         let recent = Array(bubbles.suffix(MikaLimits.turns))
         let turns = recent.map { bubble -> MikaTurn in
             var text = bubble.text
-            if bubble.role == .user, text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            if bubble.role == .user, let mode = bubble.scanMode {
+                // Un geste de la caméra : sa consigne, refaite à chaque fois, et ce qui a été tapé.
+                text = ScanPrompts.consigne(mode, target: bubble.scanTarget, typed: bubble.text)
+            } else if bubble.role == .user, text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 text = L10n.t(bubble.photoNames.count > 1 ? "ios.chat11.ask.photos" : "ios.chat11.ask.photo", locale: .resolved())
             }
             return MikaTurn(role: bubble.role, text: String(text.prefix(MikaLimits.messageCharacters)))
@@ -323,7 +426,10 @@ final class ChatSession {
             contextTitle: exerciseDocument != nil ? SolverPrompts.exerciseTitle : courseTitle,
             contextText: exerciseDocument ?? courseText
         )
-        return MikaChatRequest(turns: turns, attachment: attachment, language: language, level: OnboardingPreferences.educationStage?.level)
+        // Le geste de la caméra, quand le dernier message en vient : le serveur de demain s'en
+        // sert, celui d'aujourd'hui l'ignore.
+        let mode = recent.last(where: { $0.role == .user })?.scanMode?.rawValue
+        return MikaChatRequest(turns: turns, attachment: attachment, language: language, level: OnboardingPreferences.educationStage?.level, mode: mode)
     }
 
     /// La langue de la leçon liée, sinon celle de l'interface.
@@ -351,6 +457,7 @@ final class ChatSession {
     private func reset() {
         draft = ""
         pending = []
+        clearPendingMode()
         failure = nil
         capReached = false
         limitReached = false
@@ -415,6 +522,28 @@ final class ChatSession {
         Analytics.track(.mikaCardAdded)
         Analytics.track(.chatGateway, ["kind": .text("card")])
         return true
+    }
+
+    /// Les cartes d'un vocabulaire ou de cartes mémoire rejoignent une leçon, toutes d'un coup.
+    @discardableResult
+    func addCards(of bubbleID: UUID, to course: Course, in context: ModelContext) -> Int {
+        guard let index = bubbles.firstIndex(where: { $0.id == bubbleID }),
+              !bubbles[index].cardAdded,
+              !bubbles[index].cards.isEmpty,
+              let inserted = try? CourseRepository.addFlashcards(bubbles[index].cards, to: course, in: context),
+              !inserted.isEmpty
+        else { return 0 }
+        bubbles[index].cardAdded = true
+        let target = bubbleID
+        var descriptor = FetchDescriptor<ChatMessage>(predicate: #Predicate { $0.id == target })
+        descriptor.fetchLimit = 1
+        if let message = try? context.fetch(descriptor).first {
+            message.cardAdded = true
+            try? context.save()
+        }
+        Haptics.success()
+        Analytics.track(.chatGateway, ["kind": .text("cards"), "count": .number(Double(inserted.count))])
+        return inserted.count
     }
 
     // MARK: La lecture

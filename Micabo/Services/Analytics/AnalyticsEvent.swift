@@ -164,6 +164,24 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// Une séance de Concentration qui ouvre sa leçon : `activity` (`lesson`, `cards`, `quiz`).
     case focusLessonOpened = "focus_lesson_opened"
 
+    // MARK: La caméra à modes, les outils, le tiroir (lot 12)
+
+    /// La caméra ouverte : `mode` (`solve`, `equation`, `explain`, `vocabulary`, `translate`,
+    /// `flashcards`, `summary`) et `context` (`standalone`, `chat`).
+    case scanOpened = "scan_opened"
+    /// Un mode choisi par sa pastille : `mode`.
+    case scanModeChosen = "scan_mode_chosen"
+    /// Une capture envoyée : `mode`, `pages` (leur nombre), `typed` (texte tapé). Jamais le texte.
+    case scanCaptured = "scan_captured"
+    /// Rien de lisible sur la capture : `mode`.
+    case scanUnreadable = "scan_unreadable"
+    /// La feuille Outils ouverte : `context` (`home`, `chat`).
+    case toolsOpened = "tools_opened"
+    /// Une entrée de la feuille Outils : `tool` (un nom fixe) et `context`.
+    case toolPicked = "tool_picked"
+    /// Le tiroir des conversations ouvert : `via` (`button`, `swipe`) et `count`.
+    case drawerOpened = "drawer_opened"
+
     // MARK: Corriger un texte (lot 7)
 
     /// Un raccourci des outils de Home : `tool` (`scan`, `writing`, `quiz`).

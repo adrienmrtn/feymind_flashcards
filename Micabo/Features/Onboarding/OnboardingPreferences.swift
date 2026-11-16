@@ -455,6 +455,10 @@ enum OnboardingPreferences {
         /// L'échéance n'est plus demandée ; la clé reste listée pour être effacée.
         static let examHorizon = "micabo.onboarding.examHorizon"
         static let method = "micabo.onboarding.method"
+        /// Lot 12 : la matière la plus dure, le temps de révision par semaine, l'engagement.
+        static let hardestSubject = "micabo.onboarding.hardestSubject"
+        static let weeklyStudy = "micabo.onboarding.weeklyStudy"
+        static let committed = "micabo.onboarding.committed"
         /// L'heure à laquelle il révise, de 5 à 23. C'est l'heure du rappel.
         static let studyHour = "micabo.onboarding.studyHour"
         /// Ce qui l'inquiète dans ses études, dans l'ordre de la liste.
@@ -483,7 +487,8 @@ enum OnboardingPreferences {
             dailyMinutes, weeklyMinutes, ratingAsked, pendingFirstImport, retiredNotificationsOptIn, completedAt,
             sheetLanguage, schoolTrack, schoolYear, displayName,
             source, triedApps, blocker, examHorizon, method, studyHour, worries,
-            exam, examDate, examPlaced
+            exam, examDate, examPlaced,
+            hardestSubject, weeklyStudy, committed
         ] + resume
     }
 
@@ -609,6 +614,30 @@ enum OnboardingPreferences {
     static var method: String? {
         get { defaults.string(forKey: Key.method) }
         set { write(newValue, forKey: Key.method) }
+    }
+
+    /// La matière la plus dure (lot 12), un nom du catalogue.
+    static var hardestSubject: String? {
+        get { defaults.string(forKey: Key.hardestSubject) }
+        set { write(newValue, forKey: Key.hardestSubject) }
+    }
+
+    /// Le temps de révision par semaine d'aujourd'hui (lot 12), `WeeklyStudy`.
+    static var weeklyStudy: String? {
+        get { defaults.string(forKey: Key.weeklyStudy) }
+        set { write(newValue, forKey: Key.weeklyStudy) }
+    }
+
+    /// L'engagement pris pendant le parcours (lot 12).
+    static var hasCommitted: Bool {
+        get { defaults.bool(forKey: Key.committed) }
+        set {
+            if newValue {
+                defaults.set(true, forKey: Key.committed)
+            } else {
+                defaults.removeObject(forKey: Key.committed)
+            }
+        }
     }
 
     /// L'heure du rappel, telle que le parcours l'a demandée. Absente avant le parcours.

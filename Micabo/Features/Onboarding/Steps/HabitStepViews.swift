@@ -2,30 +2,71 @@ import SwiftUI
 
 // MARK: - Le temps par jour
 
-/// **« Combien de temps par jour ? »** Quatre crans, du plus tranquille au plus intense ;
-/// quinze minutes est celui qu'on conseille. Un appui avance. C'est de ce temps que
-/// `DailyLoad` tire le nombre de cartes du plan.
+/// **« Combien de temps par jour sur Micabo ? »** (lot 14 : un curseur jusqu'à 2 h.) Les crans
+/// de `DailyLoad.steps` : 5 minutes jusqu'à une demi-heure, puis 15 minutes jusqu'à 2 h. La
+/// durée en très grand, et un mot qui qualifie le rythme. C'est de ce temps que `DailyLoad`
+/// tire le nombre de cartes du plan.
 struct DailyTimeStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+    @Environment(\.onbCompact) private var compact
 
-    /// Le cran conseillé.
-    static let advised = OnboardingDailyTime.fifteen
+    /// Le cran proposé d'abord : quinze minutes.
+    static let advised = 15
+
+    /// « 15 min », « 1 h 30 », « 1時間30分 » : une durée écrite par le système, dans la langue.
+    static func duration(_ minutes: Int, locale: UiLocale) -> String {
+        Duration.seconds(minutes * 60).formatted(
+            .units(allowed: [.hours, .minutes], width: .abbreviated)
+                .locale(locale.foundation)
+        )
+    }
+
+    /// **Le mot du rythme** : tranquille, régulier, sérieux, intense, très intense.
+    static func qualifierKey(_ minutes: Int) -> String {
+        switch minutes {
+        case ..<10: "ios.onb10.time.5"
+        case ..<15: "ios.onb10.time.10"
+        case ..<30: "ios.onb10.time.15"
+        case ..<60: "ios.onb10.time.30"
+        default: "ios.onb16.time.max"
+        }
+    }
+
+    private var minutes: Int { DailyLoad.nearestStep(to: model.dailyMinutes ?? Self.advised) }
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb10.q.time")) {
-            VStack(spacing: OnbLayout.rowGap) {
-                ForEach(OnboardingDailyTime.allCases) { time in
-                    V3OptionRow(
-                        time.title(locale: i18n.locale),
-                        subtitle: time == Self.advised ? i18n.t("ios.onb10.time.advised") : nil,
-                        icon: time.icon,
-                        isSelected: model.dailyMinutes == time.rawValue
-                    ) {
-                        model.dailyMinutes = time.rawValue
-                        model.advance()
-                    }
-                }
+        OnbQuestion(
+            i18n.t("ios.onb12.q.time"),
+            say: OnbSay(i18n.t("ios.onb12.say.time"), mood: .idle)
+        ) {
+            VStack(spacing: compact ? 18 : 30) {
+                OnbSliderValue(
+                    label: Self.duration(minutes, locale: i18n.locale),
+                    qualifier: i18n.t(Self.qualifierKey(minutes))
+                )
+                OnbNotchSlider(
+                    count: DailyLoad.steps.count,
+                    index: Binding(
+                        get: { DailyLoad.stepIndex(for: minutes) },
+                        set: { model.dailyMinutes = DailyLoad.minutes(atStepIndex: $0) }
+                    ),
+                    lowerBound: Self.duration(DailyLoad.minimumMinutes, locale: i18n.locale),
+                    upperBound: Self.duration(DailyLoad.maximumMinutes, locale: i18n.locale),
+                    accessibilityLabel: OnbPhrase.plain(i18n.t("ios.onb12.q.time")),
+                    valueText: { Self.duration(DailyLoad.minutes(atStepIndex: $0), locale: i18n.locale) }
+                )
+            }
+            .padding(.top, compact ? 8 : 28)
+            .frame(maxWidth: .infinity)
+            .onAppear {
+                // La réponse existe dès l'affichage, comme le curseur le montre.
+                if model.dailyMinutes == nil { model.dailyMinutes = Self.advised }
+            }
+        } footer: {
+            V3Button(i18n.t("common.continue")) {
+                if model.dailyMinutes == nil { model.dailyMinutes = Self.advised }
+                model.advance()
             }
         }
     }
@@ -35,12 +76,9 @@ struct DailyTimeStepView: View {
 
 /// **« Je te fais signe chaque jour à 18 h ? »** Le rappel, montré avant d'être demandé.
 ///
-/// La page montre un exemple du rappel : le prénom, le nombre de cartes que son temps par
-/// jour donne vraiment (`DailyLoad`), sa première matière. L'heure se
-/// change d'un appui (c'était un écran à part, `studyTime`). Le bouton ouvre **la vraie boîte
-/// de dialogue d'iOS**, qu'on ne pose qu'une fois ; « Plus tard » avance sans l'ouvrir, et
-/// elle reste disponible ensuite. Un refus n'arrête rien : rien dans Micabo ne dépend des
-/// notifications.
+/// La page montre le rappel tel qu'iOS l'afficherait : le prénom, le nombre de cartes que son
+/// temps par jour donne vraiment (`DailyLoad`), sa matière. L'heure se change d'un appui. Le
+/// bouton ouvre **la vraie boîte de dialogue d'iOS** ; « Plus tard » avance sans l'ouvrir.
 struct NotificationsStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -58,11 +96,14 @@ struct NotificationsStepView: View {
 
     var body: some View {
         OnbScreen {
-            OnbTitle(i18n.t("ios.onb10.notif.title", ["hour": hourText]), size: OnbLayout.display)
+            OnbTitle(i18n.t("ios.onb15.notif.title", ["hour": hourText]), size: OnbLayout.questionTitle)
                 .padding(.top, OnbLayout.titleTop)
 
+            OnbMikaRow(say: OnbSay(i18n.t("ios.onb7.notif.one"), mood: .wink))
+                .padding(.top, OnbLayout.mikaGap)
+
             notification
-                .padding(.top, OnbLayout.titleGap)
+                .padding(.top, OnbLayout.answersGap + 4)
 
             V3Chip(i18n.t("ios.onb10.notif.change", ["hour": hourText]), systemImage: "clock") {
                 showsHourPicker = true
@@ -70,12 +111,6 @@ struct NotificationsStepView: View {
             .frame(maxWidth: .infinity)
             .padding(.top, 18)
         } footer: {
-            Text(i18n.t("ios.onb7.notif.one"))
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.ink2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, 4)
             V3Button(i18n.t("ios.onb10.notif.enable"), isLoading: isAsking) {
                 Task { await ask() }
             }
@@ -95,15 +130,16 @@ struct NotificationsStepView: View {
     // MARK: La notification
 
     /// La phrase de l'exemple, tirée des réponses : le prénom, les cartes de son temps par
-    /// jour, sa première matière ; « avant ton contrôle » s'il en a annoncé un.
+    /// jour, sa matière (la plus dure d'abord) ; « avant ton contrôle » s'il en a annoncé un.
     static func message(for model: OnboardingModel, locale: UiLocale) -> String {
+        let subject = model.focusSubject.map { SubjectDisplay.subject($0, locale: locale) } ?? model.firstSubjectName(locale: locale)
         let vars = [
             "name": model.displayName.nilIfBlank ?? "",
             "count": "\(model.cardsPerDay)",
-            "subject": model.firstSubjectName(locale: locale) ?? "",
+            "subject": subject ?? "",
             "min": "\(model.minutesPerDay)",
         ]
-        guard model.displayName.nilIfBlank != nil, model.firstSubjectName(locale: locale) != nil else {
+        guard model.displayName.nilIfBlank != nil, subject != nil else {
             return L10n.t("ios.onb10.notif.bodyPlain", locale: locale, vars: vars)
         }
         if model.examChoice == .test {
@@ -112,29 +148,29 @@ struct NotificationsStepView: View {
         return L10n.t("ios.onb10.notif.body", locale: locale, vars: vars)
     }
 
-    /// L'exemple, tel qu'iOS affiche un rappel : l'avatar de Mika, son nom, « maintenant ».
+    /// L'exemple, tel qu'iOS affiche un rappel : l'avatar de Mika, son nom, l'heure.
     private var notification: some View {
         HStack(alignment: .top, spacing: 12) {
-            MikaAvatar(size: 44)
+            MikaAvatar(size: 48)
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(verbatim: "Mika")
+                    Text(verbatim: "Micabo")
                         .font(V3Font.label)
                         .foregroundStyle(V3Color.ink)
                     Spacer(minLength: 8)
-                    Text(i18n.t("ios.notifNow"))
-                        .font(V3Font.caption)
+                    Text(hourText)
+                        .font(OnbType.mention)
                         .foregroundStyle(V3Color.ink3)
                 }
                 Text(Self.message(for: model, locale: i18n.locale))
-                    .font(V3Font.body)
-                    .foregroundStyle(V3Color.ink2)
+                    .font(V3Font.bodyStrong)
+                    .foregroundStyle(V3Color.ink)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(14)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .v3Card()
         .accessibilityElement(children: .combine)
@@ -193,3 +229,4 @@ struct NotificationsStepView: View {
         model.advance()
     }
 }
+

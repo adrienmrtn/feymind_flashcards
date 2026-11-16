@@ -3,9 +3,14 @@ import SwiftUI
 
 // MARK: - Les quatre stories
 
-/// **Les quatre stories du premier écran** : ce que fait l'app, montré dans un aperçu du
+/// **Les cinq stories du premier écran** : ce que fait l'app, montré dans un aperçu du
 /// produit. C'est le « story mapping » des fonctionnalités : la Home n'a plus à l'expliquer.
+///
+/// Lot 16 (demande du fondateur) : la première page dit **« Tous tes cours, simplifiés. »** ;
+/// « PDF, audio, photos, YouTube : tout devient une leçon » passe en deuxième.
 enum OnboardingStory: Int, CaseIterable, Identifiable {
+    /// Tous tes cours, simplifiés : Mika et tes matières, rangées.
+    case intro
     /// Un cours devient une leçon.
     case lesson
     /// Des quiz et des cartes.
@@ -17,14 +22,16 @@ enum OnboardingStory: Int, CaseIterable, Identifiable {
 
     var id: Int { rawValue }
 
-    /// Le rang de la page dans les statistiques : de 1 à 4.
+    /// Le rang de la page dans les statistiques : de 1 à 5.
     var index: Int { rawValue + 1 }
 
     var titleKey: String {
         switch self {
-        case .lesson: "ios.onb10.story1"
+        case .intro: "ios.onb16.story.intro"
+        // Lot 14 : tous les cours, pas une seule photo (« dire aussi PDF, micro, YouTube »).
+        case .lesson: "ios.onb14.story1"
         case .quiz: "ios.onb10.story2"
-        case .scan: "ios.onb10.story3"
+        case .scan: "ios.onb16.scan.title"
         case .plan: "ios.onb10.story4"
         }
     }
@@ -32,7 +39,7 @@ enum OnboardingStory: Int, CaseIterable, Identifiable {
     /// La couleur du mot-clé : une idée, une couleur.
     var keyword: Color {
         switch self {
-        case .lesson: V3Color.accentBright
+        case .intro, .lesson: V3Color.accentBright
         case .quiz: V3Color.green
         case .scan: V3Color.pink
         case .plan: V3Color.yellow
@@ -44,8 +51,8 @@ enum OnboardingStory: Int, CaseIterable, Identifiable {
     }
 }
 
-/// **Le premier écran : quatre stories**, qu'on passe avec « Continuer » ou en glissant. À la
-/// quatrième, le bouton dit « Commencer » et entre dans le parcours.
+/// **Le premier écran : cinq stories**, qu'on passe avec « Continuer » ou en glissant. À la
+/// dernière, le bouton dit « Commencer » et entre dans le parcours.
 ///
 /// Chaque page a un titre et un aperçu du produit, dessiné ici (pas d'image : les textes sont
 /// ceux de la langue de l'élève, et l'examen de la dernière page est celui de son pays).
@@ -66,7 +73,7 @@ struct StoriesStepView: View {
     @Environment(\.onboardingStill) private var still
 
     /// La page à l'écran. Le défilement l'écrit, « Continuer » aussi.
-    @State private var current: OnboardingStory? = .lesson
+    @State private var current: OnboardingStory? = .intro
     /// Les pages déjà comptées dans les statistiques : une fois chacune.
     @State private var seen: Set<OnboardingStory> = []
 
@@ -77,7 +84,7 @@ struct StoriesStepView: View {
     @State private var isCheckingAccount = false
 
     private var story: OnboardingStory {
-        previewPage ?? current ?? .lesson
+        previewPage ?? current ?? .intro
     }
 
     /// L'examen de la dernière page : celui que tout le monde connaît dans le pays détecté
@@ -333,6 +340,7 @@ struct StoryPage: View {
 
             StoryPhoneFrame {
                 switch story {
+                case .intro: StoryIntroPreview()
                 case .lesson: StoryLessonPreview()
                 case .quiz: StoryQuizPreview()
                 case .scan: StoryScanPreview()
@@ -424,44 +432,81 @@ struct StoryTag: View {
     }
 }
 
-/// **Page 1** : « Photo de mon cours », puis la leçon qui en sort, avec sa jauge et ses trois
-/// modes.
+/// **Page 1 : « Tous tes cours, simplifiés. »** (lot 16) Mika, et tes cours rangés par
+/// matière, chacun avec son icône : la promesse avant la démonstration. Les matières sont des
+/// matières courantes, dans la langue de l'app ; rien n'est compté.
+private struct StoryIntroPreview: View {
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    private static let subjects = ["Mathématiques", "Histoire", "Physique", "Anglais"]
+
+    var body: some View {
+        MikaMascot(mood: .wave, size: 96)
+            .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
+
+        VStack(spacing: 10) {
+            ForEach(Self.subjects, id: \.self) { subject in
+                let icon = MicaboIcon.subjectIcon(subject) ?? .book
+                let tone = LessonTone.forSubject(icon)
+                HStack(spacing: 12) {
+                    MicaboIconView(icon: icon, size: 20 * 1.35, tint: tone.ink)
+                        .frame(width: 38, height: 38)
+                        .background(V3Color.wash(of: tone.ink), in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+                    Text(SubjectDisplay.subject(subject, locale: i18n.locale))
+                        .font(V3Font.option)
+                        .foregroundStyle(V3Color.ink)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(V3Color.green)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .modifier(StoryTile())
+            }
+        }
+    }
+}
+
+/// **Page 2** : les cinq sources (lot 14), une vraie page de cahier prise en photo
+/// (`NotebookPhoto`), puis la leçon qui en sort, avec ses trois modes.
 private struct StoryLessonPreview: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 
     var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "camera.fill")
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(V3Color.accentBright)
-            Text(i18n.t("ios.onb10.story.photo"))
-                .foregroundStyle(V3Color.ink)
-        }
-        .font(V3Font.label)
-        .padding(.horizontal, 14)
-        .padding(.vertical, 9)
-        .background(V3Color.soft, in: RoundedRectangle(cornerRadius: V3Metric.radiusTile, style: .continuous))
-        .frame(maxWidth: .infinity, alignment: .trailing)
+        OnbSourceStrip(tile: 40, highlighted: .photo)
+
+        NotebookPhoto(height: 132)
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 4)
+
+        Image(systemName: "arrow.down")
+            .font(.system(size: 18, weight: .black))
+            .foregroundStyle(V3Color.accentBright)
+            .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
 
         VStack(alignment: .leading, spacing: 0) {
-            Text(i18n.t("ios.onb.sample.title"))
+            Text(i18n.t("ios.onb12.notebook.title"))
                 .font(V3Font.display(22))
                 .foregroundStyle(V3Color.ink)
-            V3ProgressBar(value: 0.4)
-                .padding(.top, 10)
-                .padding(.bottom, 14)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
             HStack(spacing: 8) {
                 StoryTag(text: i18n.t("lesson.nav.notes"), tone: V3Color.accentBright)
                 StoryTag(text: i18n.t("lesson.nav.quiz"), tone: V3Color.green)
                 StoryTag(text: i18n.t("lesson.nav.flashcards"), tone: V3Color.lilac)
             }
+            .padding(.top, 12)
         }
         .padding(16)
         .modifier(StoryTile())
     }
 }
 
-/// **Page 2** : une question, trois réponses, la bonne en vert.
+/// **Page 3** : une question, trois réponses, la bonne en vert.
 private struct StoryQuizPreview: View {
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
 

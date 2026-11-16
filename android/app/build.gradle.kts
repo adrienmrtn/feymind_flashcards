@@ -26,7 +26,7 @@ android {
         targetSdk = 36
         // Le numéro de build vient de la CI (un de plus à chaque envoi), comme pour TestFlight.
         versionCode = (System.getenv("MICABO_VERSION_CODE") ?: "1").toInt()
-        versionName = "1.13"
+        versionName = "1.14"
         // La clé publique Android de RevenueCat (`goog_…`) : publique, l'app l'embarque. La CI
         // peut la remplacer par REVENUECAT_ANDROID_KEY.
         buildConfigField("String", "REVENUECAT_KEY", "\"${System.getenv("REVENUECAT_ANDROID_KEY")?.takeIf { it.isNotBlank() } ?: "goog_tWKnMrBUAJTiDzOnwmvfIWTQhqY"}\"")
@@ -69,6 +69,20 @@ android {
         compose = true
         buildConfig = true
     }
+
+    // **Les tests sur la JVM** (Robolectric) : la logique du parcours, les catalogues des 32
+    // langues, et les rendus de chaque écran sur une matrice de téléphones (`ScreenshotTest`).
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all { test ->
+                test.maxHeapSize = "3g"
+                test.systemProperty("robolectric.graphicsMode", "NATIVE")
+                test.systemProperty("micabo.shots", rootProject.layout.buildDirectory.dir("shots").get().asFile.absolutePath)
+                test.testLogging { events("failed"); exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL }
+            }
+        }
+    }
 }
 
 kotlin {
@@ -100,4 +114,14 @@ dependencies {
     implementation("androidx.exifinterface:exifinterface:1.4.1")
     // La connexion Google s'ouvre dans un onglet de l'app, pas dans le navigateur.
     implementation("androidx.browser:browser:1.8.0")
+    // Les icônes plates de l'app (`MicaboIcons`) : R8 ne garde que celles qui servent.
+    implementation("androidx.compose.material:material-icons-extended")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16.1")
+    testImplementation("androidx.test:core:1.6.1")
+    testImplementation("androidx.test.ext:junit:1.2.1")
+    testImplementation(composeBom)
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }

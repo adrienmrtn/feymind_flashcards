@@ -3,23 +3,88 @@
 <resources>
     <plurals name="app_friends_friendCount">
         <item quantity="one">%1$d kamarát</item>
-        <item quantity="other">kamaráti: %1$d</item>
+        <item quantity="few">%1$d kamaráti</item>
+        <item quantity="other">%1$d kamarátov</item>
     </plurals>
     <plurals name="copy_cards">
         <item quantity="one">%1$d kartička</item>
-        <item quantity="other">kartičky: %1$d</item>
+        <item quantity="few">%1$d kartičky</item>
+        <item quantity="other">%1$d kartičiek</item>
+    </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Tvoj predmet</item>
+        <item quantity="few">Tvoje %1$d predmety</item>
+        <item quantity="other">Tvojich %1$d predmetov</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d bod: poriadna výzva. Pôjdeme krok za krokom</item>
+        <item quantity="few">+%1$d body: poriadna výzva. Pôjdeme krok za krokom</item>
+        <item quantity="other">+%1$d bodov: poriadna výzva. Pôjdeme krok za krokom</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d bod: ambiciózne a zvládnuteľné</item>
+        <item quantity="few">+%1$d body: ambiciózne a zvládnuteľné</item>
+        <item quantity="other">+%1$d bodov: ambiciózne a zvládnuteľné</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d bod: malý krok, úplne zvládnuteľný</item>
+        <item quantity="few">+%1$d body: malý krok, úplne zvládnuteľný</item>
+        <item quantity="other">+%1$d bodov: malý krok, úplne zvládnuteľný</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d deň</item>
+        <item quantity="few">%1$d dni</item>
+        <item quantity="other">%1$d dní</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d deň zadarmo, potom %2$s týždenne. Zrušiť môžeš kedykoľvek.</item>
+        <item quantity="few">%1$d dni zadarmo, potom %2$s týždenne. Zrušiť môžeš kedykoľvek.</item>
+        <item quantity="other">%1$d dní zadarmo, potom %2$s týždenne. Zrušiť môžeš kedykoľvek.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d deň zadarmo, potom %2$s ročne. Zrušiť môžeš kedykoľvek.</item>
+        <item quantity="few">%1$d dni zadarmo, potom %2$s ročne. Zrušiť môžeš kedykoľvek.</item>
+        <item quantity="other">%1$d dní zadarmo, potom %2$s ročne. Zrušiť môžeš kedykoľvek.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d deň zadarmo</item>
+        <item quantity="few">%1$d dni zadarmo</item>
+        <item quantity="other">%1$d dní zadarmo</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Vyskúšaj zadarmo na %1$d deň.</item>
+        <item quantity="few">Vyskúšaj zadarmo na %1$d dni.</item>
+        <item quantity="other">Vyskúšaj zadarmo na %1$d dní.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Začať môj deň zadarmo</item>
+        <item quantity="few">Začať moje %1$d dni zadarmo</item>
+        <item quantity="other">Začať mojich %1$d dní zadarmo</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d deň zadarmo, potom každý týždeň</item>
+        <item quantity="few">%1$d dni zadarmo, potom každý týždeň</item>
+        <item quantity="other">%1$d dní zadarmo, potom každý týždeň</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d deň zadarmo, potom %2$s ročne</item>
+        <item quantity="few">%1$d dni zadarmo, potom %2$s ročne</item>
+        <item quantity="other">%1$d dní zadarmo, potom %2$s ročne</item>
     </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d deň v rade</item>
-        <item quantity="other">Dní v rade: %1$d</item>
+        <item quantity="few">%1$d dni v rade</item>
+        <item quantity="other">%1$d dní v rade</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
         <item quantity="one">Tvoj rekord: %2$s. Vydrž ešte %1$d deň a prekonáš ho.</item>
-        <item quantity="other">Tvoj rekord: %2$s. Dní do nového rekordu: %1$d.</item>
+        <item quantity="few">Tvoj rekord: %2$s. Vydrž ešte %1$d dni a prekonáš ho.</item>
+        <item quantity="other">Tvoj rekord: %2$s. Vydrž ešte %1$d dní a prekonáš ho.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d deň</item>
-        <item quantity="other">Dní: %1$d</item>
+        <item quantity="few">%1$d dni</item>
+        <item quantity="other">%1$d dní</item>
     </plurals>
     <plurals name="ios_streak_unit">
         <item quantity="one">deň v rade</item>
@@ -40,11 +105,16 @@
     </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Pridať moju chybu do kartičiek</item>
-        <item quantity="other">Pridať moje chyby (%1$d) do kartičiek</item>
+        <item quantity="few">Pridať moje %1$d chyby do kartičiek</item>
+        <item quantity="other">Pridať mojich %1$d chýb do kartičiek</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">Otázky: %1$d</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d otázka je bez odpovede. Aj tak odovzdať?</item>
-        <item quantity="other">Otázky bez odpovede: %1$d. Aj tak odovzdať?</item>
+        <item quantity="few">%1$d otázky sú bez odpovede. Aj tak odovzdať?</item>
+        <item quantity="other">%1$d otázok je bez odpovede. Aj tak odovzdať?</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
         <item quantity="other">Zostáva dní: %1$d</item>

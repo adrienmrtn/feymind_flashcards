@@ -541,9 +541,9 @@ final class RenderGalleryTests: XCTestCase {
                 .environment(\.onboardingStill, true)
         )
         try RenderGallery.render(
-            "onboarding-sample-card",
+            "onboarding-research",
             height: 900,
-            SampleCardStepView(previewAnswer: 1)
+            ResearchStepView()
                 .environment(model)
                 .environment(\.onboardingStill, true)
         )

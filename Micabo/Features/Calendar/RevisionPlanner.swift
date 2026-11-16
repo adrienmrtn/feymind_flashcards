@@ -27,8 +27,10 @@ struct PlannedRevision: Equatable {
 ///   depuis l'examen, pas depuis aujourd'hui : rouvrir l'app trois jours plus tard ne change
 ///   pas les jours choisis ;
 /// - **six semaines au plus** : au-delà, un planning est une promesse qu'on ne tient pas ;
-/// - **une séance dure le temps que l'élève s'est donné** dans le parcours d'accueil
-///   (`OnboardingPreferences.dailyMinutes`), entre 15 et 90 minutes ;
+/// - **le temps que l'élève s'est donné par jour** dans le parcours d'accueil
+///   (`OnboardingPreferences.dailyMinutes`) se répartit en séances d'**une heure au plus**
+///   (lot 16) : 45 minutes, une séance ; 90 minutes, deux de 45 ; deux heures, deux d'une heure.
+///   Les séances d'un même jour se suivent, avec un quart d'heure de pause ;
 /// - **elle tombe à l'heure qu'il a choisie** pour réviser, ou à 18 h, et **jamais sur un
 ///   cours** : à défaut, elle glisse au plus près, avec dix minutes d'air de chaque côté, entre
 ///   7 h et 22 h ; un jour sans créneau n'a pas de séance ;
@@ -42,10 +44,22 @@ enum RevisionPlanner {
     static let step = 15
     static let defaultStartMinute = 18 * 60
 
-    /// La durée d'une séance, d'après le temps quotidien de l'élève.
+    /// Le temps par jour le plus long que le plan répartit (le curseur du parcours va à 2 h).
+    static let maxDailyMinutes = 120
+
+    /// **Les séances d'une journée**, d'après le temps quotidien de l'élève : autant de séances
+    /// qu'il faut pour qu'aucune ne dépasse une heure (`FocusPlan.maxMinutes`), de même durée,
+    /// arrondies aux cinq minutes, quinze minutes au moins.
+    static func sessionLengths(dailyMinutes: Int) -> [Int] {
+        let total = max(15, min(maxDailyMinutes, dailyMinutes))
+        let count = max(1, Int((Double(total) / Double(FocusPlan.maxMinutes)).rounded(.up)))
+        let each = Int((Double(total) / Double(count) / 5).rounded()) * 5
+        return Array(repeating: max(15, min(FocusPlan.maxMinutes, each)), count: count)
+    }
+
+    /// La durée d'une séance, d'après le temps quotidien de l'élève : une heure au plus.
     static func sessionLength(dailyMinutes: Int) -> Int {
-        let clamped = max(15, min(90, dailyMinutes))
-        return Int((Double(clamped) / 5).rounded()) * 5
+        sessionLengths(dailyMinutes: dailyMinutes).first ?? 15
     }
 
     /// Vrai si un jour situé `daysBefore` jours avant l'examen reçoit une séance.
@@ -73,7 +87,8 @@ enum RevisionPlanner {
         let daysLeft = calendar.dateComponents([.day], from: today, to: examDay).day ?? 0
         guard daysLeft >= 2 else { return [] }
 
-        let length = sessionLength(dailyMinutes: dailyMinutes)
+        let lengths = sessionLengths(dailyMinutes: dailyMinutes)
+        let length = lengths[0]
         let preferred = max(earliestStart, min(latestEnd - length, preferredStartMinute))
         let firstBefore = min(daysLeft, horizonDays)
         // Aujourd'hui, une séance ne peut pas commencer dans le passé : un quart d'heure de
@@ -87,16 +102,24 @@ enum RevisionPlanner {
             guard sessions.count < maxSessions,
                   let day = calendar.date(byAdding: .day, value: -before, to: examDay) else { continue }
             let notBefore = before == daysLeft ? todayFloor : earliestStart
-            guard let start = slot(length: length, preferred: preferred, busy: busy(day), notBefore: notBefore) else { continue }
-            let lesson = lessons.isEmpty ? nil : lessons[lessonIndex % lessons.count]
-            lessonIndex += 1
-            sessions.append(PlannedRevision(
-                day: day,
-                startMinute: start,
-                endMinute: start + length,
-                courseID: lesson?.id,
-                title: lesson?.title ?? examName
-            ))
+            // Les séances du jour se suivent : la suivante part un quart d'heure après la fin
+            // de la précédente, qui compte désormais comme occupée.
+            var dayBusy = busy(day)
+            var wanted = preferred
+            for sessionLength in lengths where sessions.count < maxSessions {
+                guard let start = slot(length: sessionLength, preferred: wanted, busy: dayBusy, notBefore: notBefore) else { break }
+                let lesson = lessons.isEmpty ? nil : lessons[lessonIndex % lessons.count]
+                lessonIndex += 1
+                sessions.append(PlannedRevision(
+                    day: day,
+                    startMinute: start,
+                    endMinute: start + sessionLength,
+                    courseID: lesson?.id,
+                    title: lesson?.title ?? examName
+                ))
+                dayBusy.append(start...(start + sessionLength))
+                wanted = start + sessionLength + step
+            }
         }
         return sessions
     }
@@ -133,6 +156,23 @@ enum RevisionPlanner {
 /// restent dans l'agenda, cochées ou non. Seules les séances à venir sont remplacées.
 @MainActor
 enum StudyPlanStore {
+    /// **Les séances à venir de plus d'une heure, ramenées à une heure** (lot 16) : un planning
+    /// fait avant le plafond gardait des séances de 90 minutes. Elles finissent une heure après
+    /// leur début ; les séances passées ne bougent pas. Rend le nombre de séances raccourcies.
+    @discardableResult
+    static func capLongSessions(in context: ModelContext, now: Date = Date(), calendar: Calendar = MicaboCalendar.shared) -> Int {
+        let today = calendar.startOfDay(for: now)
+        let events = (try? context.fetch(FetchDescriptor<CalendarEvent>())) ?? []
+        var capped = 0
+        for event in events where event.kind == .revision && event.day >= today
+            && event.endMinute - event.startMinute > FocusPlan.maxMinutes {
+            event.endMinute = event.startMinute + FocusPlan.maxMinutes
+            capped += 1
+        }
+        if capped > 0 { try? context.save() }
+        return capped
+    }
+
     /// Pose les séances d'un examen et rend leur nombre.
     @discardableResult
     static func generate(for exam: Exam, in context: ModelContext, now: Date = Date(), calendar: Calendar = MicaboCalendar.shared) -> Int {

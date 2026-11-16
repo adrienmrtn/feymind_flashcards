@@ -6,12 +6,12 @@ import SwiftUI
 
 // MARK: - La moyenne d'aujourd'hui
 
-/// **« Ta moyenne en ce moment, à peu près ? »**
+/// **« Ta moyenne en ce moment, à peu près ? »** (lot 14 : le curseur à crans.)
 ///
-/// La question ne juge pas : la première valeur de la molette est **en dessous** du barème,
-/// parce qu'une échelle qui commence à la moyenne annonce à celui qui ne l'a pas qu'il n'était
-/// pas prévu. Elle est facultative : « Passer », en haut à droite, saute aussi la moyenne
-/// visée.
+/// La valeur en très grand, dans le barème de son pays ; dessous, la piste du curseur, ses
+/// bornes en clair. Le premier cran est **en dessous** du barème : une échelle qui commence à
+/// la moyenne dit à celui qui ne l'a pas qu'il n'était pas prévu. Facultative : « Passer », en
+/// haut à droite, saute aussi la moyenne visée.
 struct CurrentAverageStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -27,35 +27,25 @@ struct CurrentAverageStepView: View {
     }
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb10.q.current")) {
-            VStack(spacing: 18) {
-                OnbGradeWheel(
-                    choices: choices,
-                    score: Binding(
-                        get: { model.currentScore },
-                        set: { newValue in
-                            model.currentScore = newValue
-                            // Un objectif plus bas que la nouvelle moyenne n'a plus cours.
-                            if let target = model.targetScore, let newValue, target < newValue {
-                                model.targetScore = nil
-                            }
+        OnbQuestion(
+            i18n.t("ios.onb12.q.current"),
+            say: OnbSay(i18n.t("ios.onb12.say.current"), mood: .wink)
+        ) {
+            OnbGradeSlider(
+                choices: choices,
+                score: Binding(
+                    get: { model.currentScore },
+                    set: { newValue in
+                        model.currentScore = newValue
+                        // Un objectif plus bas que la nouvelle moyenne n'a plus cours.
+                        if let target = model.targetScore, let newValue, target < newValue {
+                            model.targetScore = nil
                         }
-                    ),
-                    label: OnbPhrase.plain(i18n.t("ios.onb10.q.current")),
-                    caption: model.gradeScale.caption(locale: i18n.locale)
-                )
-
-                HStack(spacing: 6) {
-                    Image(systemName: "lock.fill")
-                        .accessibilityHidden(true)
-                    Text(i18n.t("ios.onb10.current.private"))
-                }
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.ink3)
-            }
-            .frame(maxWidth: .infinity)
-
-            Spacer(minLength: 0)
+                    }
+                ),
+                label: OnbPhrase.plain(i18n.t("ios.onb12.q.current")),
+                caption: model.gradeScale.caption(locale: i18n.locale)
+            )
         } footer: {
             V3Button(i18n.t("common.continue"), isEnabled: model.currentScore != nil) {
                 model.answerCurrentAverage()
@@ -67,11 +57,8 @@ struct CurrentAverageStepView: View {
 
 // MARK: - La moyenne visée
 
-/// **« Et tu vises combien ? »**
-///
-/// On peut viser sa note d'aujourd'hui (« tenir ») ou n'importe laquelle au-dessus ; les
-/// notes plus basses ne sont pas là. Sous la molette, **la carte change en direct** : l'écart
-/// dans le barème de l'élève, et ce que Mika en pense.
+/// **« Et tu vises combien ? »** On peut viser sa note d'aujourd'hui (« tenir ») ou plus haut ;
+/// Mika dit l'écart en direct, dans le barème de l'élève.
 struct TargetAverageStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -81,27 +68,19 @@ struct TargetAverageStepView: View {
     }
 
     var body: some View {
-        OnbQuestion(i18n.t("ios.onb10.q.target"), mood: .happy) {
-            VStack(spacing: 22) {
-                OnbGradeWheel(
-                    choices: choices,
-                    score: Binding(
-                        get: { model.targetScore },
-                        set: { model.targetScore = $0 }
-                    ),
-                    // Le milieu de ce qui reste à viser : ni « tenir », ni le haut du barème.
-                    fallbackIndex: (choices.count - 1) / 2,
-                    label: OnbPhrase.plain(i18n.t("ios.onb10.q.target")),
-                    caption: model.gradeScale.caption(locale: i18n.locale)
-                )
-
-                if let gap = model.gradeGap(locale: i18n.locale) {
-                    gapCard(gap)
-                }
-            }
-            .frame(maxWidth: .infinity)
-
-            Spacer(minLength: 0)
+        OnbQuestion(i18n.t("ios.onb10.q.target"), say: say) {
+            OnbGradeSlider(
+                choices: choices,
+                score: Binding(
+                    get: { model.targetScore },
+                    set: { model.targetScore = $0 }
+                ),
+                // Le milieu de ce qui reste à viser : ni « tenir », ni le haut du barème.
+                fallbackIndex: (choices.count - 1) / 2,
+                label: OnbPhrase.plain(i18n.t("ios.onb10.q.target")),
+                caption: model.gradeScale.caption(locale: i18n.locale),
+                tone: V3Color.green
+            )
         } footer: {
             V3Button(i18n.t("common.continue"), isEnabled: model.targetScore != nil) {
                 model.advance()
@@ -109,36 +88,76 @@ struct TargetAverageStepView: View {
         }
     }
 
-    /// La réaction : une cible, l'écart et ce qu'il vaut, puis d'où l'on part et où l'on va.
-    private func gapCard(_ gap: OnboardingGradeGap) -> some View {
-        HStack(alignment: .center, spacing: 12) {
-            // Une cible, en vert : c'est un objectif.
-            Image(systemName: "target")
-                .resizable()
-                .scaledToFit()
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(V3Color.green)
-                .frame(width: 30, height: 30)
-                .accessibilityHidden(true)
+    /// **Mika réagit à l'écart, en direct** (« +4 points : ambitieux, et faisable »).
+    private var say: OnbSay {
+        guard let gap = model.gradeGap(locale: i18n.locale) else {
+            return OnbSay(i18n.t("ios.onb12.say.target"), mood: .happy)
+        }
+        return OnbSay(gap.title(locale: i18n.locale), mood: .happy)
+    }
+}
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(gap.title(locale: i18n.locale))
-                    .font(V3Font.bodyStrong)
-                    .foregroundStyle(V3Color.ink)
-                Text(gap.line(until: model.datedExam?.date, locale: i18n.locale))
+// MARK: - Le curseur d'une note
+
+/// **Une note au curseur** (lot 14) : la note en très grand (« 16 » et « /20 »), la piste à
+/// crans dessous, les bornes du barème aux deux bouts, et le mot du barème quand le chiffre ne
+/// suffit pas (« la meilleure note est 1 »).
+struct OnbGradeSlider: View {
+    let choices: [GradeTick]
+    @Binding var score: Int?
+    /// Le cran de départ, quand rien n'a encore été choisi. Le milieu, sauf avis contraire.
+    var fallbackIndex: Int?
+    let label: String
+    var caption: String?
+    /// La couleur du barème : bleu pour aujourd'hui, vert pour l'objectif.
+    var tone: Color = V3Color.accentBright
+
+    @Environment(\.onbCompact) private var compact
+
+    private var start: Int {
+        min(max(0, fallbackIndex ?? (choices.count - 1) / 2), max(0, choices.count - 1))
+    }
+
+    private var index: Int {
+        guard let score, let found = choices.firstIndex(where: { $0.score == score }) else { return start }
+        return found
+    }
+
+    var body: some View {
+        VStack(spacing: compact ? 18 : 30) {
+            OnbSliderValue(
+                label: choices.indices.contains(index) ? choices[index].label : "",
+                tone: tone
+            )
+            OnbNotchSlider(
+                count: choices.count,
+                index: Binding(
+                    get: { index },
+                    set: { newValue in
+                        guard choices.indices.contains(newValue) else { return }
+                        score = choices[newValue].score
+                    }
+                ),
+                lowerBound: choices.first?.label ?? "",
+                upperBound: choices.last?.label ?? "",
+                accessibilityLabel: label,
+                valueText: { choices.indices.contains($0) ? choices[$0].label : "" }
+            )
+            if let caption {
+                Text(caption)
                     .font(V3Font.caption)
                     .foregroundStyle(V3Color.ink2)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
             }
-            .multilineTextAlignment(.leading)
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .v3Card(tone: V3Color.green)
-        .contentTransition(.opacity)
-        .animation(MicaboMotion.quick, value: gap)
-        .accessibilityElement(children: .combine)
+        .padding(.top, compact ? 8 : 28)
+        .frame(maxWidth: .infinity)
+        .onAppear {
+            // La réponse existe dès l'affichage : une note montrée sans être enregistrée
+            // laisserait le bouton éteint sans dire pourquoi.
+            if score == nil, choices.indices.contains(start) { score = choices[start].score }
+        }
     }
 }
 
@@ -324,27 +343,24 @@ struct StartingPointStepView: View {
             ])
         }
         if let exam {
-            return L10n.t("ios.onb10.start.titleExam", locale: locale, vars: ["exam": exam.choice.title(locale: locale)])
+            return L10n.t("ios.onb16.start.titleExam", locale: locale, vars: ["exam": exam.choice.title(locale: locale)])
         }
-        return L10n.t("ios.onb10.start.titleBare", locale: locale)
+        return L10n.t("ios.onb16.start.titleBare", locale: locale)
     }
 
     var body: some View {
         OnbScreen {
             // La note visée est en vert : c'est l'objectif.
-            OnbTitle(title, size: OnbLayout.display, alignment: .center, keyword: V3Color.green)
+            OnbTitle(title, size: OnbLayout.display, keyword: V3Color.green)
                 .padding(.top, OnbLayout.titleTop)
 
+            OnbMikaRow(say: OnbSay(i18n.t("ios.onb16.start.line"), mood: .proud))
+                .padding(.top, OnbLayout.mikaGap)
+
             projection
-                .padding(.top, OnbLayout.titleGap)
+                .padding(.top, OnbLayout.answersGap)
         } footer: {
-            Text(i18n.t("ios.onb10.start.line"))
-                .font(V3Font.body)
-                .foregroundStyle(V3Color.ink2)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.bottom, 4)
-            V3Button(i18n.t("ios.onb10.start.commit")) {
+            V3Button(i18n.t("ios.onb12.start.cta")) {
                 model.advance()
             }
         }
@@ -353,10 +369,6 @@ struct StartingPointStepView: View {
     /// La carte : son intitulé, la courbe, puis d'où l'on part et quand on arrive.
     private var projection: some View {
         VStack(spacing: 8) {
-            Text(i18n.t("ios.onb10.start.card"))
-                .font(V3Font.caption)
-                .foregroundStyle(V3Color.ink2)
-
             OnbProjectionChart(target: target)
                 .frame(height: 170)
 
@@ -395,7 +407,33 @@ struct OnbProjectionChart: View {
     /// La note visée, écrite au bout de la courbe ; sans elle, la courbe est sans chiffres.
     let target: String?
 
+    @Environment(\.onboardingStill) private var frozen
+    @Environment(\.onbSettled) private var settled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// **La courbe se trace à l'arrivée** (lot 12) : de 0 à 1, une fois, d'aujourd'hui vers
+    /// l'objectif. Dans un rendu ou avec « Réduire les animations », elle est là d'emblée.
+    @State private var drawn: CGFloat = 0
+    /// La courbe est arrivée : le point et la note visée se posent, d'un ressort.
+    @State private var arrived = false
+
+    private var still: Bool { frozen || settled }
+    private var progress: CGFloat { still || reduceMotion ? 1 : drawn }
+    private var landed: Bool { still || reduceMotion || arrived }
+
     var body: some View {
+        chart
+            .onAppear {
+                guard !still, !reduceMotion, drawn == 0 else { return }
+                withAnimation(MicaboMotion.fill(seconds: 1.1), completionCriteria: .logicallyComplete) {
+                    drawn = 1
+                } completion: {
+                    Haptics.soft()
+                    withAnimation(MicaboMotion.celebrate) { arrived = true }
+                }
+            }
+    }
+
+    private var chart: some View {
         GeometryReader { proxy in
             let size = proxy.size
             let start = CGPoint(x: 12, y: size.height - 28)
@@ -416,8 +454,10 @@ struct OnbProjectionChart: View {
                         startPoint: .top,
                         endPoint: .bottom
                     ))
+                    .opacity(Double(progress))
 
                 OnbProjectionCurve(start: start, end: end, floor: nil)
+                    .trim(from: 0, to: progress)
                     .stroke(V3Color.green, style: StrokeStyle(lineWidth: 5, lineCap: .round))
 
                 Circle()
@@ -430,13 +470,16 @@ struct OnbProjectionChart: View {
                     .fill(V3Color.green)
                     .overlay(Circle().strokeBorder(V3Color.surface, lineWidth: 3))
                     .frame(width: 18, height: 18)
+                    .scaleEffect(landed ? 1 : 0.2)
+                    .opacity(landed ? 1 : 0)
                     .position(end)
             }
             .flipsForRightToLeftLayoutDirection(true)
         }
         .overlay(alignment: .topTrailing) {
-            // La note visée, dans une pastille verte, au bout de la courbe.
-            if let target {
+            // La note visée, dans une pastille verte, au bout de la courbe : elle se pose quand
+            // la courbe arrive.
+            if let target, landed {
                 Text(target)
                     .font(V3Font.label)
                     .foregroundStyle(V3Color.bg)

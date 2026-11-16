@@ -26,15 +26,21 @@ struct ExamStepView: View {
         return model.examDate
     }
 
+    /// Mika : avant la réponse, il reprend la classe ; après, il dit le temps qu'il reste.
+    private var say: OnbSay {
+        if let reaction {
+            return OnbSay(reaction, mood: model.examChoice == .noExam ? .wink : .surprise)
+        }
+        guard let label = model.classLabel else { return OnbSay(i18n.t("ios.onb12.say.exam"), mood: .think) }
+        return OnbSay(i18n.t("ios.onb12.react.year", ["class": label]), mood: .think)
+    }
+
     var body: some View {
-        OnbQuestion(
-            reaction ?? i18n.t("ios.onb10.q.exam"),
-            mood: model.examChoice == nil ? .idle : .happy
-        ) {
+        OnbQuestion(i18n.t("ios.onb12.q.exam"), say: say) {
             VStack(spacing: OnbLayout.rowGap) {
                 ForEach(model.examChoices, id: \.id) { choice in
-                    V3OptionRow(
-                        Self.rowTitle(choice, locale: i18n.locale),
+                    OnbOption(
+                        title: Self.rowTitle(choice, locale: i18n.locale),
                         icon: choice.icon,
                         isSelected: model.examChoice == choice
                     ) {
@@ -110,9 +116,24 @@ struct ExamStepView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text(i18n.t("ios.onb10.exam.edit"))
+                if let days = model.examDaysLeft(), days > 0 {
+                    // Le temps qu'il reste, en jaune (l'examen) : il se recompte quand la date
+                    // change.
+                    Text(OnbWords.duration(days: days, locale: i18n.locale))
+                        .font(V3Font.label)
+                        .foregroundStyle(V3Color.yellowInk)
+                        .lineLimit(1)
+                        .contentTransition(.numericText())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(V3Color.yellowWash, in: Capsule())
+                        .animation(MicaboMotion.standard, value: days)
+                }
+
+                Image(systemName: "pencil")
                     .font(V3Font.label)
                     .foregroundStyle(V3Color.accentBright)
+                    .accessibilityLabel(Text(i18n.t("ios.onb10.exam.edit")))
             }
             .multilineTextAlignment(.leading)
             .padding(.horizontal, 16)

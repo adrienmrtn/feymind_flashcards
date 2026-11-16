@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">%1$d venn</item>
+        <item quantity="other">%1$d venner</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">%1$d kort</item>
+        <item quantity="other">%1$d kort</item>
+    </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Faget ditt</item>
+        <item quantity="other">Dine %1$d fag</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d poeng: en skikkelig utfordring. Vi tar det steg for steg</item>
+        <item quantity="other">+%1$d poeng: en skikkelig utfordring. Vi tar det steg for steg</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d poeng: ambisiøst, og gjennomførbart</item>
+        <item quantity="other">+%1$d poeng: ambisiøst, og gjennomførbart</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d poeng: et lite steg, helt gjennomførbart</item>
+        <item quantity="other">+%1$d poeng: et lite steg, helt gjennomførbart</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dager</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d dag gratis, deretter %2$s per uke. Si opp når du vil.</item>
+        <item quantity="other">%1$d dager gratis, deretter %2$s per uke. Si opp når du vil.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d dag gratis, deretter %2$s per år. Si opp når du vil.</item>
+        <item quantity="other">%1$d dager gratis, deretter %2$s per år. Si opp når du vil.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d dag gratis</item>
+        <item quantity="other">%1$d dager gratis</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Prøv det gratis i %1$d dag.</item>
+        <item quantity="other">Prøv det gratis i %1$d dager.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Start min gratis dag</item>
+        <item quantity="other">Start mine %1$d gratis dager</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d dag gratis, deretter hver uke</item>
+        <item quantity="other">%1$d dager gratis, deretter hver uke</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d dag gratis, deretter %2$s per år</item>
+        <item quantity="other">%1$d dager gratis, deretter %2$s per år</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d dag på rad</item>
+        <item quantity="other">%1$d dager på rad</item>
+    </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Rekorden din er %2$s. %1$d dag til, så slår du den.</item>
+        <item quantity="other">Rekorden din er %2$s. %1$d dager til, så slår du den.</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d dag</item>
+        <item quantity="other">%1$d dager</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">dag på rad</item>
+        <item quantity="other">dager på rad</item>
+    </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">Slutter om %1$d dag</item>
+        <item quantity="other">Slutter om %1$d dager</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">%1$d kort å repetere</item>
+        <item quantity="other">%1$d kort å repetere</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Legg feilen min til i kortene</item>
+        <item quantity="other">Legg de %1$d feilene mine til i kortene</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d spørsmål</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">%1$d spørsmål er ubesvart. Levere likevel?</item>
+        <item quantity="other">%1$d spørsmål er ubesvart. Levere likevel?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="one">%1$d dag igjen</item>
+        <item quantity="other">%1$d dager igjen</item>
+    </plurals>
+</resources>

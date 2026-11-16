@@ -1,0 +1,6 @@
+/* Les demandes d'accès d'iOS, dans la langue du téléphone (voir en.lproj). */
+
+"NSCameraUsageDescription" = "Micabo משתמש במצלמה כדי לסרוק את דפי השיעורים שלך.";
+"NSPhotoLibraryUsageDescription" = "Micabo ניגש לתמונות שלך כדי לייבא שיעור או תרשים.";
+"NSMicrophoneUsageDescription" = "Micabo משתמש במיקרופון כדי להקליט שיעור או הערה קולית, וכדי לשמוע את התשובות שאמרת בקול.";
+"NSSpeechRecognitionUsageDescription" = "Micabo הופך את ההקלטות שלך ואת התשובות שאמרת בקול לטקסט, ישירות בטלפון שלך.";

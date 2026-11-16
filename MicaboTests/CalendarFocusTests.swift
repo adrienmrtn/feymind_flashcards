@@ -152,7 +152,12 @@ final class CalendarFocusTests: XCTestCase {
         XCTAssertEqual(RevisionPlanner.sessionLength(dailyMinutes: 5), 15)
         XCTAssertEqual(RevisionPlanner.sessionLength(dailyMinutes: 22), 20)
         XCTAssertEqual(RevisionPlanner.sessionLength(dailyMinutes: 30), 30)
-        XCTAssertEqual(RevisionPlanner.sessionLength(dailyMinutes: 300), 90)
+        XCTAssertEqual(RevisionPlanner.sessionLength(dailyMinutes: 300), 60, "Lot 16 : une heure au plus")
+        XCTAssertEqual(RevisionPlanner.sessionLengths(dailyMinutes: 45), [45])
+        XCTAssertEqual(RevisionPlanner.sessionLengths(dailyMinutes: 60), [60])
+        XCTAssertEqual(RevisionPlanner.sessionLengths(dailyMinutes: 90), [45, 45])
+        XCTAssertEqual(RevisionPlanner.sessionLengths(dailyMinutes: 120), [60, 60])
+        XCTAssertTrue(RevisionPlanner.sessionLengths(dailyMinutes: 500).allSatisfy { $0 <= FocusPlan.maxMinutes })
     }
 
     func testTheFreePlanIsForOneExam() throws {
@@ -274,7 +279,7 @@ final class CalendarFocusTests: XCTestCase {
         XCTAssertEqual(FocusPhases.clock(3_900), "1:05:00")
         XCTAssertEqual(FocusPlan.defaultMinutes(dailyMinutes: nil), 25)
         XCTAssertEqual(FocusPlan.defaultMinutes(dailyMinutes: 22), 20)
-        XCTAssertEqual(FocusPlan.defaultMinutes(dailyMinutes: 300), 120)
+        XCTAssertEqual(FocusPlan.defaultMinutes(dailyMinutes: 300), 60, "Lot 16 : une séance dure une heure au plus")
     }
 
     // MARK: - Les chiffres

@@ -11,6 +11,66 @@
         <item quantity="few">%1$d carduri</item>
         <item quantity="other">%1$d de carduri</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Materia ta</item>
+        <item quantity="few">Cele %1$d materii ale tale</item>
+        <item quantity="other">Cele %1$d de materii ale tale</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d punct: o adevărată provocare. O luăm pas cu pas</item>
+        <item quantity="few">+%1$d puncte: o adevărată provocare. O luăm pas cu pas</item>
+        <item quantity="other">+%1$d de puncte: o adevărată provocare. O luăm pas cu pas</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d punct: ambițios și realizabil</item>
+        <item quantity="few">+%1$d puncte: ambițios și realizabil</item>
+        <item quantity="other">+%1$d de puncte: ambițios și realizabil</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d punct: un pas mic, perfect realizabil</item>
+        <item quantity="few">+%1$d puncte: un pas mic, perfect realizabil</item>
+        <item quantity="other">+%1$d de puncte: un pas mic, perfect realizabil</item>
+    </plurals>
+    <plurals name="ios_onb17_trial_days">
+        <item quantity="one">%1$d zi</item>
+        <item quantity="few">%1$d zile</item>
+        <item quantity="other">%1$d de zile</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d zi gratuită, apoi %2$s pe săptămână. Anulezi oricând.</item>
+        <item quantity="few">%1$d zile gratuite, apoi %2$s pe săptămână. Anulezi oricând.</item>
+        <item quantity="other">%1$d de zile gratuite, apoi %2$s pe săptămână. Anulezi oricând.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d zi gratuită, apoi %2$s pe an. Anulezi oricând.</item>
+        <item quantity="few">%1$d zile gratuite, apoi %2$s pe an. Anulezi oricând.</item>
+        <item quantity="other">%1$d de zile gratuite, apoi %2$s pe an. Anulezi oricând.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d zi gratuită</item>
+        <item quantity="few">%1$d zile gratuite</item>
+        <item quantity="other">%1$d de zile gratuite</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Încearcă-l %1$d zi, gratuit.</item>
+        <item quantity="few">Încearcă-l %1$d zile, gratuit.</item>
+        <item quantity="other">Încearcă-l %1$d de zile, gratuit.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Încep ziua gratuită</item>
+        <item quantity="few">Încep cele %1$d zile gratuite</item>
+        <item quantity="other">Încep cele %1$d de zile gratuite</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d zi gratuită, apoi în fiecare săptămână</item>
+        <item quantity="few">%1$d zile gratuite, apoi în fiecare săptămână</item>
+        <item quantity="other">%1$d de zile gratuite, apoi în fiecare săptămână</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d zi gratuită, apoi %2$s pe an</item>
+        <item quantity="few">%1$d zile gratuite, apoi %2$s pe an</item>
+        <item quantity="other">%1$d de zile gratuite, apoi %2$s pe an</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d zi la rând</item>
         <item quantity="few">%1$d zile la rând</item>
@@ -18,7 +78,8 @@
     </plurals>
     <plurals name="ios_profile_streakToBeat">
         <item quantity="one">Recordul tău e %2$s. Încă %1$d zi și-l depășești.</item>
-        <item quantity="other">Recordul tău e %2$s. Încă %1$d zile și-l depășești.</item>
+        <item quantity="few">Recordul tău e %2$s. Încă %1$d zile și-l depășești.</item>
+        <item quantity="other">Recordul tău e %2$s. Încă %1$d de zile și-l depășești.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d zi</item>
@@ -45,6 +106,9 @@
         <item quantity="few">Adaugă cele %1$d greșeli la carduri</item>
         <item quantity="other">Adaugă cele %1$d de greșeli la carduri</item>
     </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d întrebări</item>
+    </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d întrebare e fără răspuns. Predai oricum?</item>
         <item quantity="few">%1$d întrebări sunt fără răspuns. Predai oricum?</item>
@@ -52,6 +116,7 @@
     </plurals>
     <plurals name="lesson_lessons_examDays">
         <item quantity="one">Mai e %1$d zi</item>
-        <item quantity="other">Mai sunt %1$d zile</item>
+        <item quantity="few">Mai sunt %1$d zile</item>
+        <item quantity="other">Mai sunt %1$d de zile</item>
     </plurals>
 </resources>

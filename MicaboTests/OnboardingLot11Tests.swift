@@ -48,28 +48,34 @@ final class OnboardingLot11Tests: XCTestCase {
         }
     }
 
-    /// Chaque démo suit la réponse qui la précède.
+    /// **Les démonstrations suivent la reformulation** (lot 12) : Mika dit « je t'ai compris »,
+    /// puis montre une réponse jouable par blocage ; le calendrier et la concentration suivent
+    /// le temps par jour.
     func testEachDemoFollowsTheAnswerItIllustrates() {
         let order = OnboardingStep.allCases
         func after(_ demo: OnboardingStep, _ answer: OnboardingStep) {
             XCTAssertEqual(order.firstIndex(of: demo), order.firstIndex(of: answer).map { $0 + 1 }, "\(demo)")
         }
-        after(.lessonDemo, .subjects)
-        after(.scanDemo, .solutionMap)
-        after(.planDemo, .dailyTime)
-        after(.chatDemo, .sampleCard)
-        // Les quatre écrans qui amènent à l'offre : le plan, ce que l'essai ouvre, la fin de
-        // l'essai, pourquoi maintenant.
-        XCTAssertEqual(Array(order.suffix(5)), [.profileSummary, .freeTrialIntro, .trialOffer, .whyNow, .paywall])
-        XCTAssertTrue([OnboardingStep.lessonDemo, .scanDemo, .planDemo, .chatDemo, .whyNow].allSatisfy(\.showsChrome))
-        XCTAssertTrue([OnboardingStep.lessonDemo, .scanDemo, .planDemo, .chatDemo, .whyNow].allSatisfy(\.allowsReturn))
-    }
-
-    /// La phrase du scanner reprend le blocage coché.
-    func testTheScannerSpeaksToTheWorry() {
-        XCTAssertEqual(ScanDemoStepView.askKey(worries: [.homework, .hardLessons]), "ios.onb11.scan.askHomework")
-        XCTAssertEqual(ScanDemoStepView.askKey(worries: [.hardLessons]), "ios.onb11.scan.askHard")
-        XCTAssertEqual(ScanDemoStepView.askKey(worries: [.forgetting]), "ios.onb11.scan.ask")
+        // Lot 14 : le chapitre de l'aide s'ouvre après « Je t'ai compris », puis Mika dit d'où
+        // il vient, et les démos suivent ; le calendrier suit « je ne suis pas que ton prof ».
+        after(.helpIntro, .solutionMap)
+        after(.origin, .helpIntro)
+        after(.lessonDemo, .origin)
+        after(.scanDemo, .lessonDemo)
+        // Lot 15 : le chat est parti (redit par la question à Mika du récit final).
+        after(.research, .scanDemo)
+        after(.organizeIntro, .dailyTime)
+        after(.planDemo, .organizeIntro)
+        after(.focusDemo, .planDemo)
+        // Les écrans qui amènent au paywall (lot 15) : une leçon racontée du début à la fin,
+        // « Et toi, ta première leçon ? », puis l'essai voulu pour lui, le rappel promis.
+        XCTAssertEqual(
+            Array(order.suffix(10)),
+            [.storyIntro, .storyCreate, .storyPath, .storyPractice, .storyAsk, .storyClose, .firstLesson, .freeTrialIntro, .trialOffer, .paywall]
+        )
+        let demos = OnboardingStep.allCases.filter { $0.kind == .demo }
+        XCTAssertTrue((demos + [.commitment]).allSatisfy(\.showsChrome))
+        XCTAssertTrue((demos + [.commitment]).allSatisfy(\.allowsReturn))
     }
 
     /// La démo de leçon parle de la matière cochée, jamais d'une matière qu'il n'a pas.
@@ -78,32 +84,10 @@ final class OnboardingLot11Tests: XCTestCase {
         model.subjects = ["Histoire"]
         XCTAssertEqual(OnbDemo.subject(for: model, locale: .fr), SubjectDisplay.subject("Histoire", locale: .fr))
         model.subjects = ["Anglais"]
-        XCTAssertNil(OnbDemo.subject(for: model, locale: .fr), "Aucune famille connue : la phrase se dit sans matière")
-        XCTAssertFalse(OnbDemo.topic(for: model, locale: .fr).hasPrefix("ios."))
-    }
-
-    /// Les séances d'ici l'examen : une par jour, à partir de deux jours (« 1 séances » ne se dit pas).
-    func testSessionsLeftAreTheDaysLeft() {
-        XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: nil))
-        XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: 1))
-        XCTAssertEqual(WhyNowStepView.sessionsLeft(daysLeft: 12), 12)
-        XCTAssertEqual(WhyNowStepView.sessionsLeft(daysLeft: 56), 56)
-        XCTAssertNil(WhyNowStepView.sessionsLeft(daysLeft: 215), "Loin de l'examen, on ne compte plus les séances")
-        XCTAssertTrue(WhyNowStepView.isFar(daysLeft: 215))
-        XCTAssertFalse(WhyNowStepView.isFar(daysLeft: 30))
-        XCTAssertFalse(WhyNowStepView.isFar(daysLeft: nil))
-    }
-
-    /// Ce que l'essai ouvre : la première leçon (offerte de toute façon) en tête, l'examen nommé.
-    func testTheTrialUnlocksAreMadeOfTheAnswers() {
-        let model = OnboardingModel()
-        model.firstLessonChoice = .topic
-        model.firstLessonTopic = "La guerre froide"
-        let unlocks = FreeTrialIntroStepView.unlocks(for: model, locale: .fr)
-        XCTAssertEqual(unlocks.count, 6)
-        XCTAssertTrue(unlocks[0].isFree)
-        XCTAssertTrue(unlocks[0].text.contains("La guerre froide"))
-        XCTAssertEqual(unlocks.filter(\.isFree).count, 1)
+        XCTAssertEqual(OnbDemo.subject(for: model, locale: .fr), SubjectDisplay.subject("Anglais", locale: .fr), "Sa seule matière, même sans question d'exemple")
+        model.subjects = ["Anglais", "Espagnol"]
+        XCTAssertNil(OnbDemo.subject(for: model, locale: .fr), "Aucune famille connue ni matière la plus dure : la phrase se dit sans matière")
+        XCTAssertFalse(OnbDemo.lessonTitle(for: model, locale: .fr).hasPrefix("ios."), "Lot 16 : la matière, ou « Ta première leçon »")
     }
 
     /// **La bienvenue après l'achat** : une fois montré, le paywall reste monté même quand Pro

@@ -55,10 +55,13 @@ enum PaywallTestMode {
     static let onboardingPaywallKey = "micabo.test.onboardingPaywall"
 
     /// **Le parcours se termine-t-il sur le paywall ?** Toujours pour un élève sans
-    /// abonnement ; pour un abonné, seulement quand le test l'a demandé — sinon on lui
-    /// proposerait l'essai qu'il paie déjà.
-    static func showsOnboardingPaywall(isPro: Bool, forcedByTest: Bool) -> Bool {
-        !isPro || forcedByTest
+    /// abonnement. Pour un abonné : quand le test l'a demandé, et **dans toute construction
+    /// interne** (Xcode, TestFlight : `BuildChannel.isInternal`, lot 12) — le compte du
+    /// développeur est Pro à vie, et c'est là qu'on juge le parcours ; le paywall s'y montre
+    /// en aperçu, sans achat possible (`PaywallFlowView.previewsPro`). Seul un vrai abonné de
+    /// l'App Store finit le parcours sans paywall : on ne lui propose pas ce qu'il paie déjà.
+    static func showsOnboardingPaywall(isPro: Bool, forcedByTest: Bool, isInternal: Bool = false) -> Bool {
+        !isPro || forcedByTest || isInternal
     }
 
     /// Vrai quand « Refaire l'onboarding » a demandé le paywall. Ne vaut que là où la section

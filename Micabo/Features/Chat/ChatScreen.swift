@@ -1,6 +1,7 @@
 import PhotosUI
 import SwiftData
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - L'écran
 
@@ -15,15 +16,15 @@ import SwiftUI
 /// posée dans la zone sûre du bas — elle monte avec le clavier et reste au-dessus de lui.
 struct ChatScreen: View {
     let launch: ChatLaunch
-    /// « En faire une leçon » : la Home reprend le sujet et lance la création qu'elle connaît.
-    /// `nil` là où la Home n'est pas derrière (une leçon, la séance).
-    var onMakeLesson: ((String) -> Void)?
+    /// « En faire une leçon » : la Home reprend le sujet (et le texte des pages lues) et lance
+    /// la création qu'elle connaît. `nil` là où la Home n'est pas derrière (une leçon, la séance).
+    var onMakeLesson: ((ChatLessonSeed) -> Void)?
     /// Fermer : `dismiss` par défaut ; une pile de navigation passe son retour.
     var onClose: (() -> Void)?
     /// Le symbole du bouton de sortie : la croix d'une feuille, la flèche d'une pile.
     var closeSymbol = "xmark"
 
-    init(launch: ChatLaunch, onMakeLesson: ((String) -> Void)? = nil, onClose: (() -> Void)? = nil, closeSymbol: String = "xmark") {
+    init(launch: ChatLaunch, onMakeLesson: ((ChatLessonSeed) -> Void)? = nil, onClose: (() -> Void)? = nil, closeSymbol: String = "xmark") {
         self.launch = launch
         self.onMakeLesson = onMakeLesson
         self.onClose = onClose
@@ -39,6 +40,15 @@ struct ChatScreen: View {
     @State private var showsCamera = false
     @State private var showsHistory = false
     @State private var choosingLessonFor: UUID?
+    /// Lot 12 — la feuille Outils du « + », et ce qu'elle a choisi (ouvert une fois refermée).
+    @State private var showsTools = false
+    @State private var pickedTool: ToolItem?
+    @State private var scanMode: ChatScanMode?
+    @State private var showsPicker = false
+    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var showsFiles = false
+    @State private var focusPlan: FocusPlan?
+    @State private var quizCourse: Course?
     @FocusState private var focused: Bool
 
     private var isPro: Bool { pro?.isPro ?? false }
@@ -55,8 +65,14 @@ struct ChatScreen: View {
         .toolbar(.hidden, for: .navigationBar)
     }
 
-    @ViewBuilder
+    /// Le compilateur type mal d'un seul tenant la conversation et toutes ses présentations :
+    /// celles du lot 12 (les outils) se posent dans leur propre fonction.
     private func content(_ session: ChatSession) -> some View {
+        toolPresentations(conversation(session), session: session)
+    }
+
+    @ViewBuilder
+    private func conversation(_ session: ChatSession) -> some View {
         @Bindable var session = session
         ChatConversationView(
             session: session,
@@ -88,14 +104,92 @@ struct ChatScreen: View {
             .presentationDragIndicator(.visible)
         }
         .sheet(item: lessonChoice) { choice in
-            ChatLessonPicker { course in
-                session.addCard(of: choice.id, to: course, in: modelContext)
+            ChatLessonPicker(newLessonTitle: session.title) { course in
+                if session.bubbles.first(where: { $0.id == choice.id })?.cards.isEmpty == false {
+                    session.addCards(of: choice.id, to: course, in: modelContext)
+                } else {
+                    session.addCard(of: choice.id, to: course, in: modelContext)
+                }
                 choosingLessonFor = nil
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
         .micaboPaywall($session.paywall)
+    }
+
+    /// **Ce que le « + » ouvre** (lot 12) : la feuille Outils, puis la caméra à modes, la
+    /// photothèque, les fichiers, une séance ou un quiz.
+    private func toolPresentations<Base: View>(_ base: Base, session: ChatSession) -> some View {
+        base
+        .sheet(isPresented: $showsTools, onDismiss: { openTool(session) }) {
+            ToolsSheet(context: .chat, availability: ToolsAvailability(hasLesson: session.courseID != nil, hasLessons: false, canImport: session.hasRoomForPhotos)) { item in
+                pickedTool = item
+                showsTools = false
+            }
+        }
+        .fullScreenCover(item: $scanMode) { choice in
+            ScanCaptureView(context: .chat, initialMode: choice.mode, onCapture: { capture in
+                scanMode = nil
+                session.queueScan(capture)
+                send(session, nil)
+            }, onClose: { scanMode = nil })
+        }
+        .fullScreenCover(item: $focusPlan) { plan in
+            FocusTimerView(plan: plan)
+        }
+        .fullScreenCover(item: $quizCourse) { course in
+            QuickQuizSheet(course: course)
+        }
+        .photosPicker(isPresented: $showsPicker, selection: $pickerItems, maxSelectionCount: max(1, ChatSession.maxPhotos - session.pending.count), selectionBehavior: .ordered, matching: .images)
+        .onChange(of: pickerItems) { _, items in
+            guard !items.isEmpty else { return }
+            pickerItems = []
+            Task {
+                var images: [UIImage] = []
+                for item in items {
+                    if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) {
+                        images.append(image)
+                    }
+                }
+                session.add(photos: images)
+            }
+        }
+        .fileImporter(isPresented: $showsFiles, allowedContentTypes: [.image, .pdf], allowsMultipleSelection: true) { result in
+            guard case .success(let urls) = result else { return }
+            let room = ChatSession.maxPhotos - session.pending.count
+            session.add(photos: ScanFileLoader.load(urls, limit: max(0, room)).map(\.image))
+        }
+    }
+
+    /// **Une entrée de la feuille Outils**, ouverte une fois la feuille refermée : la caméra en
+    /// rafale, la photothèque, les fichiers, un geste de la caméra à modes, une séance, un quiz.
+    private func openTool(_ session: ChatSession) {
+        guard let item = pickedTool else { return }
+        pickedTool = nil
+        if let mode = item.scanMode {
+            scanMode = ChatScanMode(mode: mode)
+            return
+        }
+        switch item {
+        case .camera: showsCamera = true
+        case .photos: showsPicker = true
+        case .files: showsFiles = true
+        case .focus:
+            focusPlan = FocusPlan(
+                workMinutes: FocusPlan.defaultMinutes(dailyMinutes: OnboardingPreferences.dailyMinutes),
+                courseID: session.courseID,
+                courseTitle: session.courseTitle
+            )
+        case .quiz:
+            guard let courseID = session.courseID else { return }
+            let target = courseID
+            var descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.id == target })
+            descriptor.fetchLimit = 1
+            quizCourse = try? modelContext.fetch(descriptor).first
+        default:
+            break
+        }
     }
 
     private var lessonChoice: Binding<ChatCardChoice?> {
@@ -122,6 +216,11 @@ struct ChatScreen: View {
                 showsCamera = true
             },
             library: { images in session.add(photos: images) },
+            tools: {
+                focused = false
+                showsTools = true
+            },
+            clearMode: { session.clearPendingMode() },
             removePhoto: { session.remove(photo: $0) },
             send: { send(session, nil) },
             suggestion: { text in send(session, text) },
@@ -131,9 +230,9 @@ struct ChatScreen: View {
             unlock: { session.paywall = .mika },
             addCard: { id in addCard(id, session: session) },
             makeLesson: {
-                guard let topic = session.lessonTopic, let onMakeLesson else { return }
+                guard let seed = session.lessonSeed, let onMakeLesson else { return }
                 Analytics.track(.chatGateway, ["kind": .text("lesson")])
-                onMakeLesson(topic)
+                onMakeLesson(seed)
             }
         )
     }
@@ -143,7 +242,10 @@ struct ChatScreen: View {
         let created = ChatSession(launch: launch, context: modelContext)
         session = created
         Analytics.track(.chatOpened, ["origin": .text(launch.origin.rawValue), "resumed": .flag(created.thread != nil)])
-        if let text = launch.autoSend?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
+        if let capture = launch.scan?.capture {
+            created.queueScan(capture)
+            send(created, nil)
+        } else if let text = launch.autoSend?.trimmingCharacters(in: .whitespacesAndNewlines), !text.isEmpty {
             created.draft = text
             send(created, nil)
         } else if launch.opensCamera {
@@ -161,14 +263,19 @@ struct ChatScreen: View {
         }
     }
 
-    /// La carte rejoint la leçon de la conversation ; sans leçon, l'élève choisit laquelle.
+    /// La carte (ou les cartes) rejoint la leçon de la conversation ; sans leçon, l'élève
+    /// choisit laquelle, ou en crée une.
     private func addCard(_ id: UUID, session: ChatSession) {
         if let courseID = session.courseID {
             let target = courseID
             var descriptor = FetchDescriptor<Course>(predicate: #Predicate { $0.id == target })
             descriptor.fetchLimit = 1
             if let course = try? modelContext.fetch(descriptor).first {
-                session.addCard(of: id, to: course, in: modelContext)
+                if session.bubbles.first(where: { $0.id == id })?.cards.isEmpty == false {
+                    session.addCards(of: id, to: course, in: modelContext)
+                } else {
+                    session.addCard(of: id, to: course, in: modelContext)
+                }
                 return
             }
         }
@@ -180,6 +287,12 @@ private struct ChatCardChoice: Identifiable {
     let id: UUID
 }
 
+/// Le mode avec lequel la caméra s'ouvre depuis la conversation.
+private struct ChatScanMode: Identifiable {
+    let mode: ScanMode
+    var id: String { mode.rawValue }
+}
+
 /// Les gestes de l'écran, posés une fois : la vue se dessine sans connaître la base.
 struct ChatActions {
     var close: () -> Void = {}
@@ -188,6 +301,10 @@ struct ChatActions {
     var new: () -> Void = {}
     var camera: () -> Void = {}
     var library: ([UIImage]) -> Void = { _ in }
+    /// Lot 12 — le « + » : la feuille Outils.
+    var tools: () -> Void = {}
+    /// Lot 12 — retirer le geste en attente (« Traduire en anglais »).
+    var clearMode: () -> Void = {}
     var removePhoto: (UUID) -> Void = { _ in }
     var send: () -> Void = {}
     var suggestion: (String) -> Void = { _ in }
@@ -419,6 +536,9 @@ struct ChatBubbleView: View {
     var body: some View {
         if bubble.role == .user {
             VStack(alignment: .trailing, spacing: 8) {
+                if let mode = bubble.scanMode {
+                    ChatModeTag(label: ScanPrompts.label(mode, target: bubble.scanTarget), mode: mode)
+                }
                 if bubble.exerciseID != nil {
                     Label(L10n.t("ios.chat11.scanned", locale: .resolved()), systemImage: "viewfinder")
                         .font(V3Font.eyebrow)
@@ -460,7 +580,9 @@ struct ChatBubbleView: View {
                 }
                 SolverRichText(source: bubble.text, size: 16.5, color: V3Color.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                if let card = bubble.card {
+                if !bubble.cards.isEmpty {
+                    ChatCardsProposal(cards: bubble.cards, added: bubble.cardAdded) { actions.addCard(bubble.id) }
+                } else if let card = bubble.card {
                     ChatCardProposal(card: card, added: bubble.cardAdded) { actions.addCard(bubble.id) }
                 }
                 if isLast && showsMakeLesson {
@@ -546,6 +668,96 @@ struct ChatCardProposal: View {
     }
 }
 
+/// **Les cartes d'une page** (lot 12) : un vocabulaire relevé ou des cartes mémoire. L'aperçu
+/// montre les premières, et un seul bouton les range toutes dans une leçon (choisie, ou nouvelle).
+struct ChatCardsProposal: View {
+    let cards: [GeneratedFlashcard]
+    let added: Bool
+    let onAdd: () -> Void
+
+    static let preview = 4
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label(L10n.t("ios.scan12.cards.title", locale: .resolved(), vars: ["count": "\(cards.count)"]), systemImage: "rectangle.on.rectangle.angled")
+                .font(V3Font.eyebrow)
+                .foregroundStyle(V3Color.accentBright)
+            VStack(spacing: 0) {
+                ForEach(Array(cards.prefix(Self.preview).enumerated()), id: \.offset) { index, card in
+                    VStack(alignment: .leading, spacing: 3) {
+                        SolverRichText(source: card.front, size: 15.5, color: V3Color.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                        SolverRichText(source: card.back, size: 14.5, color: V3Color.ink2)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .overlay(alignment: .top) {
+                        if index > 0 { Rectangle().fill(V3Color.line).frame(height: 1) }
+                    }
+                }
+            }
+            if cards.count > Self.preview {
+                Text(L10n.t("ios.scan12.cards.more", locale: .resolved(), vars: ["count": "\(cards.count - Self.preview)"]))
+                    .font(V3Font.caption)
+                    .foregroundStyle(V3Color.ink3)
+            }
+            Button(action: onAdd) {
+                Label(
+                    L10n.t(added ? "ios.scan12.cards.added" : "ios.scan12.cards.add", locale: .resolved(), vars: ["count": "\(cards.count)"]),
+                    systemImage: added ? "checkmark.circle.fill" : "plus.circle.fill"
+                )
+                .font(V3Font.label)
+                .foregroundStyle(added ? V3Color.green : V3Color.ctaInk)
+                .padding(.horizontal, 16)
+                .frame(minHeight: 44)
+                .background(added ? V3Color.greenWash : V3Color.cta, in: Capsule())
+            }
+            .buttonStyle(MicaboPressableButtonStyle(feedback: .medium))
+            .disabled(added)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .v3Card(radius: V3Metric.radiusInner)
+    }
+}
+
+/// **Le geste de la caméra**, en pastille : sur la bulle de l'élève (« Traduire en anglais »),
+/// ou au-dessus de la barre tant qu'il attend son envoi (alors retirable).
+struct ChatModeTag: View {
+    let label: String
+    var mode: ScanMode?
+    var onRemove: (() -> Void)?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: mode?.symbol ?? "camera.viewfinder")
+                .font(V3Font.text(.footnote, weight: .bold))
+                .foregroundStyle(mode?.tone ?? V3Color.iconPink)
+            Text(label)
+                .font(V3Font.label)
+                .foregroundStyle(V3Color.ink)
+                .lineLimit(1)
+            if let onRemove {
+                Button(action: onRemove) {
+                    Image(systemName: "xmark")
+                        .font(V3Font.text(.caption2, weight: .heavy))
+                        .foregroundStyle(V3Color.ink2)
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(MicaboPressableButtonStyle(feedback: .light))
+                .accessibilityLabel(Text(L10n.t("ios.scan12.mode.remove", locale: .resolved())))
+            }
+        }
+        .padding(.leading, 12)
+        .padding(.trailing, onRemove == nil ? 12 : 4)
+        .frame(minHeight: 32)
+        .background(V3Color.soft, in: Capsule())
+        .accessibilityElement(children: .combine)
+    }
+}
+
 /// Mika écrit.
 struct ChatThinkingRow: View {
     var body: some View {
@@ -628,18 +840,20 @@ struct ChatComposer: View {
     let actions: ChatActions
     var still = false
 
-    @State private var items: [PhotosPickerItem] = []
-
     static let height: CGFloat = 52
 
     var body: some View {
         @Bindable var session = session
         VStack(alignment: .leading, spacing: 10) {
+            if let label = session.pendingLabel {
+                ChatModeTag(label: label, mode: session.pendingMode, onRemove: actions.clearMode)
+                    .padding(.horizontal, V3Metric.screenMargin)
+            }
             if !session.pending.isEmpty {
                 ChatPendingRow(photos: session.pending, onRemove: actions.removePhoto)
             }
             HStack(alignment: .bottom, spacing: 10) {
-                library
+                tools
                 HStack(alignment: .bottom, spacing: 8) {
                     field(draft: $session.draft)
                     trailing
@@ -654,19 +868,6 @@ struct ChatComposer: View {
         .padding(.top, 8)
         .padding(.bottom, 10)
         .background(V3Color.bg)
-        .onChange(of: items) { _, picked in
-            guard !picked.isEmpty else { return }
-            Task {
-                var images: [UIImage] = []
-                for item in picked {
-                    if let data = try? await item.loadTransferable(type: Data.self), let image = UIImage(data: data) {
-                        images.append(image)
-                    }
-                }
-                items = []
-                actions.library(images)
-            }
-        }
     }
 
     private var placeholder: String {
@@ -675,24 +876,19 @@ struct ChatComposer: View {
             : L10n.t("ios.chat11.placeholderPhotos", locale: .resolved())
     }
 
-    @ViewBuilder
-    private var library: some View {
-        let room = max(0, ChatSession.maxPhotos - session.pending.count)
-        let face = Image(systemName: "photo.on.rectangle.angled")
-            .font(V3Font.text(.title3, weight: .semibold))
-            .foregroundStyle(V3Color.ink)
-            .frame(width: Self.height, height: Self.height)
-            .background(V3Color.surface, in: Circle())
-        if still {
-            face
-        } else {
-            PhotosPicker(selection: $items, maxSelectionCount: max(1, room), selectionBehavior: .ordered, matching: .images) {
-                face
-            }
-            .disabled(room == 0 || session.thinking)
-            .opacity(room == 0 ? 0.45 : 1)
-            .accessibilityLabel(Text(L10n.t("ios.chat11.library", locale: .resolved())))
+    /// **Le « + »** (lot 12) : la feuille Outils — la caméra, les photos, les fichiers, et les
+    /// gestes de Mika (expliquer, résumer, traduire, résoudre, des cartes…).
+    private var tools: some View {
+        Button(action: actions.tools) {
+            Image(systemName: "plus")
+                .font(V3Font.text(.title3, weight: .bold))
+                .foregroundStyle(V3Color.ink)
+                .frame(width: Self.height, height: Self.height)
+                .background(V3Color.surface, in: Circle())
         }
+        .buttonStyle(MicaboPressableButtonStyle(feedback: .soft))
+        .disabled(session.thinking)
+        .accessibilityLabel(Text(L10n.t("ios.scan12.tools.title", locale: .resolved())))
     }
 
     @ViewBuilder
@@ -821,17 +1017,29 @@ struct ChatPendingRow: View {
 
 /// Une conversation hors leçon propose une carte : l'élève choisit la leçon où elle se range.
 struct ChatLessonPicker: View {
+    /// Lot 12 — le nom d'une nouvelle leçon (un paquet de cartes), proposée en tête ; `nil` :
+    /// seulement les leçons qui existent.
+    var newLessonTitle: String?
     let onPick: (Course) -> Void
     @Query(sort: \Course.updatedAt, order: .reverse) private var courses: [Course]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
 
-    private var lessons: [Course] { courses.filter { $0.isLesson && $0.source != .deck } }
+    private var lessons: [Course] { courses.filter { $0.isLesson || $0.source == .deck } }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 10) {
-                    if lessons.isEmpty {
+                    if let newLessonTitle {
+                        V3OptionRow(L10n.t("ios.scan12.cards.newLesson", locale: .resolved()), subtitle: newLessonTitle, icon: .cards, isSelected: false) {
+                            if let course = try? CourseRepository.makeDeck(title: newLessonTitle, in: modelContext) {
+                                onPick(course)
+                            }
+                            dismiss()
+                        }
+                    }
+                    if lessons.isEmpty && newLessonTitle == nil {
                         Text(L10n.t("ios.chat11.card.noLesson", locale: .resolved()))
                             .font(V3Font.body)
                             .foregroundStyle(V3Color.ink2)
