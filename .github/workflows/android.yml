@@ -107,6 +107,41 @@ jobs:
             android/app/build/reports/tests/testDebugUnitTest
           if-no-files-found: ignore
 
+      # **Les rendus sur une branche neuve, `android-renders/run-<n>`** : le stockage des
+      # artefacts n'est pas joignable partout (la session de développement ne l'atteint pas).
+      # Images réduites en JPEG quand ImageMagick est là, le rapport des vérifications à côté.
+      # Chaque run a sa branche : rien n'est écrasé ; ces branches se suppriment sans risque.
+      - name: Garder les rendus sur une branche
+        if: always()
+        env:
+          TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN: ${{ github.run_number }}
+        run: |
+          [ -d android/build/shots ] || exit 0
+          OUT="$RUNNER_TEMP/renders"
+          mkdir -p "$OUT"
+          cd android/build/shots
+          find . -type f -name '*.txt' -exec cp --parents {} "$OUT" \;
+          CONVERT=""
+          command -v magick >/dev/null && CONVERT="magick"
+          [ -z "$CONVERT" ] && command -v convert >/dev/null && CONVERT="convert"
+          find . -type f -name '*.png' | while read -r png; do
+            mkdir -p "$OUT/$(dirname "$png")"
+            if [ -n "$CONVERT" ]; then
+              $CONVERT "$png" -resize 50% -quality 72 "$OUT/${png%.png}.jpg"
+            else
+              cp "$png" "$OUT/$png"
+            fi
+          done
+          cd "$OUT"
+          git init -q -b "android-renders/run-$RUN"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Rendus Android, run $RUN"
+          git push -q "https://x-access-token:$TOKEN@github.com/$REPO.git" "android-renders/run-$RUN"
+
       - name: Pas de clé, pas d'envoi
         if: env.HAS_KEYSTORE != 'true'
         run: |

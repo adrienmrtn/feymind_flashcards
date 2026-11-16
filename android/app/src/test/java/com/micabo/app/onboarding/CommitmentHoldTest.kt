@@ -36,6 +36,10 @@ class CommitmentHoldTest {
         return model
     }
 
+    private fun label(): String = runCatching {
+        rule.onNodeWithTag("commitHold").fetchSemanticsNode().config[androidx.compose.ui.semantics.SemanticsProperties.ContentDescription].joinToString()
+    }.getOrDefault("?")
+
     @Test
     fun aShortPressDoesNothing() {
         val model = start()
@@ -67,9 +71,11 @@ class CommitmentHoldTest {
         val model = start()
         val button = rule.onNodeWithTag("commitHold")
         button.performTouchInput { down(center) }
+        repeat(10) { rule.mainClock.advanceTimeByFrame() }
+        val during = label()
         // Le doigt reste posé deux secondes : l'horloge avance image par image.
-        repeat(125) { rule.mainClock.advanceTimeByFrame() }
-        assertTrue("le maintien de 2 s doit signer", model.hasCommitted)
+        repeat(115) { rule.mainClock.advanceTimeByFrame() }
+        assertTrue("le maintien de 2 s doit signer (pendant : « $during », après : « ${label()} »)", model.hasCommitted)
         button.performTouchInput { up() }
         repeat(100) { rule.mainClock.advanceTimeByFrame() }
         assertEquals(OnboardingStep.planBuilding, model.step)

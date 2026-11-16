@@ -23,13 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsNodeInteraction
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.text.TextLayoutResult
@@ -65,7 +63,7 @@ data class Device(
     /** La barre d'état ; plus haute avec une encoche ou une découpe. */
     val statusDp: Int = 24,
 ) {
-    val qualifiers: String get() = "$language-w${widthDp}dp-h${heightDp}dp-" + (if (night) "night" else "notnight") + "-$density"
+    val qualifiers: String get() = "$language-" + (if (language in setOf("ar", "iw", "he")) "ldrtl-" else "") + "w${widthDp}dp-h${heightDp}dp-" + (if (night) "night" else "notnight") + "-$density"
     val rtl: Boolean get() = language in setOf("ar", "iw", "he")
 
     override fun toString() = name
@@ -152,9 +150,17 @@ fun shoot(
         rule.mainClock.advanceTimeBy(2_000)
         rule.waitForIdle()
         check(rule, device, report)
-        val image = rule.onRoot().captureToImage().asAndroidBitmap()
+        // La photo : la fenêtre entière dessinée dans une image (pas d'attente d'un rendu matériel).
+        var image: Bitmap? = null
+        scenario.onActivity { activity ->
+            val view = activity.window.decorView
+            val bitmap = Bitmap.createBitmap(view.width.coerceAtLeast(1), view.height.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+            view.draw(android.graphics.Canvas(bitmap))
+            image = bitmap
+        }
+        val shot = image ?: error("aucune image")
         val folder = File(File(shotsRoot, device.name), group).also { it.mkdirs() }
-        File(folder, "$name.png").outputStream().use { image.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        File(folder, "$name.png").outputStream().use { shot.compress(Bitmap.CompressFormat.PNG, 100, it) }
     } catch (error: Throwable) {
         report.problems += "plante : ${error.javaClass.simpleName} ${error.message?.take(300)}"
     } finally {
@@ -190,7 +196,12 @@ private fun check(rule: ComposeTestRule, device: Device, report: ShotReport) {
         action.action?.invoke(results)
         val layout = results.firstOrNull() ?: continue
         val ellipsized = (0 until layout.lineCount).any { layout.isLineEllipsized(it) }
-        if (layout.hasVisualOverflow || ellipsized) report.problems += "texte coupé « $text »"
+        // Une marge de 2 px : le rendu sans écran arrondit parfois la largeur au pixel près.
+        val dw = layout.multiParagraph.width - layout.size.width
+        val dh = layout.multiParagraph.height - layout.size.height
+        if (dw > 2f || dh > 2f || ellipsized) {
+            report.problems += "texte coupé « $text » (" + (if (ellipsized) "points de suspension" else "dépasse de ${dw.toInt()}×${dh.toInt()} px") + ")"
+        }
         val box = node.boundsInRoot
         if (box.width > 0 && (box.left < -1f || box.right > bounds.width + 1f) && node.isVisibleOnScreen(bounds)) {
             report.problems += "texte hors de l'écran « $text »"
