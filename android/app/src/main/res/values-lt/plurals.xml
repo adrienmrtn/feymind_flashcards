@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="one">%1$d draugas</item>
+        <item quantity="few">%1$d draugai</item>
+        <item quantity="other">%1$d draugų</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="one">%1$d kortelė</item>
+        <item quantity="few">%1$d kortelės</item>
+        <item quantity="other">%1$d kortelių</item>
+    </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Tavo %1$d dalykas</item>
+        <item quantity="few">Tavo %1$d dalykai</item>
+        <item quantity="other">Tavo %1$d dalykų</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d taškas: tikras iššūkis. Eisime žingsnis po žingsnio</item>
+        <item quantity="few">+%1$d taškai: tikras iššūkis. Eisime žingsnis po žingsnio</item>
+        <item quantity="other">+%1$d taškų: tikras iššūkis. Eisime žingsnis po žingsnio</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d taškas: ambicinga, bet įmanoma</item>
+        <item quantity="few">+%1$d taškai: ambicinga, bet įmanoma</item>
+        <item quantity="other">+%1$d taškų: ambicinga, bet įmanoma</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d taškas: mažas žingsnelis, visiškai įmanoma</item>
+        <item quantity="few">+%1$d taškai: mažas žingsnelis, visiškai įmanoma</item>
+        <item quantity="other">+%1$d taškų: mažas žingsnelis, visiškai įmanoma</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d diena nemokamai, vėliau %2$s per savaitę. Atšauk bet kada.</item>
+        <item quantity="few">%1$d dienos nemokamai, vėliau %2$s per savaitę. Atšauk bet kada.</item>
+        <item quantity="other">%1$d dienų nemokamai, vėliau %2$s per savaitę. Atšauk bet kada.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d diena nemokamai, vėliau %2$s per metus. Atšauk bet kada.</item>
+        <item quantity="few">%1$d dienos nemokamai, vėliau %2$s per metus. Atšauk bet kada.</item>
+        <item quantity="other">%1$d dienų nemokamai, vėliau %2$s per metus. Atšauk bet kada.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d diena nemokamai</item>
+        <item quantity="few">%1$d dienos nemokamai</item>
+        <item quantity="other">%1$d dienų nemokamai</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Išbandyk %1$d dieną nemokamai.</item>
+        <item quantity="few">Išbandyk %1$d dienas nemokamai.</item>
+        <item quantity="other">Išbandyk %1$d dienų nemokamai.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Pradėti %1$d nemokamą dieną</item>
+        <item quantity="few">Pradėti %1$d nemokamas dienas</item>
+        <item quantity="other">Pradėti %1$d nemokamų dienų</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d diena nemokamai, vėliau kas savaitę</item>
+        <item quantity="few">%1$d dienos nemokamai, vėliau kas savaitę</item>
+        <item quantity="other">%1$d dienų nemokamai, vėliau kas savaitę</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d diena nemokamai, vėliau %2$s per metus</item>
+        <item quantity="few">%1$d dienos nemokamai, vėliau %2$s per metus</item>
+        <item quantity="other">%1$d dienų nemokamai, vėliau %2$s per metus</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="one">%1$d diena iš eilės</item>
+        <item quantity="few">%1$d dienos iš eilės</item>
+        <item quantity="other">%1$d dienų iš eilės</item>
+    </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="one">Tavo rekordas – %2$s. Dar %1$d diena, ir jį pagerinsi.</item>
+        <item quantity="few">Tavo rekordas – %2$s. Dar %1$d dienos, ir jį pagerinsi.</item>
+        <item quantity="other">Tavo rekordas – %2$s. Dar %1$d dienų, ir jį pagerinsi.</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="one">%1$d diena</item>
+        <item quantity="few">%1$d dienos</item>
+        <item quantity="other">%1$d dienų</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="one">diena iš eilės</item>
+        <item quantity="few">dienos iš eilės</item>
+        <item quantity="other">dienų iš eilės</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="one">Pridėti mano %1$d klaidą prie kortelių</item>
+        <item quantity="few">Pridėti mano %1$d klaidas prie kortelių</item>
+        <item quantity="other">Pridėti mano %1$d klaidų prie kortelių</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="one">%1$d klausimas</item>
+        <item quantity="few">%1$d klausimai</item>
+        <item quantity="other">%1$d klausimų</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="one">Liko %1$d neatsakytas klausimas. Vis tiek atiduoti?</item>
+        <item quantity="few">Liko %1$d neatsakyti klausimai. Vis tiek atiduoti?</item>
+        <item quantity="other">Liko %1$d neatsakytų klausimų. Vis tiek atiduoti?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="one">Liko %1$d diena</item>
+        <item quantity="few">Liko %1$d dienos</item>
+        <item quantity="other">Liko %1$d dienų</item>
+    </plurals>
+</resources>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Engendré par android/tools/generate_strings.py depuis les catalogues de l'app iPhone. Ne pas éditer à la main. -->
+<resources>
+    <plurals name="app_friends_friendCount">
+        <item quantity="zero">%1$d draugu</item>
+        <item quantity="one">%1$d draugs</item>
+        <item quantity="other">%1$d draugi</item>
+    </plurals>
+    <plurals name="copy_cards">
+        <item quantity="zero">%1$d kartīšu</item>
+        <item quantity="one">%1$d kartīte</item>
+        <item quantity="other">%1$d kartītes</item>
+    </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="zero">Tavi %1$d priekšmeti</item>
+        <item quantity="one">Tavs %1$d priekšmets</item>
+        <item quantity="other">Tavi %1$d priekšmeti</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="zero">+%1$d punktu: īsts izaicinājums. Iesim soli pa solim</item>
+        <item quantity="one">+%1$d punkts: īsts izaicinājums. Iesim soli pa solim</item>
+        <item quantity="other">+%1$d punkti: īsts izaicinājums. Iesim soli pa solim</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="zero">+%1$d punktu: ambiciozi, bet izdarāmi</item>
+        <item quantity="one">+%1$d punkts: ambiciozi, bet izdarāmi</item>
+        <item quantity="other">+%1$d punkti: ambiciozi, bet izdarāmi</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="zero">+%1$d punktu: mazs solītis, pilnīgi izdarāmi</item>
+        <item quantity="one">+%1$d punkts: mazs solītis, pilnīgi izdarāmi</item>
+        <item quantity="other">+%1$d punkti: mazs solītis, pilnīgi izdarāmi</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="zero">%1$d dienu bez maksas, pēc tam %2$s nedēļā. Atcel jebkurā laikā.</item>
+        <item quantity="one">%1$d diena bez maksas, pēc tam %2$s nedēļā. Atcel jebkurā laikā.</item>
+        <item quantity="other">%1$d dienas bez maksas, pēc tam %2$s nedēļā. Atcel jebkurā laikā.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="zero">%1$d dienu bez maksas, pēc tam %2$s gadā. Atcel jebkurā laikā.</item>
+        <item quantity="one">%1$d diena bez maksas, pēc tam %2$s gadā. Atcel jebkurā laikā.</item>
+        <item quantity="other">%1$d dienas bez maksas, pēc tam %2$s gadā. Atcel jebkurā laikā.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="zero">%1$d dienu bez maksas</item>
+        <item quantity="one">%1$d diena bez maksas</item>
+        <item quantity="other">%1$d dienas bez maksas</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="zero">Izmēģini %1$d dienu bez maksas.</item>
+        <item quantity="one">Izmēģini %1$d dienu bez maksas.</item>
+        <item quantity="other">Izmēģini %1$d dienas bez maksas.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="zero">Sākt %1$d bezmaksas dienu</item>
+        <item quantity="one">Sākt %1$d bezmaksas dienu</item>
+        <item quantity="other">Sākt %1$d bezmaksas dienas</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="zero">%1$d dienu bez maksas, pēc tam katru nedēļu</item>
+        <item quantity="one">%1$d diena bez maksas, pēc tam katru nedēļu</item>
+        <item quantity="other">%1$d dienas bez maksas, pēc tam katru nedēļu</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="zero">%1$d dienu bez maksas, pēc tam %2$s gadā</item>
+        <item quantity="one">%1$d diena bez maksas, pēc tam %2$s gadā</item>
+        <item quantity="other">%1$d dienas bez maksas, pēc tam %2$s gadā</item>
+    </plurals>
+    <plurals name="ios_profile_streakDays">
+        <item quantity="zero">%1$d dienu pēc kārtas</item>
+        <item quantity="one">%1$d diena pēc kārtas</item>
+        <item quantity="other">%1$d dienas pēc kārtas</item>
+    </plurals>
+    <plurals name="ios_profile_streakToBeat">
+        <item quantity="zero">Tavs rekords ir %2$s. Vēl %1$d dienu, un tu to pārspēsi.</item>
+        <item quantity="one">Tavs rekords ir %2$s. Vēl %1$d diena, un tu to pārspēsi.</item>
+        <item quantity="other">Tavs rekords ir %2$s. Vēl %1$d dienas, un tu to pārspēsi.</item>
+    </plurals>
+    <plurals name="ios_streak_bestValue">
+        <item quantity="zero">%1$d dienu</item>
+        <item quantity="one">%1$d diena</item>
+        <item quantity="other">%1$d dienas</item>
+    </plurals>
+    <plurals name="ios_streak_unit">
+        <item quantity="zero">dienu pēc kārtas</item>
+        <item quantity="one">diena pēc kārtas</item>
+        <item quantity="other">dienas pēc kārtas</item>
+    </plurals>
+    <plurals name="lesson_exam_addCards">
+        <item quantity="zero">Pievienot manas %1$d kļūdas kartītēm</item>
+        <item quantity="one">Pievienot manu %1$d kļūdu kartītēm</item>
+        <item quantity="other">Pievienot manas %1$d kļūdas kartītēm</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="zero">%1$d jautājumu</item>
+        <item quantity="one">%1$d jautājums</item>
+        <item quantity="other">%1$d jautājumi</item>
+    </plurals>
+    <plurals name="lesson_exam_submitConfirm">
+        <item quantity="zero">Palikuši %1$d neatbildēti jautājumi. Iesniegt tik un tā?</item>
+        <item quantity="one">Palicis %1$d neatbildēts jautājums. Iesniegt tik un tā?</item>
+        <item quantity="other">Palikuši %1$d neatbildēti jautājumi. Iesniegt tik un tā?</item>
+    </plurals>
+    <plurals name="lesson_lessons_examDays">
+        <item quantity="zero">Atlikušas %1$d dienas</item>
+        <item quantity="one">Atlikusi %1$d diena</item>
+        <item quantity="other">Atlikušas %1$d dienas</item>
+    </plurals>
+</resources>

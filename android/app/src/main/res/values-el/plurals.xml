@@ -9,6 +9,50 @@
         <item quantity="one">%1$d κάρτα</item>
         <item quantity="other">%1$d κάρτες</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Το μάθημά σου</item>
+        <item quantity="other">Τα %1$d μαθήματά σου</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d μονάδα: πραγματική πρόκληση. Πάμε βήμα βήμα</item>
+        <item quantity="other">+%1$d μονάδες: πραγματική πρόκληση. Πάμε βήμα βήμα</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d μονάδα: φιλόδοξο, αλλά εφικτό</item>
+        <item quantity="other">+%1$d μονάδες: φιλόδοξο, αλλά εφικτό</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d μονάδα: ένα μικρό βήμα, απολύτως εφικτό</item>
+        <item quantity="other">+%1$d μονάδες: ένα μικρό βήμα, απολύτως εφικτό</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d μέρα δωρεάν, μετά %2$s την εβδομάδα. Ακύρωσε όποτε θες.</item>
+        <item quantity="other">%1$d μέρες δωρεάν, μετά %2$s την εβδομάδα. Ακύρωσε όποτε θες.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d μέρα δωρεάν, μετά %2$s τον χρόνο. Ακύρωσε όποτε θες.</item>
+        <item quantity="other">%1$d μέρες δωρεάν, μετά %2$s τον χρόνο. Ακύρωσε όποτε θες.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d μέρα δωρεάν</item>
+        <item quantity="other">%1$d μέρες δωρεάν</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Δοκίμασέ το δωρεάν για %1$d μέρα.</item>
+        <item quantity="other">Δοκίμασέ το δωρεάν για %1$d μέρες.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Ξεκίνα τη δωρεάν μέρα μου</item>
+        <item quantity="other">Ξεκίνα τις %1$d δωρεάν μέρες μου</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d μέρα δωρεάν, μετά κάθε εβδομάδα</item>
+        <item quantity="other">%1$d μέρες δωρεάν, μετά κάθε εβδομάδα</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d μέρα δωρεάν, μετά %2$s τον χρόνο</item>
+        <item quantity="other">%1$d μέρες δωρεάν, μετά %2$s τον χρόνο</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d μέρα στη σειρά</item>
         <item quantity="other">%1$d μέρες στη σειρά</item>
@@ -36,6 +80,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Πρόσθεσε το λάθος μου στις κάρτες</item>
         <item quantity="other">Πρόσθεσε τα %1$d λάθη μου στις κάρτες</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d ερωτήσεις</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d ερώτηση έμεινε αναπάντητη. Παράδοση ούτως ή άλλως;</item>

@@ -3,27 +3,105 @@
 <resources>
     <plurals name="app_friends_friendCount">
         <item quantity="one">%1$d друг</item>
-        <item quantity="other">Друзей: %1$d</item>
+        <item quantity="few">%1$d друга</item>
+        <item quantity="many">%1$d друзей</item>
+        <item quantity="other">%1$d друга</item>
     </plurals>
     <plurals name="copy_cards">
         <item quantity="one">%1$d карточка</item>
-        <item quantity="other">Карточек: %1$d</item>
+        <item quantity="few">%1$d карточки</item>
+        <item quantity="many">%1$d карточек</item>
+        <item quantity="other">%1$d карточки</item>
+    </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Твой %1$d предмет</item>
+        <item quantity="few">Твои %1$d предмета</item>
+        <item quantity="many">Твои %1$d предметов</item>
+        <item quantity="other">Твои %1$d предмета</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d балл: настоящий вызов. Пойдём шаг за шагом</item>
+        <item quantity="few">+%1$d балла: настоящий вызов. Пойдём шаг за шагом</item>
+        <item quantity="many">+%1$d баллов: настоящий вызов. Пойдём шаг за шагом</item>
+        <item quantity="other">+%1$d балла: настоящий вызов. Пойдём шаг за шагом</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d балл: амбициозно и реально</item>
+        <item quantity="few">+%1$d балла: амбициозно и реально</item>
+        <item quantity="many">+%1$d баллов: амбициозно и реально</item>
+        <item quantity="other">+%1$d балла: амбициозно и реально</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d балл: маленький шаг, вполне реально</item>
+        <item quantity="few">+%1$d балла: маленький шаг, вполне реально</item>
+        <item quantity="many">+%1$d баллов: маленький шаг, вполне реально</item>
+        <item quantity="other">+%1$d балла: маленький шаг, вполне реально</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d день бесплатно, затем %2$s в неделю. Отменить можно в любой момент.</item>
+        <item quantity="few">%1$d дня бесплатно, затем %2$s в неделю. Отменить можно в любой момент.</item>
+        <item quantity="many">%1$d дней бесплатно, затем %2$s в неделю. Отменить можно в любой момент.</item>
+        <item quantity="other">%1$d дня бесплатно, затем %2$s в неделю. Отменить можно в любой момент.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d день бесплатно, затем %2$s в год. Отменить можно в любой момент.</item>
+        <item quantity="few">%1$d дня бесплатно, затем %2$s в год. Отменить можно в любой момент.</item>
+        <item quantity="many">%1$d дней бесплатно, затем %2$s в год. Отменить можно в любой момент.</item>
+        <item quantity="other">%1$d дня бесплатно, затем %2$s в год. Отменить можно в любой момент.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d день бесплатно</item>
+        <item quantity="few">%1$d дня бесплатно</item>
+        <item quantity="many">%1$d дней бесплатно</item>
+        <item quantity="other">%1$d дня бесплатно</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Попробуй бесплатно %1$d день.</item>
+        <item quantity="few">Попробуй бесплатно %1$d дня.</item>
+        <item quantity="many">Попробуй бесплатно %1$d дней.</item>
+        <item quantity="other">Попробуй бесплатно %1$d дня.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Начать %1$d бесплатный день</item>
+        <item quantity="few">Начать %1$d бесплатных дня</item>
+        <item quantity="many">Начать %1$d бесплатных дней</item>
+        <item quantity="other">Начать %1$d бесплатных дня</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d день бесплатно, затем каждую неделю</item>
+        <item quantity="few">%1$d дня бесплатно, затем каждую неделю</item>
+        <item quantity="many">%1$d дней бесплатно, затем каждую неделю</item>
+        <item quantity="other">%1$d дня бесплатно, затем каждую неделю</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d день бесплатно, затем %2$s в год</item>
+        <item quantity="few">%1$d дня бесплатно, затем %2$s в год</item>
+        <item quantity="many">%1$d дней бесплатно, затем %2$s в год</item>
+        <item quantity="other">%1$d дня бесплатно, затем %2$s в год</item>
     </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d день подряд</item>
-        <item quantity="other">Дней подряд: %1$d</item>
+        <item quantity="few">%1$d дня подряд</item>
+        <item quantity="many">%1$d дней подряд</item>
+        <item quantity="other">%1$d дня подряд</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
         <item quantity="one">Твой рекорд — %2$s. Ещё %1$d день — и он побит.</item>
-        <item quantity="other">Твой рекорд — %2$s. Ещё %1$d дн. — и он побит.</item>
+        <item quantity="few">Твой рекорд — %2$s. Ещё %1$d дня — и он побит.</item>
+        <item quantity="many">Твой рекорд — %2$s. Ещё %1$d дней — и он побит.</item>
+        <item quantity="other">Твой рекорд — %2$s. Ещё %1$d дня — и он побит.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d день</item>
-        <item quantity="other">%1$d дн.</item>
+        <item quantity="few">%1$d дня</item>
+        <item quantity="many">%1$d дней</item>
+        <item quantity="other">%1$d дня</item>
     </plurals>
     <plurals name="ios_streak_unit">
         <item quantity="one">день подряд</item>
-        <item quantity="other">дн. подряд</item>
+        <item quantity="few">дня подряд</item>
+        <item quantity="many">дней подряд</item>
+        <item quantity="other">дня подряд</item>
     </plurals>
     <plurals name="kx_league_endsIn">
         <item quantity="one">Конец через %1$d день</item>
@@ -38,12 +116,19 @@
         <item quantity="other">%1$d карточки на повторение</item>
     </plurals>
     <plurals name="lesson_exam_addCards">
-        <item quantity="one">Добавить ошибку в карточки</item>
-        <item quantity="other">Добавить ошибки в карточки (%1$d)</item>
+        <item quantity="one">Добавить мою %1$d ошибку в карточки</item>
+        <item quantity="few">Добавить мои %1$d ошибки в карточки</item>
+        <item quantity="many">Добавить мои %1$d ошибок в карточки</item>
+        <item quantity="other">Добавить мои %1$d ошибки в карточки</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">Вопросов: %1$d</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
-        <item quantity="one">%1$d вопрос без ответа. Всё равно сдать?</item>
-        <item quantity="other">Вопросов без ответа: %1$d. Всё равно сдать?</item>
+        <item quantity="one">Остался %1$d вопрос без ответа. Всё равно сдать?</item>
+        <item quantity="few">Осталось %1$d вопроса без ответа. Всё равно сдать?</item>
+        <item quantity="many">Осталось %1$d вопросов без ответа. Всё равно сдать?</item>
+        <item quantity="other">Осталось %1$d вопроса без ответа. Всё равно сдать?</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
         <item quantity="other">Осталось дней: %1$d</item>

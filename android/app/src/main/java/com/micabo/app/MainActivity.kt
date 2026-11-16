@@ -75,11 +75,9 @@ class MainActivity : ComponentActivity() {
         if (savedInstanceState == null) handleAuthCallback(intent)
         setContent {
             val profile by app.prefs.profile.collectAsState()
-            val dark = when (profile.theme) {
-                "light" -> false
-                "dark" -> true
-                else -> isSystemInDarkTheme()
-            }
+            // **Micabo s'ouvre en marine** (V3.3) : « Jour » et « Comme le téléphone » restent
+            // au choix dans le Profil, et seul ce choix-là compte (`MicaboAppearance`).
+            val dark = com.micabo.app.ui.theme.isNight(profile.theme, profile.themeChosen, isSystemInDarkTheme())
             // Les icônes des barres du système suivent l'apparence choisie, pas celle du téléphone.
             LaunchedEffect(dark) {
                 val style = if (dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
