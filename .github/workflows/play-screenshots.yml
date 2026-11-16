@@ -1,0 +1,80 @@
+# Les captures de la fiche Google Play : android/play/screenshots → Play Console.
+#
+# Lancement : onglet Actions → « Captures Google Play » → Run workflow.
+# Par défaut c'est une vérification : Google valide l'envoi sans rien publier. Cocher
+# « Appliquer » pour remplacer les captures. Seules les captures de téléphone changent :
+# ni les textes, ni l'icône, ni la bannière, ni les builds ne sont touchés.
+#
+# Les images (1080 × 1920) sont faites par store/screenshots/generator-v3 (PLATFORM=android) ;
+# android/play/screenshots/locales.json dit quelle langue va sur quelles fiches Play. Une fiche
+# sans langue dans ce fichier (et, kk, pt-PT, uk…) garde ses captures.
+#
+# Secret du dépôt : PLAY_SERVICE_ACCOUNT_JSON (docs/google-play.md), le même que android.yml.
+
+name: Captures Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Appliquer (sinon : Google vérifie l'envoi, rien n'est publié)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-listing
+  cancel-in-progress: false
+
+env:
+  PACKAGE_NAME: com.micabo.app
+
+jobs:
+  upload:
+    name: Google Play
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+
+      # Un Ruby à part : celui du système installe les gems hors du PATH (fastlane introuvable).
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Ranger les captures par fiche Play
+        run: |
+          python3 - <<'EOF'
+          import json, os, shutil
+          root = "android/play"
+          locales = json.load(open(f"{root}/screenshots/locales.json"))
+          for lang, targets in locales.items():
+              source = f"{root}/screenshots/{lang}"
+              pictures = sorted(name for name in os.listdir(source) if name.endswith(".png"))
+              assert len(pictures) == 7, f"{lang} : {len(pictures)} images au lieu de 7"
+              for locale in targets:
+                  out = f"{root}/metadata/{locale}/images/phoneScreenshots"
+                  os.makedirs(out, exist_ok=True)
+                  for name in pictures:
+                      shutil.copy(f"{source}/{name}", f"{out}/{name}")
+                  print(f"{locale:7} ← {lang} ({len(pictures)} images)")
+          EOF
+
+      - name: ${{ inputs.apply && 'Envoyer les captures' || 'Vérifier l''envoi' }}
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          VALIDATE_ONLY: ${{ inputs.apply && 'false' || 'true' }}
+        run: |
+          gem install fastlane --no-document -q
+          echo "$PLAY_JSON" > "$RUNNER_TEMP/play.json"
+          fastlane run supply \
+            package_name:"$PACKAGE_NAME" \
+            json_key:"$RUNNER_TEMP/play.json" \
+            metadata_path:android/play/metadata \
+            skip_upload_apk:true skip_upload_aab:true skip_upload_changelogs:true \
+            skip_upload_metadata:true skip_upload_images:true \
+            skip_upload_screenshots:false \
+            validate_only:"$VALIDATE_ONLY"
+          rm -f "$RUNNER_TEMP/play.json"

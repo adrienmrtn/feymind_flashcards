@@ -79,11 +79,16 @@ enum PaywallCopy {
     /// la formule cochée et dans la mention sous le bouton : le répéter sur le bouton chargeait
     /// l'écran sans rien dire de plus. Un « Essayer gratuitement » suivi d'un prélèvement
     /// immédiat reste exclu.
-    static func callToAction(for plan: PaywallPlan, locale: UiLocale = .resolved()) -> String {
+    ///
+    /// **À la fin du parcours d'accueil** (`endsOnboarding`), sans essai, le bouton dit
+    /// « Continuer » (demande du fondateur) : on termine une inscription, on ne bute pas sur
+    /// une porte. Ce qui sera prélevé, et quand, reste écrit dans la formule cochée et dans la
+    /// mention sous le bouton.
+    static func callToAction(for plan: PaywallPlan, endsOnboarding: Bool = false, locale: UiLocale = .resolved()) -> String {
         if plan.hasTrial {
             return L10n.t("ios.pay11.cta.trial", locale: locale, vars: ["n": "\(plan.trialDays)"])
         }
-        return L10n.t("ios.pay12.cta.subscribe", locale: locale)
+        return L10n.t(endsOnboarding ? "common.continue" : "ios.pay12.cta.subscribe", locale: locale)
     }
 
     /// **La mention sous le bouton : ce qui sera prélevé, et quand.** Avec essai :
@@ -316,6 +321,16 @@ struct PaywallScreen: View {
     /// les notifications à iOS. Jamais demandées, elles le seront à l'achat de l'essai.
     @State private var reminderAllowed = true
 
+    /// **L'entrée à la fin du parcours d'accueil** : Mika arrive le premier, d'un ressort,
+    /// pendant que la page glisse ; le titre et la promesse suivent, puis les bénéfices. Il
+    /// accompagne le passage du parcours à l'offre, au lieu d'être posé là d'un coup. 0 : rien,
+    /// 1 : Mika, 2 : le titre, 3 : tout. Derrière une porte de l'app, dans un rendu ou avec
+    /// « Réduire les animations », tout est là d'emblée.
+    @State private var entered = 0
+    @OnbArrivalSkipped private var skipsArrival
+
+    private var entrance: Int { trigger == nil && !skipsArrival ? entered : 3 }
+
     init(
         trigger: PaywallTrigger? = nil,
         name: String?,
@@ -385,6 +400,7 @@ struct PaywallScreen: View {
                     // Lot 17 : à la fin du parcours, « Rien à payer aujourd'hui » se colle au
                     // bouton ; derrière une porte, la ligne de l'essai est déjà dans la page.
                     nothingToday: trigger == nil && selectedPlan.hasTrial && prices == .ready,
+                    endsOnboarding: trigger == nil,
                     bottomGap: area.bottomGap,
                     onSubscribe: { onSubscribe(selectedPlan) },
                     onRetry: onRetry,
@@ -397,6 +413,18 @@ struct PaywallScreen: View {
             guard context.reminderKept == nil else { return }
             reminderAllowed = await TrialEndReminder.canBeKept()
         }
+        .task { await enter() }
+    }
+
+    /// Mika, puis le titre, puis les bénéfices : l'entrée de la fin du parcours.
+    @MainActor
+    private func enter() async {
+        guard trigger == nil, !skipsArrival, entered == 0 else { return }
+        withAnimation(MicaboMotion.celebrate) { entered = 1 }
+        try? await Task.sleep(for: .milliseconds(260))
+        withAnimation(MicaboMotion.gentle) { entered = 2 }
+        try? await Task.sleep(for: .milliseconds(140))
+        withAnimation(MicaboMotion.gentle) { entered = 3 }
     }
 
     // MARK: Le héros et ce qu'il gagne
@@ -404,9 +432,13 @@ struct PaywallScreen: View {
     private func content(_ density: PaywallDensity) -> some View {
         VStack(spacing: 0) {
             PaywallHeroMika(mood: showsTrialHeader ? .celebrate : .wink, size: density.mikaSize)
+                .scaleEffect(entrance >= 1 ? 1 : 0.6)
+                .opacity(entrance >= 1 ? 1 : 0)
 
             PaywallTitle(title: heroTitle, size: density.titleSize, alignment: .center)
                 .padding(.top, density.titleGap)
+                .opacity(entrance >= 2 ? 1 : 0)
+                .offset(y: entrance >= 2 ? 0 : 12)
 
             Text(PaywallCopy.promise(offersTrial: selectedPlan.hasTrial, trialDays: selectedPlan.trialDays))
                 .font(PaywallStyle.heroText)
@@ -414,6 +446,8 @@ struct PaywallScreen: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 6)
+                .opacity(entrance >= 2 ? 1 : 0)
+                .offset(y: entrance >= 2 ? 0 : 12)
 
             if showsTrialHeader {
                 // **Lot 17 : trois bénéfices, une ligne chacun**, à la place du tableau : le
@@ -421,6 +455,8 @@ struct PaywallScreen: View {
                 // écrans d'avant). Toujours sans « illimité » ni « sans limite » (lot 14).
                 PaywallChecks(lines: PaywallCopy.checks(count: density.benefits), spacing: density.benefitSpacing)
                     .padding(.top, density.sectionGap)
+                    .opacity(entrance >= 3 ? 1 : 0)
+                    .offset(y: entrance >= 3 ? 0 : 12)
             } else {
                 // **Le gratuit face à Pro, en trois lignes vraies** (lot 14) : la vraie limite
                 // gratuite à gauche, la coche de Pro à droite. Derrière une porte, la ligne de
@@ -849,6 +885,8 @@ private struct PaywallFooter<Plans: View>: View {
     /// « Rien à payer aujourd'hui », collé au bouton (lot 17) : seulement quand l'essai est
     /// réellement offert sur la formule cochée.
     var nothingToday = false
+    /// À la fin du parcours d'accueil : sans essai, le bouton dit « Continuer ».
+    var endsOnboarding = false
     var bottomGap: CGFloat
     var onSubscribe: () -> Void
     var onRetry: () -> Void
@@ -887,9 +925,9 @@ private struct PaywallFooter<Plans: View>: View {
     private var button: some View {
         switch prices {
         case .ready:
-            V3Button(PaywallCopy.callToAction(for: plan), isLoading: isPurchasing, action: onSubscribe)
+            V3Button(PaywallCopy.callToAction(for: plan, endsOnboarding: endsOnboarding), isLoading: isPurchasing, action: onSubscribe)
         case .loading:
-            V3Button(PaywallCopy.callToAction(for: plan), isLoading: true, action: {})
+            V3Button(PaywallCopy.callToAction(for: plan, endsOnboarding: endsOnboarding), isLoading: true, action: {})
         case .failed:
             V3Button(L10n.t("ios.retry", locale: .resolved()), action: onRetry)
         }

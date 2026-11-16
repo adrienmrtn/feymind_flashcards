@@ -88,6 +88,9 @@ import com.micabo.app.ui.theme.nunito
 import com.micabo.app.ui.theme.text
 import com.micabo.app.ui.v3.MicaboIcons
 import com.micabo.app.ui.v3.marked
+import com.micabo.app.ui.v3.popIn
+import com.micabo.app.ui.v3.rememberStill
+import com.micabo.app.ui.v3.riseIn
 import com.micabo.app.ui.v3.v3Card
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -211,6 +214,7 @@ fun PaywallScreen(reason: String, trigger: String = "") {
         examName = examName,
         examId = examId,
         trigger = if (reason == "onboarding" || reason.isEmpty()) null else door,
+        onboarding = reason == "onboarding",
         busy = busy,
         message = message,
         failure = failure,
@@ -302,7 +306,11 @@ fun examPhrase(examName: String?, examId: String, locale: java.util.Locale): Str
     return frenchArticled(examName)
 }
 
-/** **Le paywall, sans l'app** : de quoi le poser dans les rendus et le vérifier. */
+/**
+ * **Le paywall, sans l'app** : de quoi le poser dans les rendus et le vérifier. `onboarding` : le
+ * paywall de la fin du parcours, qui arrive en douceur (Mika, puis le titre, puis les bénéfices)
+ * et dont le bouton sans essai dit « Continuer ».
+ */
 @Composable
 fun PaywallContent(
     state: PriceState,
@@ -322,9 +330,22 @@ fun PaywallContent(
     onOpen: (String) -> Unit,
     onSubscribe: (StorePlan) -> Unit,
     now: Long = System.currentTimeMillis(),
+    onboarding: Boolean = false,
 ) {
     val colors = Micabo.colors
     val locale = currentLocale
+    // L'arrivée depuis le parcours : 1 Mika, 2 le titre et la promesse, 3 les bénéfices.
+    val still = rememberStill()
+    var arrival by remember { mutableIntStateOf(if (onboarding && !still) 0 else 3) }
+    LaunchedEffect(Unit) {
+        if (arrival >= 3) return@LaunchedEffect
+        delay(120)
+        arrival = 1
+        delay(220)
+        arrival = 2
+        delay(120)
+        arrival = 3
+    }
     val yearlyPlan = plans.firstOrNull { it.yearly }
     val weeklyPlan = plans.firstOrNull { !it.yearly }
     val selected = plans.firstOrNull { it.yearly == yearlySelected } ?: plans.firstOrNull()
@@ -363,17 +384,17 @@ fun PaywallContent(
             ) {
                 Spacer(Modifier.height(8.dp))
                 if (hero) {
-                    Box(contentAlignment = Alignment.Center) {
+                    Box(Modifier.popIn(arrival >= 1, from = 0.6f), contentAlignment = Alignment.Center) {
                         val size = if (endOfOnboarding) 72.dp else if (short) 96.dp else 128.dp
                         Box(Modifier.size(size * 1.35f).background(Brush.radialGradient(listOf(colors.accent.copy(alpha = 0.40f), Color.Transparent)), CircleShape))
                         Mika(if (trigger == null) MikaMood.CELEBRATE else MikaMood.WINK, size)
                     }
                 }
-                Text(marked(title, colors.accentBright), style = display(if (short) 30.sp else 34.sp), color = colors.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
-                Text(promise, style = text(17.sp, FontWeight.SemiBold, 22.sp), color = colors.accentBright, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
+                Text(marked(title, colors.accentBright), style = display(if (short) 30.sp else 34.sp), color = colors.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 10.dp).riseIn(arrival >= 2))
+                Text(promise, style = text(17.sp, FontWeight.SemiBold, 22.sp), color = colors.accentBright, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp).riseIn(arrival >= 2, delayMillis = 60))
                 if (plansInBody) PlanRows(yearlyPlan, weeklyPlan, selected, locale, onSelect, Modifier.padding(top = 14.dp))
                 if (endOfOnboarding) {
-                    PaywallChecks(Modifier.padding(top = if (short) 16.dp else 24.dp))
+                    PaywallChecks(Modifier.padding(top = if (short) 16.dp else 24.dp), visible = arrival >= 3)
                 } else if (big) {
                     com.micabo.app.ui.v3.CappedFontScale(1.5f) { FeatureTable(Feature.shown(trigger), Modifier.padding(top = 14.dp)) }
                 } else {
@@ -407,7 +428,8 @@ fun PaywallContent(
                 }
                 when (state) {
                     PriceState.READY -> MicaboButton(
-                        if (trialDays > 0) t("ios.pay11.cta.trial", "n" to trialDays) else t("ios.pay12.cta.subscribe"),
+                        // Sans essai, à la fin du parcours : « Continuer » ; derrière une porte de l'app, « S'abonner ».
+                        if (trialDays > 0) t("ios.pay11.cta.trial", "n" to trialDays) else t(if (onboarding) "common.continue" else "ios.pay12.cta.subscribe"),
                         onClick = { selected?.let(onSubscribe) },
                         loading = busy,
                         modifier = Modifier.testTag("cta"),
@@ -519,13 +541,16 @@ private fun PlanRow(plan: StorePlan, selected: Boolean, savings: String?, onClic
     }
 }
 
-/** **Trois bénéfices, une ligne chacun** (lot 17) : une coche jaune, le corps de lecture. Sans « illimité ». */
+/**
+ * **Trois bénéfices, une ligne chacun** (lot 17) : une coche jaune, le corps de lecture. Sans
+ * « illimité ». Ils montent en cascade (120 ms d'écart) quand le paywall arrive du parcours.
+ */
 @Composable
-private fun PaywallChecks(modifier: Modifier = Modifier) {
+private fun PaywallChecks(modifier: Modifier = Modifier, visible: Boolean = true) {
     val colors = Micabo.colors
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        listOf("ios.onb17.pay.lessons", "ios.onb17.pay.mika", "ios.onb17.pay.exams").forEach { key ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        listOf("ios.onb17.pay.lessons", "ios.onb17.pay.mika", "ios.onb17.pay.exams").forEachIndexed { index, key ->
+            Row(Modifier.riseIn(visible, delayMillis = index * 120), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(Icons.Rounded.CheckCircle, null, tint = colors.yellow, modifier = Modifier.size(24.dp))
                 Text(t(key), style = Type.body, color = colors.ink, modifier = Modifier.weight(1f))
             }

@@ -31,6 +31,8 @@ struct GoalStepView: View {
                     }
                 }
             }
+        } footer: {
+            OnbPickButton(isAnswered: model.mainGoal != nil)
         }
     }
 }
@@ -87,7 +89,7 @@ struct WorriesStepView: View {
 // MARK: - Le temps de révision
 
 /// **« Tu révises combien de temps par semaine ? »** (lot 12) Ce que ça lui coûte
-/// aujourd'hui, en quatre crans, sans jugement. Un appui avance.
+/// aujourd'hui, en quatre crans, sans jugement. Un appui coche, « Continuer » avance.
 struct StudyHoursStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -104,6 +106,8 @@ struct StudyHoursStepView: View {
                     }
                 }
             }
+        } footer: {
+            OnbPickButton(isAnswered: model.weeklyStudy != nil)
         }
     }
 }
@@ -111,7 +115,7 @@ struct StudyHoursStepView: View {
 // MARK: - La méthode
 
 /// **« Et tu révises comment, aujourd'hui ? »** (lot 12) Mika vient de réagir au temps qu'il y
-/// passe. Un appui avance.
+/// passe. Un appui coche, « Continuer » avance.
 struct StudyMethodStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -130,6 +134,8 @@ struct StudyMethodStepView: View {
                     }
                 }
             }
+        } footer: {
+            OnbPickButton(isAnswered: model.studyMethod != nil)
         }
     }
 }

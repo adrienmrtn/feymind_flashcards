@@ -73,7 +73,7 @@ class OnboardingShotsTest(private val device: Device) {
         val steps = if (full) every else busiest
         val reports = steps.associate { step ->
             val model = linaOn(step)
-            step.analyticsName to shoot(rule, device, "onboarding", "%02d-%s".format(java.util.Locale.ROOT, step.ordinal, step.analyticsName), requireCta = step != OnboardingStep.planBuilding && !step.advancesOnChoice) {
+            step.analyticsName to shoot(rule, device, "onboarding", "%02d-%s".format(java.util.Locale.ROOT, step.ordinal, step.analyticsName), requireCta = step != OnboardingStep.planBuilding) {
                 OnboardingFlow(model, TestHost)
             }
         }.toMutableMap()

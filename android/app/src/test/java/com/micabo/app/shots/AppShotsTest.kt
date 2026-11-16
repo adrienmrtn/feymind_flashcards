@@ -58,6 +58,8 @@ class AppShotsTest(private val device: Device) {
             name = "Lina", examName = exam, examId = if (exam != null) "fr.bac" else "", trigger = trigger, busy = false,
             message = null, failure = "Pas de connexion. Vérifie ton internet et réessaie.", onClose = {}, onRetry = {},
             onRestore = {}, onOpen = {}, onSubscribe = {}, now = now,
+            // Sans porte : le paywall de la fin du parcours (sans essai, son bouton dit « Continuer »).
+            onboarding = trigger == null,
         )
     }
 

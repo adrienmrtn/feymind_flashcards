@@ -14,9 +14,11 @@ import SwiftUI
 /// parcours — le titre en haut à gauche, le bouton en bas — et, au centre, Mika en grand qui
 /// parle dans sa bulle. Plus de surtitre (« 3/7 · … ») : le chapitre se lit à la jauge.
 ///
-/// **L'arrivée est sobre** : en même temps que la page glisse, Mika passe de 92 % à sa taille
-/// et la bulle apparaît en fondu, sous la courbe douce de l'app — sans délai, sans saut.
-/// « Réduire les animations » et les rendus le montrent posé.
+/// **L'arrivée** : en même temps que la page glisse, Mika passe de 92 % à sa taille et la bulle
+/// apparaît en fondu. Puis **Mika parle : sa phrase se dit mot par mot, en gras**, et le bouton
+/// n'apparaît qu'une fois la phrase dite (demande du fondateur). Toucher l'écran dit tout d'un
+/// coup. « Réduire les animations », VoiceOver, les rendus et un retour en arrière le montrent
+/// posé, la phrase entière et le bouton là.
 struct OnbChapterOpener: View {
     /// Le titre, son mot-clé entre `**`.
     let title: String
@@ -26,14 +28,20 @@ struct OnbChapterOpener: View {
     var cta: String
     var onContinue: () -> Void
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.onboardingStill) private var still
-    @Environment(\.onbSettled) private var settled
+    @Environment(OnboardingModel.self) private var model: OnboardingModel?
     @Environment(\.onbCompact) private var compact
+    @OnbArrivalSkipped private var skipsArrival
 
     @State private var arrived = false
+    /// Les mots déjà dits.
+    @State private var spoken = 0
+    /// La phrase est dite : le bouton est là.
+    @State private var said = false
 
-    private var isSettled: Bool { arrived || still || settled || reduceMotion }
+    /// Rien ne se rejoue quand on revient sur l'écran.
+    private var isPosed: Bool { skipsArrival || model?.isMovingForward == false }
+    private var isSettled: Bool { arrived || isPosed }
+    private var isSaid: Bool { said || isPosed }
 
     private var mikaSize: CGFloat { compact ? 150 : 210 }
 
@@ -44,7 +52,7 @@ struct OnbChapterOpener: View {
 
             OnbCentered {
                 VStack(spacing: 4) {
-                    OnbSpeech(text: say)
+                    OnbSpeech(text: say, spoken: isSaid ? nil : spoken)
                         .opacity(isSettled ? 1 : 0)
                     MikaMascot(mood: mood, size: mikaSize)
                         .frame(width: mikaSize, height: mikaSize)
@@ -54,13 +62,41 @@ struct OnbChapterOpener: View {
                 }
                 .frame(maxWidth: .infinity)
             }
+            .contentShape(Rectangle())
+            .onTapGesture { finish() }
         } footer: {
             V3Button(cta, action: onContinue)
+                .onbRevealed(isSaid)
         }
         .onAppear {
-            guard !isSettled else { return }
+            guard !isPosed else {
+                arrived = true
+                said = true
+                return
+            }
             withAnimation(MicaboMotion.gentle) { arrived = true }
         }
+        .task { await speak() }
+    }
+
+    /// Mika dit sa phrase, un mot après l'autre, puis le bouton arrive.
+    @MainActor
+    private func speak() async {
+        guard !isSaid else { return }
+        // La bulle se pose d'abord.
+        try? await Task.sleep(for: .milliseconds(380))
+        for (index, word) in OnbWordReveal.words(of: OnbPhrase(say).text).enumerated() {
+            guard !Task.isCancelled, !said else { return }
+            spoken = index + 1
+            try? await Task.sleep(for: .seconds(OnbWordReveal.pause(after: word)))
+        }
+        guard !Task.isCancelled else { return }
+        finish()
+    }
+
+    private func finish() {
+        guard !said else { return }
+        said = true
     }
 }
 

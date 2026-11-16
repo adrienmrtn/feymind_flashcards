@@ -13,8 +13,17 @@ import { repoRoot } from "./grid.mjs";
 
 export const screenshotsDir = resolve(repoRoot, "store", "screenshots");
 
-/** Les langues dont le dépôt a les images. Une fiche App Store en `en-GB` prend celles de `en`. */
-export const LANGUAGES = ["fr", "en", "es", "de", "tr"];
+/**
+ * Les langues dont le dépôt a les images, un dossier chacune. Une fiche App Store en `en-GB`
+ * prend celles de `en` ; `pt-BR` et `es-419` sont des dossiers à part entière.
+ */
+export const LANGUAGES = [
+  "fr", "en", "tr", "de", "it", "el", "hu", "es", "ro", "hr", "cs", "sv", "pt-BR", "sr",
+  "pl", "bg", "es-419", "sl", "he", "sk", "nl", "no", "ar", "fi", "ru", "ja", "da",
+];
+
+/** Les fiches qu'App Store Connect nomme autrement que nos dossiers. */
+const LOCALE_FOLDERS = { "es-MX": "es-419", nb: "no", "nb-NO": "no", "no-NO": "no" };
 
 /**
  * Les deux tailles qu'on envoie. L'API garde les noms des anciens écrans : le jeu
@@ -108,9 +117,12 @@ export function loadPictures(root, display) {
   return { pictures, problems };
 }
 
-/** `fr-FR`, `fr-CA` → `fr` ; `zh-Hans` → null : pas d'images pour cette langue. */
+/** `fr-FR`, `fr-CA` → `fr` ; `es-MX` → `es-419` ; `pt-BR` → `pt-BR` ; `pt-PT`, `zh-Hans` → null : pas d'images. */
 export function languageOf(locale) {
-  const lang = String(locale).split("-")[0].toLowerCase();
+  const name = String(locale);
+  if (LOCALE_FOLDERS[name]) return LOCALE_FOLDERS[name];
+  if (LANGUAGES.includes(name)) return name;
+  const lang = name.split("-")[0].toLowerCase();
   return LANGUAGES.includes(lang) ? lang : null;
 }
 

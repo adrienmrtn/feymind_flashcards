@@ -1,8 +1,14 @@
 package com.micabo.app.ui.v3
 
+import android.provider.Settings
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -30,15 +36,24 @@ import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -62,6 +77,7 @@ import com.micabo.app.ui.theme.Micabo
 import com.micabo.app.ui.theme.Type
 import com.micabo.app.ui.theme.display
 import com.micabo.app.ui.theme.text
+import kotlinx.coroutines.delay
 
 /** Les mesures de la direction V3.3 (`V3Metric`). */
 object V3Metric {
@@ -83,6 +99,51 @@ val LocalCompact = compositionLocalOf { false }
 
 /** **Les tests de rendu** posent l'écran fini : les arrivées animées sont jouées d'avance. */
 val LocalStill = compositionLocalOf { false }
+
+/**
+ * **Rien ne s'anime** : un rendu de test, un aperçu, ou « Supprimer les animations » dans les
+ * réglages du téléphone. Les arrivées animées posent alors leur état final, bouton compris.
+ */
+@Composable
+fun rememberStill(): Boolean {
+    val context = LocalContext.current
+    val system = remember(context) {
+        runCatching { Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }.getOrDefault(false)
+    }
+    return LocalStill.current || LocalInspectionMode.current || system
+}
+
+/** **Un bloc qui surgit** à sa place (elle est gardée d'avance) : un fondu et une échelle à ressort. */
+@Composable
+fun Modifier.popIn(visible: Boolean, from: Float = 0.85f): Modifier {
+    val scale by animateFloatAsState(if (visible) 1f else from, spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow), label = "pop")
+    val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(220), label = "popAlpha")
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+        this.alpha = alpha
+    }
+}
+
+/** **Un bloc qui monte en fondu** à sa place, après un délai (les lignes en cascade). */
+@Composable
+fun Modifier.riseIn(visible: Boolean, delayMillis: Int = 0): Modifier {
+    val shown by animateFloatAsState(if (visible) 1f else 0f, tween(320, delayMillis = delayMillis), label = "rise")
+    return graphicsLayer {
+        alpha = shown
+        translationY = (1f - shown) * 14.dp.toPx()
+    }
+}
+
+/**
+ * **Le bouton du pied, révélé à la fin de l'animation de l'écran** : avant, il est invisible et
+ * inerte, mais garde sa place (rien ne bouge) ; ensuite il arrive en fondu.
+ */
+@Composable
+fun RevealedButton(visible: Boolean, text: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: ImageVector? = null) {
+    val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(300), label = "reveal")
+    com.micabo.app.ui.components.MicaboButton(text, onClick, modifier.graphicsLayer { this.alpha = alpha }, enabled = visible, icon = icon)
+}
 
 /** Le lavis d'un ton sur la surface (`V3Color.wash(of:)`). */
 @Composable
@@ -120,6 +181,88 @@ fun marked(textWithMarks: String, keyword: Color, bold: Boolean = false): Annota
 
 /** Le texte sans ses marques. */
 fun plain(textWithMarks: String) = textWithMarks.replace("**", "")
+
+/** Un blanc qui sépare deux mots ; l'espace insécable (« Salut ! ») garde le signe avec son mot. */
+private fun Char.splitsWords() = isWhitespace() && this != '\u00A0' && this != '\u202F'
+
+/** Le dernier caractère de chaque mot d'une phrase : leur nombre, et où reprendre son souffle. */
+private fun wordEnds(sentence: String): List<Char> = buildList {
+    var end: Char? = null
+    for (char in sentence) {
+        if (char.splitsWords()) {
+            end?.let { add(it) }
+            end = null
+        } else {
+            end = char
+        }
+    }
+    end?.let { add(it) }
+}
+
+/**
+ * **Une phrase dite mot à mot** : la phrase entière est posée dès le départ (rien ne bouge),
+ * les mots pas encore dits sont transparents ; le mot-clé entre `**` garde sa couleur.
+ */
+fun markedWords(textWithMarks: String, keyword: Color, shown: Int): AnnotatedString = buildAnnotatedString {
+    var word = 0
+    var between = true
+    textWithMarks.split("**").forEachIndexed { index, part ->
+        val tone = if (index % 2 == 1) keyword else Color.Unspecified
+        // Les caractères de même visibilité partent ensemble, dans un seul style.
+        var piece = ""
+        var hidden = false
+        for (char in part) {
+            if (char.splitsWords()) {
+                between = true
+            } else if (between) {
+                between = false
+                word += 1
+            }
+            if ((word > shown) != hidden) {
+                if (piece.isNotEmpty()) withStyle(SpanStyle(color = if (hidden) Color.Transparent else tone)) { append(piece) }
+                piece = ""
+                hidden = word > shown
+            }
+            piece += char
+        }
+        if (piece.isNotEmpty()) withStyle(SpanStyle(color = if (hidden) Color.Transparent else tone)) { append(piece) }
+    }
+}
+
+/** Où en est une phrase dite mot à mot ; `finish` la termine d'un coup (un toucher sur l'écran). */
+class WordReveal(val total: Int, start: Int) {
+    var shown by mutableIntStateOf(start)
+        private set
+    val done: Boolean get() = shown >= total
+
+    fun next() {
+        if (!done) shown += 1
+    }
+
+    fun finish() {
+        shown = total
+    }
+}
+
+/**
+ * **Le rythme d'une phrase dite mot à mot** : un mot toutes les 70 ms, un souffle après une
+ * ponctuation. `instant` pose la phrase entière (retour en arrière, rendus, animations coupées).
+ */
+@Composable
+fun rememberWordReveal(textWithMarks: String, instant: Boolean): WordReveal {
+    val ends = remember(textWithMarks) { wordEnds(plain(textWithMarks)) }
+    val reveal = remember(textWithMarks) { WordReveal(ends.size, if (instant) ends.size else 0) }
+    LaunchedEffect(reveal) {
+        // L'écran finit d'abord de glisser.
+        if (!reveal.done) delay(280)
+        while (!reveal.done) {
+            val last = ends.getOrNull(reveal.shown - 1)
+            delay(if (last != null && last in ".!?:,…") 240L else 70L)
+            reveal.next()
+        }
+    }
+    return reveal
+}
 
 /**
  * **Le titre d'un écran** (`OnbTitle`) : Sofia Black 34 (30 sur un écran court), en haut à
@@ -273,14 +416,17 @@ fun ChapterGauge(chapter: Int, fraction: Float, count: Int, modifier: Modifier =
     }
 }
 
-/** **La bulle de Mika qui parle en grand** (`OnbSpeech`) : centrée, sa pointe vers lui. */
+/**
+ * **La bulle de Mika qui parle en grand** (`OnbSpeech`) : centrée, sa pointe vers lui. Avec
+ * `shownWords`, la phrase est en gras et seuls ses premiers mots sont visibles.
+ */
 @Composable
-fun SpeechBubble(text: String, modifier: Modifier = Modifier) {
+fun SpeechBubble(text: String, modifier: Modifier = Modifier, shownWords: Int? = null) {
     val colors = Micabo.colors
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = marked(text, colors.accentBright),
-            style = Type.body,
+            text = if (shownWords == null) marked(text, colors.accentBright) else markedWords(text, colors.accentBright, shownWords),
+            style = if (shownWords == null) Type.body else Type.body.copy(fontWeight = FontWeight.Bold),
             color = colors.ink,
             textAlign = TextAlign.Center,
             modifier = Modifier
@@ -416,20 +562,27 @@ private fun CenteredColumn(minHeight: Dp, centered: Boolean, modifier: Modifier,
     }
 }
 
-/** **L'ouverture d'un chapitre** (`OnbChapterOpener`) : le titre, un grand Mika et sa bulle. */
+/**
+ * **L'ouverture d'un chapitre** (`OnbChapterOpener`) : le titre, un grand Mika et sa bulle. Mika
+ * dit sa phrase mot à mot ; le bouton n'arrive qu'à la fin. Toucher l'écran termine la phrase ;
+ * `instant` la pose entière (l'écran retrouvé par un retour).
+ */
 @Composable
-fun ChapterOpener(title: String, say: String, mood: MikaMood, cta: String, onContinue: () -> Unit) {
+fun ChapterOpener(title: String, say: String, mood: MikaMood, cta: String, instant: Boolean = false, onContinue: () -> Unit) {
+    val still = rememberStill()
+    val reveal = rememberWordReveal(say, instant || still)
     OnbScreen(
+        modifier = Modifier.pointerInput(reveal) { detectTapGestures(onTap = { reveal.finish() }) },
         centered = true,
         header = { V3Title(title, Modifier.padding(top = 16.dp)) },
         body = {
             val size = if (LocalCompact.current) 150.dp else 210.dp
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                SpeechBubble(say)
+                SpeechBubble(say, shownWords = reveal.shown)
                 Mika(mood, size)
             }
         },
-        footer = { com.micabo.app.ui.components.MicaboButton(cta, onContinue, Modifier.testTag("cta")) },
+        footer = { RevealedButton(reveal.done, cta, onContinue, Modifier.testTag("cta")) },
     )
 }
 

@@ -170,14 +170,33 @@ private struct PlanBuildingProgress: View {
 /// 3. **Ton objectif** : sa note visée, en vert, et le jour de son examen (sans examen :
 ///    l'horizon de trois mois ; sans note : l'examen et sa date ; sans rien : le bloc part).
 ///
-/// Mika fête, des confettis une fois. Le compte se propose en quittant cet écran. Le nom de
-/// l'étape reste `profileSummary` : sa courbe dans les statistiques continue.
+/// **Le plan se dévoile** (demande du fondateur) : le titre, puis les blocs un à un — chacun
+/// avec son icône, d'un ressort et d'un léger retour haptique —, puis les confettis, et
+/// seulement alors le bouton. **Mika ne reste pas figé** : après sa fête il flotte doucement, et
+/// change de geste toutes les quelques secondes. Les rendus, « Réduire les animations » et
+/// VoiceOver montrent tout posé.
+///
+/// Le compte se propose en quittant cet écran. Le nom de l'étape reste `profileSummary` : sa
+/// courbe dans les statistiques continue.
 struct ProfileSummaryStepView: View {
     var now = Date()
 
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
     @Environment(\.onbCompact) private var compact
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.onboardingStill) private var still
+    @OnbArrivalSkipped private var skipsArrival
+
+    /// Ce qui est dévoilé : 0 rien, 1 le titre, puis un cran par bloc, puis le bouton.
+    @State private var revealed = 0
+    /// Le geste de Mika : la fête d'abord, puis il en change.
+    @State private var mikaMood: MikaMood = .celebrate
+    /// Mika flotte.
+    @State private var floats = false
+
+    /// Les gestes que Mika enchaîne après sa fête.
+    private static let moods: [MikaMood] = [.happy, .wink, .proud, .wave, .celebrate]
 
     /// Une séance par jour : sept dans la semaine.
     static let sessionsPerWeek = 7
@@ -219,40 +238,83 @@ struct ProfileSummaryStepView: View {
         return nil
     }
 
+    /// Un bloc du plan.
+    private struct Block: Identifiable {
+        let id: Int
+        let icon: MicaboIcon
+        let iconTone: Color
+        let label: String
+        let value: String
+        let detail: String
+        let tone: Color
+        let highlighted: Bool
+    }
+
+    private var blocks: [Block] {
+        // Lot 16 : une séance dure une heure au plus ; au-delà, plusieurs séances par jour.
+        var blocks = [
+            Block(
+                id: 0,
+                icon: .alarm,
+                iconTone: V3Color.iconBlue,
+                label: i18n.t("ios.onb12.plan.tonightLabel"),
+                value: OnbWords.hour(model.reminderHour, locale: i18n.locale),
+                detail: i18n.t("ios.onb12.plan.tonightDetail", ["topic": tonight, "min": "\(sessionMinutes)"]),
+                tone: V3Color.accentBright,
+                highlighted: true
+            ),
+            Block(
+                id: 1,
+                icon: .exam,
+                iconTone: V3Color.iconYellow,
+                label: i18n.t("ios.onb12.plan.weekLabel"),
+                value: "\(Self.sessionsPerWeek * sessionsPerDay)",
+                detail: sessionsPerDay > 1
+                    ? i18n.t("ios.onb16.plan.weekSplit", ["min": "\(sessionMinutes)", "count": "\(sessionsPerDay)"])
+                    : i18n.t("ios.onb12.plan.weekDetail", ["min": "\(sessionMinutes)"]),
+                tone: V3Color.ink,
+                highlighted: false
+            ),
+        ]
+        if let goal {
+            blocks.append(Block(
+                id: 2,
+                icon: .trophy,
+                iconTone: V3Color.iconGreen,
+                label: i18n.t("ios.onb12.plan.goalLabel"),
+                value: goal.value,
+                detail: goal.detail,
+                tone: V3Color.green,
+                highlighted: false
+            ))
+        }
+        return blocks
+    }
+
+    /// Le cran où tout est dévoilé : le titre, chaque bloc, puis le bouton.
+    private var lastStage: Int { blocks.count + 2 }
+    private var stage: Int { skipsArrival ? lastStage : revealed }
+    private var isUnveiled: Bool { stage >= lastStage }
+
     var body: some View {
-        OnbScreen {
-            OnbHeroMika(mood: .celebrate, max: compact ? 84 : 120, min: 64)
+        let blocks = self.blocks
+        return OnbScreen {
+            OnbHeroMika(mood: mikaMood, max: compact ? 84 : 120, min: 64)
+                .offset(y: floats ? -5 : 3)
                 .padding(.top, 2)
 
             OnbTitle(title, size: OnbLayout.display, alignment: .center)
                 .padding(.top, 4)
+                .opacity(stage >= 1 ? 1 : 0)
+                .offset(y: stage >= 1 ? 0 : 10)
 
             VStack(spacing: 10) {
-                // Lot 16 : une séance dure une heure au plus ; au-delà, plusieurs séances par jour.
-                block(
-                    label: i18n.t("ios.onb12.plan.tonightLabel"),
-                    value: OnbWords.hour(model.reminderHour, locale: i18n.locale),
-                    detail: i18n.t("ios.onb12.plan.tonightDetail", ["topic": tonight, "min": "\(sessionMinutes)"]),
-                    tone: V3Color.accentBright,
-                    highlighted: true
-                )
-                block(
-                    label: i18n.t("ios.onb12.plan.weekLabel"),
-                    value: "\(Self.sessionsPerWeek * sessionsPerDay)",
-                    detail: sessionsPerDay > 1
-                        ? i18n.t("ios.onb16.plan.weekSplit", ["min": "\(sessionMinutes)", "count": "\(sessionsPerDay)"])
-                        : i18n.t("ios.onb12.plan.weekDetail", ["min": "\(sessionMinutes)"]),
-                    tone: V3Color.ink,
-                    highlighted: false
-                )
-                if let goal {
-                    block(
-                        label: i18n.t("ios.onb12.plan.goalLabel"),
-                        value: goal.value,
-                        detail: goal.detail,
-                        tone: V3Color.green,
-                        highlighted: false
-                    )
+                ForEach(blocks) { item in
+                    let shown = stage >= item.id + 2
+                    block(item)
+                        .opacity(shown ? 1 : 0)
+                        .scaleEffect(shown ? 1 : 0.9)
+                        .offset(y: shown ? 0 : 16)
                 }
             }
             .padding(.top, 16)
@@ -260,26 +322,69 @@ struct ProfileSummaryStepView: View {
             V3Button(i18n.t("ios.deckBuild.seePlan")) {
                 model.advance()
             }
+            .onbRevealed(isUnveiled)
         }
         .overlay {
-            OnbConfetti(isOn: true)
+            OnbConfetti(isOn: isUnveiled)
+        }
+        .onAppear {
+            guard !still, !reduceMotion else { return }
+            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { floats = true }
+        }
+        .task { await unveil(count: blocks.count) }
+        .task { await enliven() }
+    }
+
+    /// Le plan se dévoile : le titre, les blocs un à un, puis la fête et le bouton.
+    @MainActor
+    private func unveil(count: Int) async {
+        guard !skipsArrival, revealed == 0 else { return }
+        // La page finit de glisser.
+        try? await Task.sleep(for: .milliseconds(420))
+        for next in 1...(count + 1) {
+            guard !Task.isCancelled else { return }
+            withAnimation(MicaboMotion.celebrate) { revealed = next }
+            if next > 1 { Haptics.soft() }
+            try? await Task.sleep(for: .milliseconds(next == 1 ? 480 : 440))
+        }
+        guard !Task.isCancelled else { return }
+        Haptics.success()
+        revealed = count + 2
+    }
+
+    /// Mika ne reste pas figé : il change de geste toutes les quelques secondes.
+    @MainActor
+    private func enliven() async {
+        guard !still, !reduceMotion else { return }
+        var index = 0
+        while !Task.isCancelled {
+            try? await Task.sleep(for: .seconds(3.4))
+            guard !Task.isCancelled else { return }
+            mikaMood = Self.moods[index % Self.moods.count]
+            index += 1
         }
     }
 
-    /// Un bloc : son nom en petit, le gros chiffre, la ligne qui le dit en mots.
-    private func block(label: String, value: String, detail: String, tone: Color, highlighted: Bool) -> some View {
+    /// Un bloc : le gros chiffre ; à côté, son icône et son nom, puis la ligne qui le dit en
+    /// mots.
+    private func block(_ item: Block) -> some View {
         HStack(alignment: .center, spacing: 14) {
-            Text(value)
+            Text(item.value)
                 .font(V3Font.display(compact ? 34 : 40))
-                .foregroundStyle(tone)
+                .foregroundStyle(item.tone)
                 .lineLimit(1)
                 .minimumScaleFactor(0.6)
                 .frame(minWidth: 76, alignment: .leading)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(V3Font.label)
-                    .foregroundStyle(V3Color.ink2)
-                Text(detail)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    MicaboIconView(icon: item.icon, size: 17 * 1.35, tint: item.iconTone)
+                        .frame(width: 28, height: 28)
+                        .background(V3Color.wash(of: item.iconTone), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    Text(item.label)
+                        .font(V3Font.label)
+                        .foregroundStyle(V3Color.ink2)
+                }
+                Text(item.detail)
                     .font(V3Font.bodyStrong)
                     .foregroundStyle(V3Color.ink)
                     .multilineTextAlignment(.leading)
@@ -290,7 +395,7 @@ struct ProfileSummaryStepView: View {
         .padding(.horizontal, 18)
         .padding(.vertical, compact ? 10 : 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .v3Card(selected: highlighted)
+        .v3Card(selected: item.highlighted)
         .accessibilityElement(children: .combine)
     }
 }

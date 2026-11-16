@@ -27,7 +27,7 @@ def main():
     count = 0
     for lang in sorted(os.listdir(SOURCE)):
         folder = os.path.join(SOURCE, lang)
-        if lang == "generator" or not os.path.isdir(folder):
+        if lang.startswith("generator") or not os.path.isdir(folder):
             continue
         out = os.path.join(out_root, lang)
         os.makedirs(out, exist_ok=True)

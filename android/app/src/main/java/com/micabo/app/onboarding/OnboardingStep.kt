@@ -70,10 +70,6 @@ enum class OnboardingStep(val kind: Kind, val chapter: Int) {
     val next: OnboardingStep? get() = entries.getOrNull(ordinal + 1)
     val previous: OnboardingStep? get() = entries.getOrNull(ordinal - 1)
 
-    /** Un choix unique avance tout seul et n'a pas de bouton. */
-    val advancesOnChoice: Boolean
-        get() = this in setOf(country, level, schoolType, year, hardestSubject, goal, studyHours, studyMethod)
-
     /** La barre du haut se retire des écrans qui sont un moment à eux seuls. */
     val showsChrome: Boolean get() = this !in setOf(hookLogo, planBuilding, profileSummary, paywall)
 

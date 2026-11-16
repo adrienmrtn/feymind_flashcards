@@ -292,11 +292,13 @@ final class OnboardingFlowTests: XCTestCase {
         )
     }
 
-    /// **Un choix unique avance tout seul** : ces écrans n'ont pas de bouton.
-    func testASingleChoiceAdvancesOnItsOwn() {
-        let advancing = OnboardingStep.allCases.filter(\.advancesOnChoice)
-        XCTAssertEqual(advancing, [.country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod])
-        XCTAssertTrue(advancing.allSatisfy(\.isQuestion))
+    /// **Un choix unique se coche, et c'est le bouton qui avance** : aucun écran ne part à
+    /// l'appui d'une réponse.
+    func testASingleChoiceWaitsForItsButton() {
+        let single = OnboardingStep.allCases.filter(\.isSingleChoice)
+        XCTAssertEqual(single, [.country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod])
+        XCTAssertTrue(single.allSatisfy(\.isQuestion))
+        XCTAssertTrue(OnboardingStep.allCases.allSatisfy { !$0.advancesOnChoice })
     }
 
     /// **Les questions ne s'enchaînent jamais à plus de six** sans un écran où Mika parle ou

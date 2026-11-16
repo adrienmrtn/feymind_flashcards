@@ -19,7 +19,7 @@ extension OnboardingModel {
 /// réponses des questions suivantes. Mika le dit, avec le prénom qu'il vient d'apprendre.
 ///
 /// **Une liste à drapeaux, le pays du téléphone en tête et déjà choisi** ; **la recherche
-/// couvre le monde entier**. Un appui coche, et la page part à la fin du ressort.
+/// couvre le monde entier**. Un appui coche ; « Continuer » avance.
 struct CountryStepView: View {
     @Environment(OnboardingModel.self) private var model
     @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
@@ -60,9 +60,7 @@ struct CountryStepView: View {
                     results
                 } else {
                     if model.country == .other, let custom = model.customCountry {
-                        OnbOption(title: custom.name, emoji: custom.flag, isSelected: true) {
-                            model.advance()
-                        }
+                        OnbOption(title: custom.name, emoji: custom.flag, isSelected: true) {}
                     }
                     ForEach(listed) { country in
                         OnbOption(
@@ -77,6 +75,8 @@ struct CountryStepView: View {
             }
 
             OnbKeyboardRoom(isActive: model.step == .country)
+        } footer: {
+            OnbPickButton(isAnswered: model.country != .other || model.customCountry != nil)
         }
     }
 
@@ -147,10 +147,13 @@ struct CountryStepView: View {
         }
     }
 
+    /// Un pays de la recherche : il se coche, la recherche se referme, et il est en tête de
+    /// la liste, choisi.
     private func choose(_ country: WorldCountry) {
         isSearching = false
         OnbPick.choose(on: .country, model: model) {
             model.select(worldCountry: country)
+            query = ""
         }
     }
 }
@@ -176,6 +179,8 @@ struct SchoolTypeStepView: View {
                     }
                 }
             }
+        } footer: {
+            OnbPickButton(isAnswered: model.track != nil)
         }
     }
 }
@@ -214,6 +219,8 @@ struct SchoolYearStepView: View {
                     }
                 }
             }
+        } footer: {
+            OnbPickButton(isAnswered: model.year != nil)
         }
     }
 }
@@ -238,6 +245,8 @@ struct LevelStepView: View {
                     }
                 }
             }
+        } footer: {
+            OnbPickButton(isAnswered: model.stage != nil)
         }
     }
 }
