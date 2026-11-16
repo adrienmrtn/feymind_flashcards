@@ -171,6 +171,16 @@ struct PathCircle: Equatable, Identifiable {
         case quiz(group: Int, themes: [Int])
         /// Le Quiz final : toute la leçon, puis « À retenir ».
         case final(themes: [Int])
+
+        /// Le nom de l'étape dans les statistiques, sans ses rangs.
+        var analyticsName: String {
+            switch self {
+            case .intro: "intro"
+            case .notes: "notes"
+            case .quiz: "quiz"
+            case .final: "final"
+            }
+        }
     }
 
     enum State: Equatable {

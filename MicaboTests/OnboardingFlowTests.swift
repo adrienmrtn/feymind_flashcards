@@ -68,7 +68,7 @@ final class OnboardingFlowTests: XCTestCase {
     func testTheFlowIsTheSpecInOrder() {
         XCTAssertEqual(OnboardingStep.allCases.map(\.analyticsName), [
             "hookLogo",
-            "welcome", "name", "country", "level", "schoolType", "year", "exam", "subjects",
+            "welcome", "name", "gender", "country", "level", "schoolType", "year", "exam", "subjects",
             "studyIntro", "hardestSubject", "goal", "worries", "studyHours", "studyMethod", "solutionMap",
             "helpIntro", "origin", "lessonDemo", "scanDemo", "research",
             "goalIntro", "currentAverage", "targetAverage", "startingPoint", "dailyTime",
@@ -77,7 +77,7 @@ final class OnboardingFlowTests: XCTestCase {
             "storyIntro", "storyCreate", "storyPath", "storyPractice", "storyAsk", "storyClose",
             "firstLesson", "freeTrialIntro", "trialOffer", "paywall",
         ])
-        XCTAssertEqual(OnboardingStep.allCases.count, 43, "Un écran de stories et quarante-deux étapes (lot 16)")
+        XCTAssertEqual(OnboardingStep.allCases.count, 44, "Un écran de stories et quarante-trois étapes (le genre, après le prénom)")
         XCTAssertEqual(OnboardingStep.allCases.filter { $0.kind == .stories }, [.hookLogo])
         XCTAssertEqual(OnboardingStep.allCases.last, .paywall)
     }
@@ -94,6 +94,9 @@ final class OnboardingFlowTests: XCTestCase {
 
         model.advance()
         XCTAssertEqual(model.step, .name, "Le prénom, en premier")
+
+        model.advance()
+        XCTAssertEqual(model.step, .gender, "Le genre, juste après le prénom")
 
         model.advance()
         XCTAssertEqual(model.step, .country, "Le pays commande les réponses de tout le reste")
@@ -127,13 +130,80 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertEqual(OnboardingStep.allCases.filter { $0.isSkipped(for: .other) }, [.schoolType, .year])
     }
 
+    /// **Le genre est facultatif** : une réponse se garde, « Passer » n'en garde aucune et
+    /// continue sur le pays.
+    func testTheGenderQuestionCanBeSkipped() {
+        let answered = self.model(advancingTo: .gender)
+        answered.gender = .female
+        answered.advance()
+        XCTAssertEqual(answered.step, .country)
+        XCTAssertEqual(OnboardingPreferences.gender, "female")
+
+        Self.clean()
+        let skipped = self.model(advancingTo: .gender)
+        skipped.gender = .other
+        skipped.skipGender()
+        XCTAssertEqual(skipped.step, .country)
+        XCTAssertNil(skipped.gender)
+        XCTAssertNil(OnboardingPreferences.gender)
+    }
+
+    /// **La ligne d'analyse dit tout, sauf le prénom.** Elle part à la fin du parcours
+    /// (`onboarding_profile`) : la langue, le genre, le pays, les matières — et rien qui
+    /// nomme l'élève.
+    func testTheAnalyticsProfileCarriesEveryAnswerButTheName() throws {
+        let model = OnboardingModel()
+        model.displayName = "Zélie-Prénom"
+        model.select(country: .fr)
+        model.gender = .female
+        model.subjects = ["Philosophie", "Mathématiques"]
+        model.dailyMinutes = 20
+
+        let profile = model.analyticsProfile
+        let json = String(decoding: try JSONEncoder().encode(profile), as: UTF8.self)
+        XCTAssertFalse(json.contains("Zélie"), json)
+        XCTAssertLessThan(json.count, 2000, "la table refuse des props plus longues")
+        for key in ["ui_language", "country", "gender", "subjects", "subject_count", "daily_minutes", "first_lesson"] {
+            XCTAssertNotNil(profile[key], key)
+        }
+        XCTAssertTrue(json.contains("Mathématiques,Philosophie"), json)
+
+        model.gender = nil
+        XCTAssertTrue(
+            String(decoding: try JSONEncoder().encode(model.analyticsProfile), as: UTF8.self).contains("passer")
+        )
+    }
+
+    /// Un titre de cours trop long ne fait pas refuser le lot : il est raccourci.
+    func testANameSentToAnalyticsIsShortened() throws {
+        let value = AnalyticsValue.name("  " + String(repeating: "a", count: 500) + "  ")
+        let json = String(decoding: try JSONEncoder().encode(value), as: UTF8.self)
+        XCTAssertEqual(json.count, 122)
+    }
+
+    /// Dix matières ne tiennent pas dans une valeur de 120 signes : elles partent en morceaux
+    /// de noms entiers, que les vues SQL recollent.
+    func testALongListOfSubjectsTravelsInWholeNames() {
+        let names = (1...12).map { "Matière numéro \($0) à rallonge" }
+        let parts = OnboardingModel.analyticsList("subjects", names)
+        XCTAssertEqual(Set(parts.keys), ["subjects", "subjects_2", "subjects_3"])
+        var seen: [String] = []
+        for key in ["subjects", "subjects_2", "subjects_3"] {
+            guard case .text(let chunk)? = parts[key] else { return XCTFail(key) }
+            XCTAssertLessThanOrEqual(chunk.count, 120)
+            seen += chunk.components(separatedBy: ",")
+        }
+        XCTAssertEqual(seen, Array(names.prefix(seen.count)))
+        XCTAssertEqual(Array(OnboardingModel.analyticsList("value", ["a", "b"]).keys), ["value"])
+    }
+
     /// **Le parcours d'un lycéen français, écran par écran.**
     func testAFrenchStudentWalksTheWholeFlow() {
         let model = OnboardingModel()
         model.select(country: .fr)
         model.subjects = ["Mathématiques", "Philosophie"]
         var expected: [OnboardingStep] = [
-            .hookLogo, .welcome, .name, .country, .schoolType, .year, .exam, .subjects,
+            .hookLogo, .welcome, .name, .gender, .country, .schoolType, .year, .exam, .subjects,
             .studyIntro, .hardestSubject, .goal, .worries, .studyHours, .studyMethod, .solutionMap,
             .helpIntro, .origin, .lessonDemo, .scanDemo, .research,
             .goalIntro, .currentAverage, .targetAverage, .startingPoint, .dailyTime,
@@ -278,7 +348,7 @@ final class OnboardingFlowTests: XCTestCase {
     /// Les questions sont celles que Mika pose dans sa bulle, et rien d'autre ne l'est.
     func testTheQuestionsAreExactlyTheScreensThatAsk() {
         XCTAssertEqual(OnboardingStep.allCases.filter(\.isQuestion), [
-            .name, .country, .level, .schoolType, .year, .exam, .subjects, .hardestSubject, .goal,
+            .name, .gender, .country, .level, .schoolType, .year, .exam, .subjects, .hardestSubject, .goal,
             .worries, .studyHours, .studyMethod, .currentAverage, .targetAverage,
             .dailyTime, .firstLesson,
         ])
@@ -296,7 +366,7 @@ final class OnboardingFlowTests: XCTestCase {
     /// l'appui d'une réponse.
     func testASingleChoiceWaitsForItsButton() {
         let single = OnboardingStep.allCases.filter(\.isSingleChoice)
-        XCTAssertEqual(single, [.country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod])
+        XCTAssertEqual(single, [.gender, .country, .level, .schoolType, .year, .hardestSubject, .goal, .studyHours, .studyMethod])
         XCTAssertTrue(single.allSatisfy(\.isQuestion))
         XCTAssertTrue(OnboardingStep.allCases.allSatisfy { !$0.advancesOnChoice })
     }
@@ -319,7 +389,7 @@ final class OnboardingFlowTests: XCTestCase {
             OnboardingStep.allCases.filter { !$0.showsChrome },
             [.hookLogo, .planBuilding, .profileSummary, .paywall]
         )
-        XCTAssertEqual(OnboardingStep.allCases.filter(\.isSkippable), [.currentAverage])
+        XCTAssertEqual(OnboardingStep.allCases.filter(\.isSkippable), [.gender, .currentAverage])
         XCTAssertEqual(OnboardingStep.allCases.filter(\.isLoading), [.planBuilding])
     }
 

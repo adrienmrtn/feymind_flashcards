@@ -31,6 +31,27 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
     /// « a vu l'écran » de « a répondu », et l'écart entre les deux est un abandon.
     case onboardingAnswer = "onboarding_answer"
     case onboardingFinished = "onboarding_finished"
+    /// **Toutes les réponses du parcours, en une ligne**, envoyée à la fin : la langue de
+    /// l'app, le genre, le pays, la classe, les matières, l'objectif… Une ligne par élève se
+    /// lit sans recoller trente `onboarding_answer`. Jamais le prénom.
+    case onboardingProfile = "onboarding_profile"
+    /// La langue de l'app changée à la main : `from`, `to`.
+    case languageChanged = "language_changed"
+
+    // MARK: Navigation et leçons
+
+    /// Un onglet de la barre du bas, ouvert : `tab` (home, lessons, calendar, focus, profile).
+    case tabViewed = "tab_viewed"
+    /// Une leçon ouverte : `title`, le nom du cours, et `subject`. Jamais son contenu.
+    case lessonOpened = "lesson_opened"
+    /// Une étape du chemin terminée : `kind` (intro, notes, quiz, final), `title`.
+    case lessonStepDone = "lesson_step_done"
+    /// Le Quiz final réussi une première fois : la leçon est apprise. `title`, `subject`.
+    case lessonFinished = "lesson_finished"
+    /// Une question répondue : `kind` (choice, order…), `right`, `difficulty`.
+    case questionAnswered = "question_answered"
+    /// Un quiz terminé : `right`, `total`, `title`.
+    case quizFinished = "quiz_finished"
     /// Une page des stories du premier écran, vue : `index` de 1 à 4. Une fois par page.
     case onboardingStoryViewed = "onboarding_story_viewed"
     /// La première leçon choisie pendant le parcours : `choice` vaut `topic`, `import` ou
@@ -305,5 +326,13 @@ enum AnalyticsValue: Sendable, Codable, ExpressibleByStringLiteral,
         case .flag(let value):
             try container.encode(value)
         }
+    }
+}
+
+extension AnalyticsValue {
+    /// **Un nom** : le titre d'un cours, d'une matière, d'une école — jamais un contenu.
+    /// Débarrassé de ses blancs ; l'encodage le coupe à 120 signes comme tout texte.
+    static func name(_ raw: String) -> AnalyticsValue {
+        .text(raw.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 }

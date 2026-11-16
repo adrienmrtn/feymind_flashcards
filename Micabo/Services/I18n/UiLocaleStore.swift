@@ -9,6 +9,7 @@ final class UiLocaleStore {
             guard locale != oldValue else { return }
             // Les cours suivent : `OnboardingPreferences.contentLanguage` est la langue de l'app.
             UserDefaults.standard.set(locale.rawValue, forKey: UiLocale.storageKey)
+            Analytics.track(.languageChanged, ["from": .text(oldValue.rawValue), "to": .text(locale.rawValue)])
         }
     }
 

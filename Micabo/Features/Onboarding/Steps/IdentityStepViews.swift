@@ -103,3 +103,30 @@ struct NameStepView: View {
         model.advance()
     }
 }
+
+// MARK: - Le genre
+
+/// **« Et toi, tu es… ? »** Un homme, une femme, autre : une réponse, juste après le prénom.
+/// Facultative : « Passer », en haut à droite, continue sans rien garder. Mika reprend le
+/// prénom qu'il vient d'apprendre.
+struct GenderStepView: View {
+    @Environment(OnboardingModel.self) private var model
+    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
+
+    var body: some View {
+        OnbQuestion(
+            i18n.t("ios.onb18.q.gender"),
+            say: OnbSay(i18n.t("ios.onb18.say.gender"), mood: .happy)
+        ) {
+            VStack(spacing: OnbLayout.rowGap) {
+                ForEach(StudentGender.allCases) { gender in
+                    OnbOption(title: gender.title(locale: i18n.locale), isSelected: model.gender == gender) {
+                        OnbPick.choose(on: .gender, model: model) { model.gender = gender }
+                    }
+                }
+            }
+        } footer: {
+            OnbPickButton(isAnswered: model.gender != nil)
+        }
+    }
+}
