@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -242,7 +243,7 @@ private fun SystemBars(device: Device) {
             Modifier.fillMaxWidth().height(device.statusDp.dp).padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("9:41", color = ink, fontSize = (13f / androidx.compose.ui.platform.LocalDensity.current.fontScale).sp)
+            Text("9:41", color = ink, fontSize = (13f / androidx.compose.ui.platform.LocalDensity.current.fontScale).sp, modifier = Modifier.wrapContentHeight(unbounded = true))
             Spacer(Modifier.weight(1f))
             if (device.statusDp > 30) Box(Modifier.size(22.dp).clip(CircleShape).background(Color.Black))
             Spacer(Modifier.weight(1f))

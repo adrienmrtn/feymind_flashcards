@@ -365,18 +365,25 @@ fun PaywallContent(
                 }
                 Text(marked(title, colors.accentBright), style = display(if (short) 30.sp else 34.sp), color = colors.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
                 Text(promise, style = text(17.sp, FontWeight.SemiBold, 22.sp), color = colors.accentBright, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
-                FeatureTable(Feature.shown(trigger), Modifier.padding(top = if (short) 14.dp else 22.dp))
+                if (big && state == PriceState.READY) {
+                    Column(Modifier.fillMaxWidth().padding(top = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        weeklyPlan?.let { PlanCard(it, selected = selected == it, savings = null, onClick = { onSelect(false) }, modifier = Modifier.fillMaxWidth()) }
+                        yearlyPlan?.let { PlanCard(it, selected = selected == it, savings = savings(yearlyPlan, weeklyPlan, locale), onClick = { onSelect(true) }, modifier = Modifier.fillMaxWidth()) }
+                    }
+                }
+                if (big) {
+                    com.micabo.app.ui.v3.CappedFontScale(1.5f) { FeatureTable(Feature.shown(trigger), Modifier.padding(top = 14.dp)) }
+                } else {
+                    FeatureTable(Feature.shown(trigger), Modifier.padding(top = if (short) 14.dp else 22.dp))
+                }
                 if (trigger != null && trialDays > 0 && state == PriceState.READY) {
                     val reminder = TrialDates.reminder(now, trialDays)
                     val line = t("ios.pay10.nothingToday") + (reminder?.let { " · " + t("ios.pay12.remindOn", "date" to TrialDates.dayText(it, locale)) } ?: "")
                     Text(line, style = text(15.sp, FontWeight.SemiBold, 20.sp), color = colors.green, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp))
                 }
-                if (big && state == PriceState.READY) {
-                    Column(Modifier.fillMaxWidth().padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        weeklyPlan?.let { PlanCard(it, selected = selected == it, savings = null, onClick = { onSelect(false) }, modifier = Modifier.fillMaxWidth()) }
-                        yearlyPlan?.let { PlanCard(it, selected = selected == it, savings = savings(yearlyPlan, weeklyPlan, locale), onClick = { onSelect(true) }, modifier = Modifier.fillMaxWidth()) }
-                    }
-                }
+                // Texte très agrandi : « Restaurer · Conditions · Confidentialité » passent dans la
+                // partie qui défile, pour laisser au bouton et à la mention légale la place du bas.
+                if (big) LegalFooter(restoreEnabled = !busy, onRestore = onRestore, onOpen = onOpen)
                 Spacer(Modifier.height(12.dp))
             }
             Column(
@@ -408,7 +415,7 @@ fun PaywallContent(
                 if (state == PriceState.READY && selected != null) {
                     Text(legalLine(selected, now, locale), style = Type.mention, color = colors.inkSecondary, textAlign = TextAlign.Center)
                 }
-                LegalFooter(restoreEnabled = !busy, onRestore = onRestore, onOpen = onOpen)
+                if (!big) LegalFooter(restoreEnabled = !busy, onRestore = onRestore, onOpen = onOpen)
             }
         }
     }

@@ -593,7 +593,7 @@ fun CommitmentStep(model: OnboardingModel, previewHold: Float? = null) {
                         },
                 ) {
                     val width = maxWidth
-                    HoldLabel(label, committed, colors.canvas, Modifier.fillMaxWidth())
+                    HoldLabel(label, committed, colors.canvas, Modifier.fillMaxWidth().align(Alignment.Center))
                     Box(Modifier.matchParentSize()) {
                         Box(
                             Modifier.fillMaxHeight().fillMaxWidth(shown.coerceIn(0f, 1f)).clipToBounds().background(if (committed) colors.green else colors.accent),
