@@ -267,7 +267,7 @@ private fun StoryIntro() {
     val colors = Micabo.colors
     Mika(MikaMood.WAVE, 96.dp, Modifier.fillMaxWidth())
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        listOf("Mathématiques", "Histoire", "SVT", "Anglais").forEach { subject ->
+        listOf("Mathématiques", "Histoire", "Physique", "Anglais").forEach { subject ->
             StoryTile {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     val tone = subjectTone(subject)

@@ -157,7 +157,9 @@ enum MicaboIcon: String, CaseIterable, Codable, Identifiable {
         case .check: "checkmark.circle.fill"
         case .palette: "paintpalette.fill"
         case .diploma: "graduationcap.fill"
-        case .atom: "atom"
+        // « atom » ne se dessinait pas (la tuile de la physique restait vide, première story) :
+        // l'éclair, l'énergie, est un symbole sûr.
+        case .atom: "bolt.fill"
         case .scroll: "scroll.fill"
         case .pin: "mappin.circle.fill"
         case .alarm: "alarm.fill"
