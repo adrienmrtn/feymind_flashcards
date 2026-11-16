@@ -1,0 +1,49 @@
+# Les textes des fiches App Store (nom, sous-titre, description, mots-clés, texte promo).
+#
+# Lancement : onglet Actions → « Textes App Store » → Run workflow.
+# Par défaut : lecture. Le résumé montre, fiche par fiche, la longueur de chaque champ et ceux
+# qui sont vides ; le journal affiche en entier les textes de fr-FR et en-US. Cocher
+# « Appliquer » pour écrire ce que nomme store/app-store-texts.json (et seulement cela).
+#
+# Secrets : ASC_KEY_ID, ASC_ISSUER_ID, ASC_PRIVATE_KEY — les mêmes que les images.
+
+name: Textes App Store
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Appliquer (sinon : lecture, rien n'est écrit)"
+        type: boolean
+        default: false
+      version:
+        description: "Version, par ex. 1.12 (vide : la seule version en préparation)"
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: store-texts
+  cancel-in-progress: false
+
+jobs:
+  texts:
+    name: App Store Connect
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          package-manager-cache: false
+      - name: ${{ inputs.apply && 'Écrire les textes' || 'Lire les textes' }}
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+          APPLY: ${{ inputs.apply && '--apply' || '' }}
+          VERSION: ${{ inputs.version }}
+        run: node store/app-store-texts.mjs $APPLY
