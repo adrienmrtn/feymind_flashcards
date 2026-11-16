@@ -47,7 +47,7 @@ class OnboardingShotsTest(private val device: Device) {
 
     /** Les écrans les plus chargés : ceux que tous les téléphones passent. */
     private val busiest = listOf(
-        OnboardingStep.hookLogo, OnboardingStep.welcome, OnboardingStep.name, OnboardingStep.subjects,
+        OnboardingStep.hookLogo, OnboardingStep.welcome, OnboardingStep.yourName, OnboardingStep.subjects,
         OnboardingStep.solutionMap, OnboardingStep.origin, OnboardingStep.scanDemo, OnboardingStep.research,
         OnboardingStep.currentAverage, OnboardingStep.dailyTime, OnboardingStep.planDemo, OnboardingStep.notifications,
         OnboardingStep.commitment, OnboardingStep.profileSummary, OnboardingStep.storyPath, OnboardingStep.storyPractice,
@@ -60,7 +60,7 @@ class OnboardingShotsTest(private val device: Device) {
         val steps = if (full) every else busiest
         val reports = steps.associate { step ->
             val model = linaOn(step)
-            step.name to shoot(rule, device, "onboarding", "%02d-%s".format(step.ordinal, step.name), requireCta = step != OnboardingStep.planBuilding) {
+            step.analyticsName to shoot(rule, device, "onboarding", "%02d-%s".format(step.ordinal, step.analyticsName), requireCta = step != OnboardingStep.planBuilding) {
                 OnboardingFlow(model, TestHost)
             }
         }

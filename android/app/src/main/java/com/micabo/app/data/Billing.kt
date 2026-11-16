@@ -42,6 +42,8 @@ data class StorePlan(
      * pour que les deux apps se lisent dans les mêmes colonnes.
      */
     val analyticsId: String = if (yearly) PLAN_YEARLY else PLAN_WEEKLY,
+    /** **Le prix ramené à la semaine** (lot 14) : le grand chiffre du paywall, tiré du prix de la boutique. */
+    val weekly: String? = null,
 )
 
 const val PLAN_YEARLY = "com.micabo.app.pro.yearly"
@@ -71,6 +73,14 @@ private fun trialDaysOf(pkg: Package): Int = runCatching {
         else -> 0
     }
 }.getOrDefault(0)
+
+/** Le prix d'un abonnement ramené à la semaine, dans la devise de la boutique (52 semaines par an). */
+private fun weeklyOf(pkg: Package, yearly: Boolean): String? = runCatching {
+    val price = pkg.product.price
+    val format = java.text.NumberFormat.getCurrencyInstance()
+    format.currency = java.util.Currency.getInstance(price.currencyCode)
+    format.format(price.amountMicros / 1_000_000.0 / if (yearly) 52.0 else 1.0)
+}.getOrNull()
 
 private fun monthlyOf(pkg: Package): String? = runCatching {
     val price = pkg.product.price
@@ -247,8 +257,8 @@ class Billing(
                     val weekly = packages.firstOrNull { it.packageType == PackageType.WEEKLY }
                         ?: packages.firstOrNull { it.product.id.contains("weekly") }
                     val out = listOfNotNull(
-                        yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), trialDaysOf(it), it.product.price.amountMicros) },
-                        weekly?.let { StorePlan(false, it.product.price.formatted, it, trialDays = trialDaysOf(it), micros = it.product.price.amountMicros) },
+                        yearly?.let { StorePlan(true, it.product.price.formatted, it, monthlyOf(it), trialDaysOf(it), it.product.price.amountMicros, weekly = weeklyOf(it, yearly = true)) },
+                        weekly?.let { StorePlan(false, it.product.price.formatted, it, trialDays = trialDaysOf(it), micros = it.product.price.amountMicros, weekly = it.product.price.formatted) },
                     )
                     val load = if (out.isEmpty()) PlanLoad(out, PlanProblem.OTHER, "no_packages") else PlanLoad(out)
                     if (continuation.isActive) continuation.resume(load)

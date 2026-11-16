@@ -399,7 +399,7 @@ class OnboardingModel(
         isMovingForward = forward
         step = next
         if (!restoring) {
-            store.putString(Keys.STEP, next.name)
+            store.putString(Keys.STEP, next.analyticsName)
             track("onboarding_step", mapOf("step" to next.analyticsName))
         }
     }
