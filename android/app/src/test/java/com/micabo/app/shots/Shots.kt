@@ -125,7 +125,7 @@ fun shoot(
             activity.setContent {
                 CompositionLocalProvider(LocalStill provides true) {
                     MicaboTheme(dark = device.night) {
-                        Box(Modifier.fillMaxSize()) {
+                        Box(Modifier.fillMaxSize().background(com.micabo.app.ui.theme.Micabo.colors.canvas)) {
                             content()
                             SystemBars(device)
                         }
@@ -196,11 +196,12 @@ private fun check(rule: ComposeTestRule, device: Device, report: ShotReport) {
         action.action?.invoke(results)
         val layout = results.firstOrNull() ?: continue
         val ellipsized = (0 until layout.lineCount).any { layout.isLineEllipsized(it) }
-        // Une marge de 2 px : le rendu sans écran arrondit parfois la largeur au pixel près.
-        val dw = layout.multiParagraph.width - layout.size.width
+        // Coupé : des lignes au-delà du maximum, des points de suspension, ou une hauteur qui
+        // déborde de sa boîte (2 px de marge). La largeur du paragraphe n'est pas comparée :
+        // c'est la largeur offerte, pas celle du texte, et elle signalait tout à tort.
         val dh = layout.multiParagraph.height - layout.size.height
-        if (dw > 2f || dh > 2f || ellipsized) {
-            report.problems += "texte coupé « $text » (" + (if (ellipsized) "points de suspension" else "dépasse de ${dw.toInt()}×${dh.toInt()} px") + ")"
+        if (layout.multiParagraph.didExceedMaxLines || ellipsized || dh > 2f) {
+            report.problems += "texte coupé « $text » (" + (if (ellipsized) "points de suspension" else if (dh > 2f) "dépasse de ${dh.toInt()} px en hauteur" else "lignes en trop") + ")"
         }
         val box = node.boundsInRoot
         if (box.width > 0 && (box.left < -1f || box.right > bounds.width + 1f) && node.isVisibleOnScreen(bounds)) {
@@ -240,7 +241,7 @@ private fun SystemBars(device: Device) {
             Modifier.fillMaxWidth().height(device.statusDp.dp).padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("9:41", color = ink, fontSize = 13.sp)
+            Text("9:41", color = ink, fontSize = (13f / androidx.compose.ui.platform.LocalDensity.current.fontScale).sp)
             Spacer(Modifier.weight(1f))
             if (device.statusDp > 30) Box(Modifier.size(22.dp).clip(CircleShape).background(Color.Black))
             Spacer(Modifier.weight(1f))

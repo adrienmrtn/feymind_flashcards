@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -155,11 +156,11 @@ fun StoriesStep(model: OnboardingModel, host: OnboardingHost, page: Int? = null)
     val scope = rememberCoroutineScope()
     val exam = SchoolSystem.flagshipExam(model.regionCode) ?: t("ios.onb5.exam.testName")
     LaunchedEffect(pager.currentPage) { host.track("onboarding_story_viewed", mapOf("index" to pager.currentPage + 1)) }
-    Column(Modifier.fillMaxSize().background(colors.canvas)) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+    Column(Modifier.fillMaxSize().background(colors.canvas), horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(Modifier.widthIn(max = com.micabo.app.ui.v3.V3Metric.readable).fillMaxWidth().heightIn(min = 44.dp).padding(horizontal = 20.dp), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
             LanguageChip(host)
         }
-        HorizontalPager(state = pager, modifier = Modifier.weight(1f).testTag("stories")) { index ->
+        HorizontalPager(state = pager, modifier = Modifier.weight(1f).widthIn(max = com.micabo.app.ui.v3.V3Metric.readable).fillMaxWidth().testTag("stories")) { index ->
             StoryPage(Story.entries[index], exam)
         }
         Row(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.Center) {
@@ -168,7 +169,7 @@ fun StoriesStep(model: OnboardingModel, host: OnboardingHost, page: Int? = null)
             }
         }
         Column(
-            Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 16.dp).testTag("footer"),
+            Modifier.widthIn(max = com.micabo.app.ui.v3.V3Metric.readable).fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 16.dp).testTag("footer"),
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             val last = pager.currentPage == Story.entries.lastIndex
@@ -234,12 +235,15 @@ private fun StoryPage(story: Story, exam: String) {
                 .padding(start = 18.dp, end = 18.dp, top = 26.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            when (story) {
-                Story.INTRO -> StoryIntro()
-                Story.LESSON -> StoryLesson()
-                Story.QUIZ -> StoryQuiz()
-                Story.SCAN -> StoryScan()
-                Story.PLAN -> StoryPlan(exam)
+            // L'illustration garde ses proportions quand le texte du téléphone est très agrandi.
+            com.micabo.app.ui.v3.CappedFontScale {
+                when (story) {
+                    Story.INTRO -> StoryIntro()
+                    Story.LESSON -> StoryLesson()
+                    Story.QUIZ -> StoryQuiz()
+                    Story.SCAN -> StoryScan()
+                    Story.PLAN -> StoryPlan(exam)
+                }
             }
         }
     }

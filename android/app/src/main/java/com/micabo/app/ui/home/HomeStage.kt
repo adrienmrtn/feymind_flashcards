@@ -104,20 +104,34 @@ fun NewLessonSheet(
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         containerColor = colors.canvas,
     ) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 12.dp)) {
-            Text(t("lesson.lessons.new"), style = display(30.sp), color = colors.ink, modifier = Modifier.padding(horizontal = 20.dp))
-            Text(t("ios.core13.new.promise"), style = Type.body, color = colors.ink, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 6.dp))
-            Text(t("ios.core13.new.topicLabel"), style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp))
-            ComposerCard(composer, onSend = onSend)
-            Text(t("ios.core13.new.orSupport"), style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, modifier = Modifier.padding(horizontal = 20.dp))
-            SourceRow(composer, isPro = canImport, onFull = onFull, onLocked = onLocked)
-            MicaboButton(
-                t("ios.core13.cta.write"),
-                onClick = onSend,
-                enabled = composer.canSend,
-                icon = Icons.Rounded.Edit,
-                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp),
-            )
-        }
+        NewLessonContent(composer, canImport, onSend, onFull, onLocked)
+    }
+}
+
+/** Le contenu de la feuille, seul : la feuille l'enveloppe, les rendus de test le posent tel quel. */
+@Composable
+fun NewLessonContent(
+    composer: LessonComposer,
+    canImport: Boolean,
+    onSend: () -> Unit,
+    onFull: () -> Unit,
+    onLocked: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = Micabo.colors
+    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 12.dp)) {
+        Text(t("lesson.lessons.new"), style = display(30.sp), color = colors.ink, modifier = Modifier.padding(horizontal = 20.dp))
+        Text(t("ios.core13.new.promise"), style = Type.body, color = colors.ink, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 6.dp))
+        Text(t("ios.core13.new.topicLabel"), style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp))
+        ComposerCard(composer, onSend = onSend)
+        Text(t("ios.core13.new.orSupport"), style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, modifier = Modifier.padding(horizontal = 20.dp))
+        SourceRow(composer, isPro = canImport, onFull = onFull, onLocked = onLocked)
+        MicaboButton(
+            t("ios.core13.cta.write"),
+            onClick = onSend,
+            enabled = composer.canSend,
+            icon = Icons.Rounded.Edit,
+            modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp).testTag("cta"),
+        )
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,6 +66,8 @@ import com.micabo.app.ui.theme.text
 /** Les mesures de la direction V3.3 (`V3Metric`). */
 object V3Metric {
     val margin = 20.dp
+    /** La largeur de lecture : au-delà (tablette, pliable ouvert), la colonne se centre. */
+    val readable = 600.dp
     val border = 1.5.dp
     val optionHeight = 58.dp
     val chipHeight = 40.dp
@@ -305,7 +308,9 @@ fun SpeechBubble(text: String, modifier: Modifier = Modifier) {
 @Composable
 fun MikaRow(say: String, mood: MikaMood, modifier: Modifier = Modifier) {
     val colors = Micabo.colors
-    val size = if (LocalCompact.current) 76.dp else 96.dp
+    // Texte très agrandi : la bulle prend toute la largeur, Mika (décoratif) laisse sa place.
+    val roomy = androidx.compose.ui.platform.LocalDensity.current.fontScale < 1.5f
+    val size = if (!roomy) 0.dp else if (LocalCompact.current) 76.dp else 96.dp
     Row(modifier.fillMaxWidth().heightIn(min = size), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
             text = marked(say, colors.accentBright),
@@ -319,7 +324,7 @@ fun MikaRow(say: String, mood: MikaMood, modifier: Modifier = Modifier) {
                 .padding(horizontal = 14.dp, vertical = 11.dp)
                 .testTag("mikaSays"),
         )
-        Mika(mood, size)
+        if (roomy) Mika(mood, size)
     }
 }
 
@@ -351,8 +356,9 @@ fun OnbScreen(
     BoxWithConstraints(modifier.fillMaxSize().background(colors.canvas)) {
         val compact = maxHeight < 640.dp
         androidx.compose.runtime.CompositionLocalProvider(LocalCompact provides compact) {
-            Column(Modifier.fillMaxSize()) {
-                BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            // Sur une tablette ou un pliable ouvert, la colonne garde une largeur de lecture.
+            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
+                BoxWithConstraints(Modifier.weight(1f).widthIn(max = V3Metric.readable).fillMaxWidth()) {
                     val viewport = maxHeight
                     Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
                         CenteredColumn(
@@ -367,6 +373,7 @@ fun OnbScreen(
                 if (footer != null) {
                     Column(
                         Modifier
+                            .widthIn(max = V3Metric.readable)
                             .fillMaxWidth()
                             .navigationBarsPadding()
                             .padding(start = V3Metric.margin, end = V3Metric.margin, top = 8.dp, bottom = 16.dp)
@@ -476,6 +483,24 @@ fun FitText(
         autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = minSize.sp, maxFontSize = style.fontSize, stepSize = 1.sp),
         modifier = modifier,
     )
+}
+
+/**
+ * **Une taille de texte plafonnée**, pour les pastilles et barres de taille fixe (onglets,
+ * compteurs) : elles suivent le réglage du téléphone jusqu'à [max], puis s'arrêtent, au lieu
+ * de casser leurs mots lettre par lettre. Le contenu, lui, grandit sans plafond.
+ */
+@Composable
+fun CappedFontScale(max: Float = 1.3f, content: @Composable () -> Unit) {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    if (density.fontScale <= max) {
+        content()
+    } else {
+        androidx.compose.runtime.CompositionLocalProvider(
+            androidx.compose.ui.platform.LocalDensity provides androidx.compose.ui.unit.Density(density.density, max),
+            content = content,
+        )
+    }
 }
 
 /** Le style d'un grand chiffre de démo (Sofia 28–44). */

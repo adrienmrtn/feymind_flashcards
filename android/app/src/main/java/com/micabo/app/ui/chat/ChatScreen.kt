@@ -220,7 +220,7 @@ fun ChatContent(
         Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             RoundIcon(Icons.AutoMirrored.Rounded.ArrowBack, t("app.common.back"), onBack)
             RoundIcon(Icons.Rounded.Menu, t("ios.chat12.menu"), onMenu, Modifier.testTag("chatMenu"))
-            Text(conversation.title.ifEmpty { t("ios.chat12.new") }, style = display(22.sp), color = colors.ink, maxLines = 1, modifier = Modifier.weight(1f).padding(horizontal = 6.dp))
+            Text(conversation.title.ifEmpty { t("ios.chat12.new") }, style = display(22.sp), color = colors.ink, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, modifier = Modifier.weight(1f).padding(horizontal = 6.dp))
             RoundIcon(Icons.Rounded.Edit, t("ios.chat12.new"), onNew)
         }
         if (conversation.messages.isEmpty() && !thinking) {
@@ -253,7 +253,7 @@ fun ChatContent(
             ) {
                 RoundIcon(Icons.Rounded.AddAPhoto, t("ios.chat12.family.scan"), onAddPhotos, Modifier.testTag("chatPhotos"))
                 Box(Modifier.weight(1f).padding(vertical = 12.dp)) {
-                    if (draft.isEmpty()) Text(t("ios.core13.bar.ask"), style = text(17.sp), color = colors.inkTertiary, maxLines = 1)
+                    if (draft.isEmpty()) Text(t("ios.core13.bar.ask"), style = text(17.sp), color = colors.inkTertiary)
                     BasicTextField(draft, onDraft, textStyle = text(17.sp).copy(color = colors.ink), cursorBrush = SolidColor(colors.accent), maxLines = 5, modifier = Modifier.fillMaxWidth().testTag("chatField"))
                 }
                 Box(

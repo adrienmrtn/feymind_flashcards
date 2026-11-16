@@ -225,7 +225,7 @@ fun HomeScreen() {
     ) {
         item {
             // La rangée du haut : « ✦ Pro » pour qui ne l'est pas, puis l'XP de la semaine et la série.
-            Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
+            com.micabo.app.ui.v3.CappedFontScale { Row(Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
                 // Les conversations avec Mika (`ios.chat12.menu`) : le chat autonome et son historique.
                 androidx.compose.material3.Icon(
                     androidx.compose.material.icons.Icons.Rounded.Forum,
@@ -243,7 +243,7 @@ fun HomeScreen() {
                 XpPill(onClick = { open(Screen.League) })
                 Spacer(Modifier.width(8.dp))
                 StreakPill(onClick = { streakSheet = true })
-            }
+            } }
         }
         item {
             // **La leçon au centre** (lot 13) : Mika, une phrase, une action. La première leçon

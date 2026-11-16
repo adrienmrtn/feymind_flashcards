@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -47,6 +48,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -329,10 +332,15 @@ fun PaywallContent(
     val title = if (exam != null) t("ios.pay10.title.planExam", "exam" to exam) else t("ios.pay10.title.plan")
     val promise = if (trialDays > 0) t("ios.pay10.title.trial", "n" to trialDays) else t("ios.pay10.title.noTrial")
     BoxWithConstraints(Modifier.fillMaxSize().background(colors.canvas)) {
-        val short = maxHeight < 700.dp
+        val short = maxHeight < 820.dp
+        // Texte très agrandi : les deux offres l'une sous l'autre, dans la partie qui défile,
+        // pour que le bouton reste en bas sans écraser les prix lettre par lettre.
+        val big = LocalDensity.current.fontScale >= 1.5f
+        // Mika ne s'affiche que s'il reste la place : sur un petit téléphone, le tableau passe avant.
+        val hero = maxHeight >= 720.dp && !big
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(0f to colors.accent.copy(alpha = 0.16f), 0.55f to Color.Transparent)))
-        Column(Modifier.fillMaxSize().statusBarsPadding()) {
-            Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.fillMaxSize().statusBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(Modifier.widthIn(max = 560.dp).fillMaxWidth().heightIn(min = 52.dp).padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("Micabo", style = display(20.sp), color = colors.ink)
@@ -343,15 +351,17 @@ fun PaywallContent(
                 IconButtonClose(enabled = !busy, onClick = onClose)
             }
             Column(
-                Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
+                Modifier.weight(1f).widthIn(max = 560.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
                 Spacer(Modifier.height(8.dp))
-                Box(contentAlignment = Alignment.Center) {
-                    val size = if (short) 84.dp else 128.dp
-                    Box(Modifier.size(size * 1.6f).background(Brush.radialGradient(listOf(colors.accent.copy(alpha = 0.40f), Color.Transparent)), CircleShape))
-                    Mika(if (trigger == null) MikaMood.CELEBRATE else MikaMood.WINK, size)
+                if (hero) {
+                    Box(contentAlignment = Alignment.Center) {
+                        val size = if (short) 96.dp else 128.dp
+                        Box(Modifier.size(size * 1.35f).background(Brush.radialGradient(listOf(colors.accent.copy(alpha = 0.40f), Color.Transparent)), CircleShape))
+                        Mika(if (trigger == null) MikaMood.CELEBRATE else MikaMood.WINK, size)
+                    }
                 }
                 Text(marked(title, colors.accentBright), style = display(if (short) 30.sp else 34.sp), color = colors.ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 10.dp))
                 Text(promise, style = text(17.sp, FontWeight.SemiBold, 22.sp), color = colors.accentBright, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 6.dp))
@@ -359,17 +369,23 @@ fun PaywallContent(
                 if (trigger != null && trialDays > 0 && state == PriceState.READY) {
                     val reminder = TrialDates.reminder(now, trialDays)
                     val line = t("ios.pay10.nothingToday") + (reminder?.let { " · " + t("ios.pay12.remindOn", "date" to TrialDates.dayText(it, locale)) } ?: "")
-                    Text(line, style = text(17.sp, FontWeight.SemiBold), color = colors.green, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 14.dp))
+                    Text(line, style = text(15.sp, FontWeight.SemiBold, 20.sp), color = colors.green, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp))
+                }
+                if (big && state == PriceState.READY) {
+                    Column(Modifier.fillMaxWidth().padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        weeklyPlan?.let { PlanCard(it, selected = selected == it, savings = null, onClick = { onSelect(false) }, modifier = Modifier.fillMaxWidth()) }
+                        yearlyPlan?.let { PlanCard(it, selected = selected == it, savings = savings(yearlyPlan, weeklyPlan, locale), onClick = { onSelect(true) }, modifier = Modifier.fillMaxWidth()) }
+                    }
                 }
                 Spacer(Modifier.height(12.dp))
             }
             Column(
-                Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp),
+                Modifier.widthIn(max = 560.dp).fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 when (state) {
-                    PriceState.READY -> Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    PriceState.READY -> if (!big) Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         weeklyPlan?.let { PlanCard(it, selected = selected == it, savings = null, onClick = { onSelect(false) }, modifier = Modifier.weight(1f).fillMaxHeight()) }
                         yearlyPlan?.let { PlanCard(it, selected = selected == it, savings = savings(yearlyPlan, weeklyPlan, locale), onClick = { onSelect(true) }, modifier = Modifier.weight(1f).fillMaxHeight()) }
                     }
@@ -443,10 +459,20 @@ private fun PlanCard(plan: StorePlan, selected: Boolean, savings: String?, onCli
             verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Text(t(if (plan.yearly) "ios.planYearly" else "ios.planWeekly"), style = text(15.sp, FontWeight.Bold), color = if (selected) colors.ink else colors.inkSecondary)
-            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(plan.weekly ?: plan.price, style = display(24.sp), color = colors.ink)
-                Text(t("app.paywall.perWeekSlash"), style = text(15.sp, FontWeight.Medium), color = colors.inkSecondary, modifier = Modifier.padding(bottom = 2.dp))
-            }
+            // Le prix et « / semaine » dans un seul texte : il passe à la ligne entre les deux,
+            // jamais au milieu d'un mot.
+            val perWeek = t("app.paywall.perWeekSlash")
+            Text(
+                androidx.compose.ui.text.buildAnnotatedString {
+                    append(plan.weekly ?: plan.price)
+                    withStyle(androidx.compose.ui.text.SpanStyle(fontFamily = androidx.compose.ui.text.font.FontFamily.Default, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.inkSecondary)) {
+                        append("\u00A0")
+                        append(perWeek)
+                    }
+                },
+                style = display(24.sp),
+                color = colors.ink,
+            )
             Text(
                 if (plan.yearly) t("ios.billedYearly", "price" to plan.price) else t("ios.billedEach", "unit" to t("ios.unitWeek")),
                 style = text(16.sp, FontWeight.Medium, 21.sp),

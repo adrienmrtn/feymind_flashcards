@@ -251,7 +251,7 @@ private fun ExamDate(onClose: () -> Unit, onPick: (Long) -> Unit) {
 }
 
 @Composable
-private fun Generating(request: LessonRequest, stage: CreationStage, error: Throwable?, onClose: () -> Unit, onRetry: () -> Unit) {
+internal fun Generating(request: LessonRequest, stage: CreationStage, error: Throwable?, onClose: () -> Unit, onRetry: () -> Unit) {
     val colors = Micabo.colors
     Column(
         Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp),

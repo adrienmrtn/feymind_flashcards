@@ -1,6 +1,16 @@
 package com.micabo.app.shots
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import com.micabo.app.data.CreationStage
+import com.micabo.app.data.LessonRequest
+import com.micabo.app.ui.home.Generating
+import com.micabo.app.ui.home.NewLessonContent
+import com.micabo.app.ui.theme.Micabo
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.micabo.app.MicaboApplication
@@ -79,6 +89,19 @@ class AppShotsTest(private val device: Device) {
         reports["accueil-premiere-lecon"] = shoot(rule, device, "app", "accueil-premiere-lecon") {
             val navigator = androidx.compose.runtime.remember { Navigator(Screen.Home) }
             CompositionLocalProvider(LocalApp provides app, LocalNavigator provides navigator) { TabsScreen(navigator) }
+        }
+        // Créer une leçon : la feuille « Nouvelle leçon », puis l'écran qui l'écrit (« Étape 3 sur 4 »).
+        app.composer.draft = "La photosynthèse"
+        reports["nouvelle-lecon"] = shoot(rule, device, "app", "nouvelle-lecon") {
+            CompositionLocalProvider(LocalApp provides app) {
+                Box(Modifier.fillMaxSize().background(Micabo.colors.canvas).statusBarsPadding()) {
+                    NewLessonContent(app.composer, canImport = false, onSend = {}, onFull = {}, onLocked = {})
+                }
+            }
+        }
+        app.composer.draft = ""
+        reports["leçon-en-cours"] = shoot(rule, device, "app", "lecon-en-ecriture", requireCta = false) {
+            Generating(LessonRequest(topic = "La photosynthèse", text = ""), CreationStage.WRITING, null, onClose = {}, onRetry = {})
         }
         FirstLesson.clear(app)
         reports["accueil"] = shoot(rule, device, "app", "accueil") {

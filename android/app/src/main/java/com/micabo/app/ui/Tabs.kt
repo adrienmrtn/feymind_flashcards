@@ -105,7 +105,7 @@ fun TabsScreen(navigator: Navigator) {
  * nomment à TalkBack). Elle se pose au-dessus de la barre du système.
  */
 @Composable
-private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) {
+private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = Modifier) = com.micabo.app.ui.v3.CappedFontScale {
     val colors = Micabo.colors
     Row(
         modifier
@@ -142,7 +142,8 @@ private fun TabBar(selected: Tab, onSelect: (Tab) -> Unit, modifier: Modifier = 
                     Icon(tab.icon, null, tint = if (active) colors.accentBright else colors.inkTertiary, modifier = Modifier.size(24.dp))
                     if (active) {
                         Spacer(Modifier.width(6.dp))
-                        Text(name, style = com.micabo.app.ui.theme.text(14.sp, FontWeight.Bold), color = colors.ink, maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        // Le nom tient sur une ligne : il rapetisse plutôt que de se couper (« Hom/e »).
+                        com.micabo.app.ui.v3.FitText(name, com.micabo.app.ui.theme.text(14.sp, FontWeight.Bold), colors.ink, minSize = 10)
                     }
                 }
             }
