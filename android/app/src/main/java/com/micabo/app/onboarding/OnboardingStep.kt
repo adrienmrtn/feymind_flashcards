@@ -13,7 +13,8 @@ enum class OnboardingStep(val kind: Kind, val chapter: Int) {
     hookLogo(Kind.STORIES, 0),
 
     welcome(Kind.CHAPTER, 0),
-    name(Kind.QUESTION, 0),
+    /** « Comment tu t'appelles ? » : `name` dans les statistiques (le nom Kotlin est pris). */
+    yourName(Kind.QUESTION, 0),
     country(Kind.QUESTION, 0),
     level(Kind.QUESTION, 0),
     schoolType(Kind.QUESTION, 0),
@@ -64,7 +65,7 @@ enum class OnboardingStep(val kind: Kind, val chapter: Int) {
     enum class Kind { STORIES, CHAPTER, MOMENT, QUESTION, DEMO, PAGE, PAYWALL }
 
     /** Le nom dans les statistiques : renommer un cas coupe sa courbe en deux. */
-    val analyticsName: String get() = name
+    val analyticsName: String get() = if (this == yourName) "name" else name
 
     val next: OnboardingStep? get() = entries.getOrNull(ordinal + 1)
     val previous: OnboardingStep? get() = entries.getOrNull(ordinal - 1)
@@ -94,7 +95,7 @@ enum class OnboardingStep(val kind: Kind, val chapter: Int) {
 
     /** Où reprendre un parcours laissé sur cet écran : l'accroche se refait. */
     fun resumePoint(hasName: Boolean): OnboardingStep = when {
-        this == hookLogo || this == welcome || this == name -> hookLogo
+        this == hookLogo || this == welcome || this == yourName -> hookLogo
         !hasName -> hookLogo
         else -> this
     }
@@ -110,7 +111,7 @@ enum class OnboardingStep(val kind: Kind, val chapter: Int) {
 
         fun chapterTitleKey(chapter: Int) = "ios.onb14.chapter.${chapter + 1}"
 
-        fun named(name: String): OnboardingStep? = entries.firstOrNull { it.name == name }
+        fun named(name: String): OnboardingStep? = entries.firstOrNull { it.analyticsName == name }
 
         /**
          * **L'écran qui suit un écran retiré**, pour reprendre un parcours commencé avant cette
@@ -131,7 +132,7 @@ enum class OnboardingStep(val kind: Kind, val chapter: Int) {
             "chatDemo" -> research
             "notJustChat" -> research
             // Les écrans de l'ancien parcours Android, avant le lot 16.
-            "language" -> name
+            "language" -> yourName
             else -> null
         }
 

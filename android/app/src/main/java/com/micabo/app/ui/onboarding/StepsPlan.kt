@@ -431,14 +431,14 @@ fun FirstLessonStep(model: OnboardingModel) {
 
 // MARK: - L'essai
 
-/** L'article du français devant un examen : « pour le Bac » (`PaywallProfile.frenchArticled`). */
-fun frenchArticled(exam: String): String {
-    val lower = exam.lowercase()
-    if (lower.startsWith("le ") || lower.startsWith("la ") || lower.startsWith("les ") || lower.startsWith("l'") || lower.startsWith("l’")) return exam
-    val plural = listOf("examens", "épreuves", "partiels", "concours", "a-levels", "gcses", "ap exams")
-    if (plural.any { lower.startsWith(it) } || lower.endsWith("s") && lower.contains(" ")) return "les $exam"
-    val vowel = lower.firstOrNull()?.let { it in "aeiouyéèêàâh" } == true
-    return if (vowel) "l'$exam" else "le $exam"
+/** L'article du français devant un examen : « le Bac », « l'Abitur », « les A-levels » (`PaywallProfile.frenchArticled`). */
+fun frenchArticled(name: String): String {
+    val first = name.split(' ').firstOrNull() ?: name
+    val acronym = first.length > 1 && first == first.uppercase()
+    val plain = com.micabo.app.onboarding.WorldCountries.fold(first)
+    if (!acronym && plain.endsWith("s") && plain != "concours") return "les $name"
+    if (!acronym && plain.firstOrNull()?.let { it in "aeiouyh" } == true) return "l'$name"
+    return "le $name"
 }
 
 /** **« On veut que tu essaies Micabo Pro gratuitement »** : ce que l'essai ouvre, pour lui. */

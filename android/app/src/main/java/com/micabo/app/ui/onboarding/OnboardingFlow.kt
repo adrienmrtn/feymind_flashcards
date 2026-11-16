@@ -223,7 +223,7 @@ fun OnboardingFlow(model: OnboardingModel, host: OnboardingHost) {
                 (slideInHorizontally(tween(320)) { direction * it / 3 } + fadeIn(tween(260))) togetherWith
                     (slideOutHorizontally(tween(320)) { -direction * it / 4 } + fadeOut(tween(200)))
             },
-            modifier = Modifier.weight(1f).testTag("step:${step.name}"),
+            modifier = Modifier.weight(1f).testTag("step:${step.analyticsName}"),
             label = "onboarding",
         ) { shown ->
             Box(Modifier.fillMaxSize()) { StepScreen(shown, model, host) }
@@ -236,7 +236,7 @@ fun StepScreen(step: OnboardingStep, model: OnboardingModel, host: OnboardingHos
     when (step) {
         OnboardingStep.hookLogo -> StoriesStep(model, host)
         OnboardingStep.welcome -> WelcomeStep(model)
-        OnboardingStep.name -> NameStep(model)
+        OnboardingStep.yourName -> NameStep(model)
         OnboardingStep.country -> CountryStep(model)
         OnboardingStep.level -> LevelStep(model)
         OnboardingStep.schoolType -> SchoolTypeStep(model)
