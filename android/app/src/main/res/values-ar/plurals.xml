@@ -9,6 +9,39 @@
         <item quantity="one">بطاقة واحدة</item>
         <item quantity="other">عدد البطاقات: %1$d</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="other">موادك: %1$d</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="other">+%1$d: تحدٍّ حقيقي. نتقدّم خطوة بخطوة</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="other">+%1$d: طموح، وممكن</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="other">+%1$d: خطوة صغيرة، ممكنة تمامًا</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="other">%1$d أيام مجانًا، ثم %2$s أسبوعيًا. ألغِ متى شئت.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="other">%1$d أيام مجانًا، ثم %2$s سنويًا. ألغِ متى شئت.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="other">%1$d أيام مجانًا</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="other">جرّبها %1$d أيام مجانًا.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="other">ابدأ تجربتي المجانية (%1$d أيام)</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="other">%1$d أيام مجانًا، ثم أسبوعيًا</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="other">%1$d أيام مجانًا، ثم %2$s سنويًا</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">يوم واحد متتالٍ</item>
         <item quantity="other">أيام متتالية: %1$d</item>
@@ -47,6 +80,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">أضف خطئي إلى البطاقات</item>
         <item quantity="other">أضف أخطائي إلى البطاقات (%1$d)</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">الأسئلة: %1$d</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">بقي سؤال واحد دون إجابة. هل تسلّم على أي حال؟</item>

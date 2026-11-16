@@ -9,6 +9,50 @@
         <item quantity="one">%1$d карта</item>
         <item quantity="other">%1$d карти</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Твоят предмет</item>
+        <item quantity="other">Твоите %1$d предмета</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d точка: истинско предизвикателство. Ще вървим стъпка по стъпка</item>
+        <item quantity="other">+%1$d точки: истинско предизвикателство. Ще вървим стъпка по стъпка</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d точка: амбициозно и постижимо</item>
+        <item quantity="other">+%1$d точки: амбициозно и постижимо</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d точка: малка крачка, напълно постижима</item>
+        <item quantity="other">+%1$d точки: малка крачка, напълно постижима</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d ден безплатно, после %2$s на седмица. Откажи се, когато поискаш.</item>
+        <item quantity="other">%1$d дни безплатно, после %2$s на седмица. Откажи се, когато поискаш.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d ден безплатно, после %2$s на година. Откажи се, когато поискаш.</item>
+        <item quantity="other">%1$d дни безплатно, после %2$s на година. Откажи се, когато поискаш.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d ден безплатно</item>
+        <item quantity="other">%1$d дни безплатно</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Пробвай го %1$d ден безплатно.</item>
+        <item quantity="other">Пробвай го %1$d дни безплатно.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Започни безплатния ми ден</item>
+        <item quantity="other">Започни моите %1$d безплатни дни</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d ден безплатно, после всяка седмица</item>
+        <item quantity="other">%1$d дни безплатно, после всяка седмица</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d ден безплатно, после %2$s на година</item>
+        <item quantity="other">%1$d дни безплатно, после %2$s на година</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d ден поред</item>
         <item quantity="other">%1$d поредни дни</item>
@@ -36,6 +80,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Добави грешката си във флашкартите</item>
         <item quantity="other">Добави %1$d грешки във флашкартите</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d въпроса</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d въпрос е без отговор. Да предадеш ли все пак?</item>

@@ -9,6 +9,50 @@
         <item quantity="one">%1$d kort</item>
         <item quantity="other">%1$d kort</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Dit fag</item>
+        <item quantity="other">Dine %1$d fag</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d point: en ægte udfordring. Vi tager det skridt for skridt</item>
+        <item quantity="other">+%1$d point: en ægte udfordring. Vi tager det skridt for skridt</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d point: ambitiøst, men muligt</item>
+        <item quantity="other">+%1$d point: ambitiøst, men muligt</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d point: et lille skridt, helt muligt</item>
+        <item quantity="other">+%1$d point: et lille skridt, helt muligt</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d dag gratis, derefter %2$s om ugen. Opsig når som helst.</item>
+        <item quantity="other">%1$d dage gratis, derefter %2$s om ugen. Opsig når som helst.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d dag gratis, derefter %2$s om året. Opsig når som helst.</item>
+        <item quantity="other">%1$d dage gratis, derefter %2$s om året. Opsig når som helst.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d dag gratis</item>
+        <item quantity="other">%1$d dage gratis</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Prøv den gratis i %1$d dag.</item>
+        <item quantity="other">Prøv den gratis i %1$d dage.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Start min gratis dag</item>
+        <item quantity="other">Start mine %1$d gratis dage</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d dag gratis, derefter hver uge</item>
+        <item quantity="other">%1$d dage gratis, derefter hver uge</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d dag gratis, derefter %2$s om året</item>
+        <item quantity="other">%1$d dage gratis, derefter %2$s om året</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d dag i træk</item>
         <item quantity="other">%1$d dage i træk</item>
@@ -36,6 +80,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Tilføj min fejl til kortene</item>
         <item quantity="other">Tilføj mine %1$d fejl til kortene</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d spørgsmål</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d spørgsmål er ubesvaret. Aflevér alligevel?</item>

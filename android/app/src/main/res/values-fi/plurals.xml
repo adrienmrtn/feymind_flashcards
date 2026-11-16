@@ -9,6 +9,50 @@
         <item quantity="one">%1$d kortti</item>
         <item quantity="other">%1$d korttia</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Aineesi</item>
+        <item quantity="other">%1$d ainettasi</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d piste: todellinen haaste. Edetään askel kerrallaan</item>
+        <item quantity="other">+%1$d pistettä: todellinen haaste. Edetään askel kerrallaan</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d piste: kunnianhimoista ja mahdollista</item>
+        <item quantity="other">+%1$d pistettä: kunnianhimoista ja mahdollista</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d piste: pieni askel, täysin mahdollinen</item>
+        <item quantity="other">+%1$d pistettä: pieni askel, täysin mahdollinen</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d päivä ilmaiseksi, sitten %2$s viikossa. Peru milloin tahansa.</item>
+        <item quantity="other">%1$d päivää ilmaiseksi, sitten %2$s viikossa. Peru milloin tahansa.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d päivä ilmaiseksi, sitten %2$s vuodessa. Peru milloin tahansa.</item>
+        <item quantity="other">%1$d päivää ilmaiseksi, sitten %2$s vuodessa. Peru milloin tahansa.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d päivä ilmaiseksi</item>
+        <item quantity="other">%1$d päivää ilmaiseksi</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Kokeile sitä ilmaiseksi %1$d päivä.</item>
+        <item quantity="other">Kokeile sitä ilmaiseksi %1$d päivää.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Aloita ilmainen päiväni</item>
+        <item quantity="other">Aloita %1$d ilmaista päivääni</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d päivä ilmaiseksi, sitten joka viikko</item>
+        <item quantity="other">%1$d päivää ilmaiseksi, sitten joka viikko</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d päivä ilmaiseksi, sitten %2$s vuodessa</item>
+        <item quantity="other">%1$d päivää ilmaiseksi, sitten %2$s vuodessa</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d päivä putkeen</item>
         <item quantity="other">%1$d päivää putkeen</item>
@@ -36,6 +80,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Lisää virheeni kortteihin</item>
         <item quantity="other">Lisää %1$d virhettäni kortteihin</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d kysymystä</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d kysymys on vastaamatta. Palautetaanko silti?</item>

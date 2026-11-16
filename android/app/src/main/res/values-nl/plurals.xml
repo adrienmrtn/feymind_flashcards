@@ -9,6 +9,50 @@
         <item quantity="one">%1$d kaart</item>
         <item quantity="other">%1$d kaarten</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Je vak</item>
+        <item quantity="other">Je %1$d vakken</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d punt: een echte uitdaging. We doen het stap voor stap</item>
+        <item quantity="other">+%1$d punten: een echte uitdaging. We doen het stap voor stap</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d punt: ambitieus, en haalbaar</item>
+        <item quantity="other">+%1$d punten: ambitieus, en haalbaar</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d punt: een kleine stap, prima haalbaar</item>
+        <item quantity="other">+%1$d punten: een kleine stap, prima haalbaar</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d dag gratis, daarna %2$s per week. Altijd opzegbaar.</item>
+        <item quantity="other">%1$d dagen gratis, daarna %2$s per week. Altijd opzegbaar.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d dag gratis, daarna %2$s per jaar. Altijd opzegbaar.</item>
+        <item quantity="other">%1$d dagen gratis, daarna %2$s per jaar. Altijd opzegbaar.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d dag gratis</item>
+        <item quantity="other">%1$d dagen gratis</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Probeer het %1$d dag gratis.</item>
+        <item quantity="other">Probeer het %1$d dagen gratis.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Start mijn gratis dag</item>
+        <item quantity="other">Start mijn %1$d gratis dagen</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d dag gratis, daarna wekelijks</item>
+        <item quantity="other">%1$d dagen gratis, daarna wekelijks</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d dag gratis, daarna %2$s per jaar</item>
+        <item quantity="other">%1$d dagen gratis, daarna %2$s per jaar</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d dag op rij</item>
         <item quantity="other">%1$d dagen op rij</item>
@@ -36,6 +80,9 @@
     <plurals name="lesson_exam_addCards">
         <item quantity="one">Mijn fout toevoegen aan flashcards</item>
         <item quantity="other">Mijn %1$d fouten toevoegen aan flashcards</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">%1$d vragen</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d vraag is niet beantwoord. Toch inleveren?</item>

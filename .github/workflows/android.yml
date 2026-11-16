@@ -45,7 +45,7 @@ jobs:
   build:
     name: Compiler et envoyer
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 75
     env:
       MICABO_VERSION_CODE: ${{ github.run_number }}
       HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
@@ -90,6 +90,22 @@ jobs:
         with:
           name: micabo-apk-${{ github.run_number }}
           path: android/app/build/outputs/apk/preview/app-preview.apk
+
+      # **Les tests sur la JVM** (Robolectric) : la logique du parcours, les 32 langues, le
+      # maintien pour s'engager, et les rendus de chaque écran sur la matrice de téléphones
+      # (petit, Pixel 8, grand, pliable, tablette, texte à 130 et 200 %, arabe, clair, trois
+      # boutons et encoche). Les rendus partent en artefact, même quand un test échoue.
+      - name: Tests et rendus des écrans
+        run: gradle -p android :app:testDebugUnitTest --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: micabo-android-rendus-${{ github.run_number }}
+          path: |
+            android/build/shots
+            android/app/build/reports/tests/testDebugUnitTest
+          if-no-files-found: ignore
 
       - name: Pas de clé, pas d'envoi
         if: env.HAS_KEYSTORE != 'true'

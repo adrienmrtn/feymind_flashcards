@@ -3,27 +3,87 @@
 <resources>
     <plurals name="app_friends_friendCount">
         <item quantity="one">%1$d prijatelj</item>
-        <item quantity="other">Prijatelja: %1$d</item>
+        <item quantity="few">%1$d prijatelja</item>
+        <item quantity="other">%1$d prijatelja</item>
     </plurals>
     <plurals name="copy_cards">
         <item quantity="one">%1$d kartica</item>
         <item quantity="few">%1$d kartice</item>
         <item quantity="other">%1$d kartica</item>
     </plurals>
+    <plurals name="ios_onb10_build_subjects">
+        <item quantity="one">Tvoj %1$d predmet</item>
+        <item quantity="few">Tvoja %1$d predmeta</item>
+        <item quantity="other">Tvojih %1$d predmeta</item>
+    </plurals>
+    <plurals name="ios_onb10_target_large_points">
+        <item quantity="one">+%1$d poen: pravi izazov. Idemo korak po korak</item>
+        <item quantity="few">+%1$d poena: pravi izazov. Idemo korak po korak</item>
+        <item quantity="other">+%1$d poena: pravi izazov. Idemo korak po korak</item>
+    </plurals>
+    <plurals name="ios_onb10_target_medium_points">
+        <item quantity="one">+%1$d poen: ambiciozno, i izvodljivo</item>
+        <item quantity="few">+%1$d poena: ambiciozno, i izvodljivo</item>
+        <item quantity="other">+%1$d poena: ambiciozno, i izvodljivo</item>
+    </plurals>
+    <plurals name="ios_onb10_target_small_points">
+        <item quantity="one">+%1$d poen: mali korak, sasvim izvodljiv</item>
+        <item quantity="few">+%1$d poena: mali korak, sasvim izvodljiv</item>
+        <item quantity="other">+%1$d poena: mali korak, sasvim izvodljiv</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialWeek">
+        <item quantity="one">%1$d dan besplatno, zatim %2$s nedeljno. Otkaži kad god želiš.</item>
+        <item quantity="few">%1$d dana besplatno, zatim %2$s nedeljno. Otkaži kad god želiš.</item>
+        <item quantity="other">%1$d dana besplatno, zatim %2$s nedeljno. Otkaži kad god želiš.</item>
+    </plurals>
+    <plurals name="ios_pay10_legal_trialYear">
+        <item quantity="one">%1$d dan besplatno, zatim %2$s godišnje. Otkaži kad god želiš.</item>
+        <item quantity="few">%1$d dana besplatno, zatim %2$s godišnje. Otkaži kad god želiš.</item>
+        <item quantity="other">%1$d dana besplatno, zatim %2$s godišnje. Otkaži kad god želiš.</item>
+    </plurals>
+    <plurals name="ios_pay10_plan_trialDays">
+        <item quantity="one">%1$d dan besplatno</item>
+        <item quantity="few">%1$d dana besplatno</item>
+        <item quantity="other">%1$d dana besplatno</item>
+    </plurals>
+    <plurals name="ios_pay10_title_trial">
+        <item quantity="one">Probaj besplatno %1$d dan.</item>
+        <item quantity="few">Probaj besplatno %1$d dana.</item>
+        <item quantity="other">Probaj besplatno %1$d dana.</item>
+    </plurals>
+    <plurals name="ios_pay11_cta_trial">
+        <item quantity="one">Počni %1$d besplatni dan</item>
+        <item quantity="few">Počni %1$d besplatna dana</item>
+        <item quantity="other">Počni %1$d besplatnih dana</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenWeek">
+        <item quantity="one">%1$d dan besplatno, zatim svake nedelje</item>
+        <item quantity="few">%1$d dana besplatno, zatim svake nedelje</item>
+        <item quantity="other">%1$d dana besplatno, zatim svake nedelje</item>
+    </plurals>
+    <plurals name="ios_pay11_plan_trialThenYear">
+        <item quantity="one">%1$d dan besplatno, zatim %2$s godišnje</item>
+        <item quantity="few">%1$d dana besplatno, zatim %2$s godišnje</item>
+        <item quantity="other">%1$d dana besplatno, zatim %2$s godišnje</item>
+    </plurals>
     <plurals name="ios_profile_streakDays">
         <item quantity="one">%1$d dan zaredom</item>
+        <item quantity="few">%1$d dana zaredom</item>
         <item quantity="other">%1$d dana zaredom</item>
     </plurals>
     <plurals name="ios_profile_streakToBeat">
         <item quantity="one">Tvoj rekord je %2$s. Još %1$d dan i obaraš ga.</item>
+        <item quantity="few">Tvoj rekord je %2$s. Još %1$d dana i obaraš ga.</item>
         <item quantity="other">Tvoj rekord je %2$s. Još %1$d dana i obaraš ga.</item>
     </plurals>
     <plurals name="ios_streak_bestValue">
         <item quantity="one">%1$d dan</item>
+        <item quantity="few">%1$d dana</item>
         <item quantity="other">%1$d dana</item>
     </plurals>
     <plurals name="ios_streak_unit">
         <item quantity="one">dan zaredom</item>
+        <item quantity="few">dana zaredom</item>
         <item quantity="other">dana zaredom</item>
     </plurals>
     <plurals name="kx_league_endsIn">
@@ -37,15 +97,21 @@
         <item quantity="other">%1$d kartica za ponavljanje</item>
     </plurals>
     <plurals name="lesson_exam_addCards">
-        <item quantity="one">Dodaj moju grešku u kartice</item>
-        <item quantity="other">Dodaj moje greške u kartice (%1$d)</item>
+        <item quantity="one">Dodaj moju %1$d grešku u kartice</item>
+        <item quantity="few">Dodaj moje %1$d greške u kartice</item>
+        <item quantity="other">Dodaj mojih %1$d grešaka u kartice</item>
+    </plurals>
+    <plurals name="lesson_exam_questionCount">
+        <item quantity="other">Pitanja: %1$d</item>
     </plurals>
     <plurals name="lesson_exam_submitConfirm">
         <item quantity="one">%1$d pitanje je bez odgovora. Ipak predati?</item>
-        <item quantity="other">Pitanja bez odgovora: %1$d. Ipak predati?</item>
+        <item quantity="few">%1$d pitanja su bez odgovora. Ipak predati?</item>
+        <item quantity="other">%1$d pitanja je bez odgovora. Ipak predati?</item>
     </plurals>
     <plurals name="lesson_lessons_examDays">
         <item quantity="one">Još %1$d dan</item>
+        <item quantity="few">Još %1$d dana</item>
         <item quantity="other">Još %1$d dana</item>
     </plurals>
 </resources>
