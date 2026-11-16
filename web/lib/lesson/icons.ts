@@ -67,6 +67,14 @@ export const ICON_FALLBACKS = {
   rate: "Star",
   friends: "Users",
   privacy: "Hand",
+  // Les domaines d'études de l'écran des matières (iPhone, lot 16).
+  health: "Stethoscope",
+  economy: "TrendingUp",
+  statistics: "ChartColumn",
+  computer: "Laptop",
+  engineering: "Settings",
+  politics: "Landmark",
+  astronomy: "MoonStar",
 } as const;
 
 export type IconFallbackId = keyof typeof ICON_FALLBACKS;
