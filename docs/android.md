@@ -115,7 +115,8 @@ contient `[supabase]` déploie les migrations nouvelles et les fonctions touché
   déplié, tablette, texte à 130 et 200 %, arabe, thème clair, trois boutons et encoche, anglais).
   Chaque rendu est vérifié : rien ne plante, aucun texte n'est coupé, le bouton principal reste
   visible au-dessus de la barre du système. Les images partent dans l'artefact
-  `micabo-android-rendus-<n>` (avec `report.txt`).
+  `micabo-android-rendus-<n>` (avec `report.txt`), et sur la branche `android-renders/run-<n>`
+  aussi, lisible sans le stockage des artefacts ; ces branches se suppriment sans risque.
 - Ce que les rendus ne disent pas (le toucher, la vitesse, les achats) : installer l'APK du run,
   ou passer par le test interne, et refaire le parcours touché.
 - Points à surveiller en priorité : la connexion Google et le lien par courriel jusqu'au retour

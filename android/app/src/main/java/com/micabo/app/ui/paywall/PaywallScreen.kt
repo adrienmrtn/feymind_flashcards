@@ -501,11 +501,13 @@ private fun PlanCard(plan: StorePlan, selected: Boolean, savings: String?, onCli
 @Composable
 private fun FeatureTable(features: List<Feature>, modifier: Modifier = Modifier) {
     val colors = Micabo.colors
+    // Les colonnes « Gratuit » et « PRO » s'élargissent avec le texte du téléphone (jusqu'à 150 %).
+    val grow = LocalDensity.current.fontScale.coerceIn(1f, 1.5f)
     Column(modifier.fillMaxWidth().v3Card().padding(horizontal = 6.dp).padding(bottom = 6.dp)) {
         Row(Modifier.fillMaxWidth().heightIn(min = 28.dp), verticalAlignment = Alignment.CenterVertically) {
             Spacer(Modifier.weight(1f))
-            Text(t("ios.pay11.table.free"), style = text(13.sp, FontWeight.Bold), color = colors.inkTertiary, textAlign = TextAlign.Center, modifier = Modifier.width(62.dp))
-            Box(Modifier.width(52.dp), contentAlignment = Alignment.Center) {
+            com.micabo.app.ui.v3.FitText(t("ios.pay11.table.free"), text(13.sp, FontWeight.Bold), colors.inkTertiary, Modifier.width(62.dp * grow), TextAlign.Center, minSize = 9)
+            Box(Modifier.width(52.dp * grow), contentAlignment = Alignment.Center) {
                 Text("PRO", style = text(13.sp, FontWeight.Black), color = colors.onYellow, modifier = Modifier.clip(CircleShape).background(colors.yellow).padding(horizontal = 7.dp, vertical = 1.dp))
             }
         }
@@ -530,8 +532,8 @@ private fun FeatureTable(features: List<Feature>, modifier: Modifier = Modifier)
                     modifier = Modifier.padding(start = 6.dp).size(20.dp),
                 )
                 Text(t(feature.titleKey), style = text(16.sp, FontWeight.SemiBold, 21.sp), color = colors.ink, modifier = Modifier.weight(1f).padding(start = 10.dp, end = 4.dp, top = 6.dp, bottom = 6.dp))
-                Text(feature.free ?: "—", style = text(16.sp, FontWeight.Bold), color = if (feature.free == null) colors.inkTertiary else colors.inkSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(62.dp))
-                Box(Modifier.width(52.dp).heightIn(min = 40.dp).background(colors.yellowWash), contentAlignment = Alignment.Center) {
+                Text(feature.free ?: "—", style = text(16.sp, FontWeight.Bold), color = if (feature.free == null) colors.inkTertiary else colors.inkSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(62.dp * grow))
+                Box(Modifier.width(52.dp * grow).heightIn(min = 40.dp).background(colors.yellowWash), contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.CheckCircle, null, tint = colors.yellow, modifier = Modifier.size(20.dp))
                 }
             }
