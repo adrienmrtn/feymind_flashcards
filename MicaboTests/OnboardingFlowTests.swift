@@ -315,7 +315,7 @@ final class OnboardingFlowTests: XCTestCase {
             let seen = walk(model)
             // Sans matière cochée : ni la plus dure, ni le scanner (lot 15 : il montre un
             // exercice de maths de sa classe).
-            XCTAssertEqual(seen.count, 38 + trialScreens, "\(country) : sans matière cochée, ni la plus dure ni le scanner")
+            XCTAssertEqual(seen.count, 39 + trialScreens, "\(country) : sans matière cochée, ni la plus dure ni le scanner")
             XCTAssertFalse(seen.contains(.scanDemo), "\(country)")
             XCTAssertFalse(seen.contains(.level), "\(country) : la filière et l'année, pas le palier")
             XCTAssertEqual(seen.last, .paywall)
@@ -324,7 +324,7 @@ final class OnboardingFlowTests: XCTestCase {
         let elsewhere = OnboardingModel()
         elsewhere.select(country: .other)
         let seen = walk(elsewhere)
-        XCTAssertEqual(seen.count, 37 + trialScreens)
+        XCTAssertEqual(seen.count, 38 + trialScreens)
         XCTAssertFalse(seen.contains(.schoolType) || seen.contains(.year))
         XCTAssertTrue(seen.contains(.level))
 
@@ -334,7 +334,7 @@ final class OnboardingFlowTests: XCTestCase {
         saudi.select(worldCountry: try XCTUnwrap(WorldCountries.country(code: "SA")))
         XCTAssertEqual(saudi.country, .other)
         XCTAssertEqual(saudi.regionCode, "SA")
-        XCTAssertEqual(walk(saudi).count, 38 + trialScreens)
+        XCTAssertEqual(walk(saudi).count, 39 + trialScreens)
 
         // Un pays de la liste retrouvé par la recherche se range sous son nom de la liste.
         let morocco = OnboardingModel()
@@ -371,14 +371,14 @@ final class OnboardingFlowTests: XCTestCase {
         XCTAssertTrue(OnboardingStep.allCases.allSatisfy { !$0.advancesOnChoice })
     }
 
-    /// **Les questions ne s'enchaînent jamais à plus de six** sans un écran où Mika parle ou
+    /// **Les questions ne s'enchaînent jamais à plus de huit** sans un écran où Mika parle ou
     /// montre quelque chose (lot 14 : le récit passe par les chapitres ; la démo finale est
-    /// voulue sans interaction).
+    /// voulue sans interaction). Le genre, facultatif, s'est glissé après le prénom.
     func testQuestionsAreBrokenUpByMika() {
         var run = 0
         for step in OnboardingStep.allCases {
             run = step.isQuestion ? run + 1 : 0
-            XCTAssertLessThanOrEqual(run, 7, "\(step)")
+            XCTAssertLessThanOrEqual(run, 8, "\(step)")
         }
     }
 
@@ -628,6 +628,8 @@ final class OnboardingFlowTests: XCTestCase {
                 "studyIntro", "helpIntro", "origin", "research", "goalIntro",
                 "organizeIntro", "storyIntro", "storyCreate", "storyPath", "storyPractice",
                 "storyAsk", "storyClose",
+                // La question du genre, après le prénom.
+                "gender",
             ]
         )
         XCTAssertEqual(AnalyticsEvent.onboardingStoryViewed.rawValue, "onboarding_story_viewed")

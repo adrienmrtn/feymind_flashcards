@@ -203,13 +203,19 @@ final class OnboardingContentTests: XCTestCase {
         }
     }
 
-    /// **Aucune attente de mise en scène** : pas de minuterie avant un contenu ou un bouton.
-    /// La seule horloge du parcours est celle du chargement du plan.
+    /// **Aucune attente de mise en scène hors des écrans racontés** : pas de minuterie avant
+    /// un contenu ou un bouton. Trois fichiers se déroulent parce que c'est leur propos (la
+    /// bulle de Mika mot à mot, le plan dévoilé bloc par bloc, la question qui s'écrit et le
+    /// chemin qui se pose) ; ailleurs, la seule horloge est celle du chargement du plan.
     func testOnlyTheLoadingScreenHasAClock() throws {
+        let told = ["Steps/ChapterStepViews.swift", "Steps/PlanStepViews.swift", "Steps/StoryStepViews.swift"]
         for (path, text) in try Self.onboardingSources() {
+            let unfolds = told.contains { path.hasSuffix($0) }
             for (number, line) in text.components(separatedBy: "\n").enumerated() {
                 guard !line.trimmingCharacters(in: .whitespaces).hasPrefix("//") else { continue }
                 for waiting in ["asyncAfter", "Task.sleep", ".delay(", "repeatForever"] {
+                    // Même racontés, ces écrans ne bouclent pas et ne retardent pas une courbe.
+                    if unfolds, waiting == "Task.sleep" { continue }
                     XCTAssertFalse(line.contains(waiting), "\(path):\(number + 1) attend : \(waiting)")
                 }
                 for clock in ["Timer.", "TimelineView(", "CADisplayLink("] where line.contains(clock) {

@@ -309,10 +309,13 @@ struct StoryPathStepView: View {
 
     /// Les étapes déjà posées.
     @State private var placed = 0
+    /// Jusqu'où le trait est parti : il devance l'étape, qui se pose quand il arrive.
+    @State private var traced = 0
 
     /// Rien ne se rejoue dans un rendu, ni quand on revient sur l'écran.
     private var isPosed: Bool { previewArrived || skipsArrival || !model.isMovingForward }
     private var visible: Int { isPosed ? Self.nodeCount : placed }
+    private var reach: Int { max(visible, traced) }
     private var isComplete: Bool { visible >= Self.nodeCount }
 
     private static let nodeCount = 5
@@ -367,8 +370,10 @@ struct StoryPathStepView: View {
             // Le trait part tout de suite (il a sa propre courbe) ; l'étape se pose quand il
             // arrive, et le téléphone vibre à ce moment-là.
             let lead = next == 1 ? 0 : 0.22
-            withAnimation(.spring(duration: 0.5, bounce: 0.45).delay(lead)) { placed = next }
+            traced = next
             try? await Task.sleep(for: .seconds(lead))
+            guard !Task.isCancelled else { return }
+            withAnimation(MicaboMotion.celebrate) { placed = next }
             if next == Self.nodeCount {
                 Haptics.success()
             } else {
@@ -391,9 +396,9 @@ struct StoryPathStepView: View {
                     for point in points.dropFirst() { line.addLine(to: point) }
                 }
                 // Le trait va jusqu'à la dernière étape posée (les segments ont la même longueur).
-                .trim(from: 0, to: CGFloat(max(0, visible - 1)) / CGFloat(Self.nodeCount - 1))
+                .trim(from: 0, to: CGFloat(max(0, reach - 1)) / CGFloat(Self.nodeCount - 1))
                 .stroke(V3Color.accent.opacity(0.55), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round, dash: [2, 9]))
-                .animation(.easeInOut(duration: 0.4), value: visible)
+                .animation(MicaboMotion.gentle, value: reach)
 
                 ForEach(nodes) { node in
                     let point = points[node.id]

@@ -193,7 +193,6 @@ struct ProfileSummaryStepView: View {
     /// Le geste de Mika : la fête d'abord, puis il en change.
     @State private var mikaMood: MikaMood = .celebrate
     /// Mika flotte.
-    @State private var floats = false
 
     /// Les gestes que Mika enchaîne après sa fête.
     private static let moods: [MikaMood] = [.happy, .wink, .proud, .wave, .celebrate]
@@ -300,7 +299,6 @@ struct ProfileSummaryStepView: View {
         let blocks = self.blocks
         return OnbScreen {
             OnbHeroMika(mood: mikaMood, max: compact ? 84 : 120, min: 64)
-                .offset(y: floats ? -5 : 3)
                 .padding(.top, 2)
 
             OnbTitle(title, size: OnbLayout.display, alignment: .center)
@@ -326,10 +324,6 @@ struct ProfileSummaryStepView: View {
         }
         .overlay {
             OnbConfetti(isOn: isUnveiled)
-        }
-        .onAppear {
-            guard !still, !reduceMotion else { return }
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { floats = true }
         }
         .task { await unveil(count: blocks.count) }
         .task { await enliven() }
