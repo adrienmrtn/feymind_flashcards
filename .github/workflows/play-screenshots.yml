@@ -39,6 +39,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Un Ruby à part : celui du système installe les gems hors du PATH (fastlane introuvable).
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
       - name: Ranger les captures par fiche Play
         run: |
           python3 - <<'EOF'
