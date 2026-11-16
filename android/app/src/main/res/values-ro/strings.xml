@@ -8,6 +8,7 @@
     <string name="app_common_save">Salvează</string>
     <string name="app_exams_countdown_today">azi</string>
     <string name="app_exams_countdown_tomorrow">mâine</string>
+    <string name="app_feedback_send">Trimite</string>
     <string name="app_friends_accept">Acceptă</string>
     <string name="app_friends_addSomeone">Adaugă pe cineva</string>
     <string name="app_friends_decline">Refuză</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Scrie un subiect în Acasă sau adaugă un PDF, o poză ori o înregistrare: Mika le transformă într-un traseu.</string>
     <string name="lesson_lessons_emptyTitle">Prima ta lecție te așteaptă</string>
     <string name="lesson_lessons_finished">Lecție terminată</string>
+    <string name="lesson_lessons_new">Lecție nouă</string>
     <string name="lesson_lessons_toOpen">Neîncepută</string>
     <string name="lesson_menu_cancel">Anulează</string>
     <string name="lesson_menu_delete">Șterge</string>

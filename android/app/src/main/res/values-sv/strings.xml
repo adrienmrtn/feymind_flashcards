@@ -8,6 +8,7 @@
     <string name="app_common_save">Spara</string>
     <string name="app_exams_countdown_today">i dag</string>
     <string name="app_exams_countdown_tomorrow">i morgon</string>
+    <string name="app_feedback_send">Skicka</string>
     <string name="app_friends_accept">Acceptera</string>
     <string name="app_friends_addSomeone">Lägg till någon</string>
     <string name="app_friends_decline">Avböj</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Skriv ett ämne på Hem, eller lägg in en PDF, ett foto eller en inspelning: Mika gör om det till en väg.</string>
     <string name="lesson_lessons_emptyTitle">Din första lektion väntar</string>
     <string name="lesson_lessons_finished">Lektionen klar</string>
+    <string name="lesson_lessons_new">Ny lektion</string>
     <string name="lesson_lessons_toOpen">Inte påbörjad</string>
     <string name="lesson_menu_cancel">Avbryt</string>
     <string name="lesson_menu_delete">Radera</string>

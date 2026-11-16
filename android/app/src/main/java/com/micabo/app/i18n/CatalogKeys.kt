@@ -9,6 +9,8 @@ internal object CatalogKeys {
     val strings: Map<String, Int> by lazy {
         hashMapOf(
             "app.a11y.close" to R.string.app_a11y_close,
+            "app.common.back" to R.string.app_common_back,
+            "app.feedback.send" to R.string.app_feedback_send,
             "app.paywall.perWeekSlash" to R.string.app_paywall_perWeekSlash,
             "common.alreadyAccount" to R.string.common_alreadyAccount,
             "common.continue" to R.string.common_continue,
@@ -770,6 +772,8 @@ internal object CatalogKeys {
             "ios.sup.source.text" to R.string.ios_sup_source_text,
             "ios.sup.source.youtube" to R.string.ios_sup_source_youtube,
             "ios.unitWeek" to R.string.ios_unitWeek,
+            "lesson.home.title" to R.string.lesson_home_title,
+            "lesson.lessons.new" to R.string.lesson_lessons_new,
             "lesson.nav.flashcards" to R.string.lesson_nav_flashcards,
             "lesson.nav.notes" to R.string.lesson_nav_notes,
             "lesson.nav.quiz" to R.string.lesson_nav_quiz,

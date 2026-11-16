@@ -64,6 +64,9 @@ class MicaboApplication : Application() {
 
     lateinit var sync: CloudSync
         private set
+    /** Les conversations avec Mika, hors leçon. */
+    lateinit var chats: com.micabo.app.data.ChatStore
+        private set
     lateinit var social: Social
         private set
 
@@ -187,6 +190,7 @@ class MicaboApplication : Application() {
         xp.reset()
         focus.reload()
         mika.exercise.clear()
+        chats.clear()
         composer.reset()
     }
 
@@ -213,6 +217,7 @@ class MicaboApplication : Application() {
         focus = FocusTimer(this, xp)
         lessons = LessonRepository(this, functions, prefs, streak, xp)
         mika = MikaChat(functions, lessons, prefs, xp)
+        chats = com.micabo.app.data.ChatStore(this)
         exams = ExamRepository(this, prefs)
         // Avant les événements : chacun lit `isPro`, et un `lateinit` encore vide ferait planter.
         billing = Billing(this) {

@@ -86,6 +86,16 @@
         <item quantity="one">diena pēc kārtas</item>
         <item quantity="other">dienas pēc kārtas</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="zero">Beidzas pēc %1$d dienām</item>
+        <item quantity="one">Beidzas pēc %1$d dienas</item>
+        <item quantity="other">Beidzas pēc %1$d dienām</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="zero">%1$d kartīšu atkārtošanai</item>
+        <item quantity="one">%1$d kartīte atkārtošanai</item>
+        <item quantity="other">%1$d kartītes atkārtošanai</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="zero">Pievienot manas %1$d kļūdas kartītēm</item>
         <item quantity="one">Pievienot manu %1$d kļūdu kartītēm</item>

@@ -5,8 +5,8 @@
     </style>
 
     <style name="Theme.Micabo.Starting" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/canvas</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground_art</item>
+        <item name="windowSplashScreenBackground">@color/launch</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_mika</item>
         <item name="postSplashScreenTheme">@style/Theme.Micabo</item>
     </style>
 </resources>

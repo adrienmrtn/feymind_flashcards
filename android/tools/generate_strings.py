@@ -1673,6 +1673,10 @@ from strings_knowunity import by_key as knowunity_by_key  # noqa: E402
 
 _KNOWUNITY_STRINGS, CUSTOM_PLURALS = knowunity_by_key()
 CUSTOM.update(_KNOWUNITY_STRINGS)
+# Les six langues du lot 13 (nb, he, ja, lt, lv, ko) pour ces phrases propres à Android.
+from strings_lot13 import merge as merge_lot13  # noqa: E402
+
+merge_lot13(CUSTOM, CUSTOM_PLURALS)
 
 LINE = re.compile(r'^\s*"([^"\\]+)"\s*:\s*"((?:[^"\\]|\\.)*)"\s*,?\s*(//.*)?$')
 TABLE = re.compile(r'^\s*static let (\w+): \[String: String\] = \[\s*$')

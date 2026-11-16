@@ -8,6 +8,7 @@
     <string name="app_common_save">Opslaan</string>
     <string name="app_exams_countdown_today">vandaag</string>
     <string name="app_exams_countdown_tomorrow">morgen</string>
+    <string name="app_feedback_send">Versturen</string>
     <string name="app_friends_accept">Accepteren</string>
     <string name="app_friends_addSomeone">Iemand toevoegen</string>
     <string name="app_friends_decline">Weigeren</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Typ een onderwerp op Home of voeg een PDF, foto of opname toe: Mika maakt er een leerpad van.</string>
     <string name="lesson_lessons_emptyTitle">Je eerste les wacht op je</string>
     <string name="lesson_lessons_finished">Les voltooid</string>
+    <string name="lesson_lessons_new">Nieuwe les</string>
     <string name="lesson_lessons_toOpen">Niet gestart</string>
     <string name="lesson_menu_cancel">Annuleren</string>
     <string name="lesson_menu_delete">Verwijderen</string>

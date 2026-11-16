@@ -8,6 +8,7 @@
     <string name="app_common_save">Tallenna</string>
     <string name="app_exams_countdown_today">tänään</string>
     <string name="app_exams_countdown_tomorrow">huomenna</string>
+    <string name="app_feedback_send">Lähetä</string>
     <string name="app_friends_accept">Hyväksy</string>
     <string name="app_friends_addSomeone">Lisää kaveri</string>
     <string name="app_friends_decline">Hylkää</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Kirjoita aihe Koti-näkymään tai lisää PDF, kuva tai tallenne: Mika tekee siitä polun.</string>
     <string name="lesson_lessons_emptyTitle">Ensimmäinen oppituntisi odottaa</string>
     <string name="lesson_lessons_finished">Oppitunti suoritettu</string>
+    <string name="lesson_lessons_new">Uusi oppitunti</string>
     <string name="lesson_lessons_toOpen">Aloittamatta</string>
     <string name="lesson_menu_cancel">Peru</string>
     <string name="lesson_menu_delete">Poista</string>

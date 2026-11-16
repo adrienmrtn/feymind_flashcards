@@ -8,6 +8,7 @@
     <string name="app_common_save">Uložiť</string>
     <string name="app_exams_countdown_today">dnes</string>
     <string name="app_exams_countdown_tomorrow">zajtra</string>
+    <string name="app_feedback_send">Odoslať</string>
     <string name="app_friends_accept">Prijať</string>
     <string name="app_friends_addSomeone">Pridať niekoho</string>
     <string name="app_friends_decline">Odmietnuť</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Napíš tému na hlavnej stránke alebo nahraj PDF, fotku či nahrávku: Mika z toho urobí cestu.</string>
     <string name="lesson_lessons_emptyTitle">Tvoja prvá lekcia čaká</string>
     <string name="lesson_lessons_finished">Lekcia hotová</string>
+    <string name="lesson_lessons_new">Nová lekcia</string>
     <string name="lesson_lessons_toOpen">Nezačatá</string>
     <string name="lesson_menu_cancel">Zrušiť</string>
     <string name="lesson_menu_delete">Vymazať</string>

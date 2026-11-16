@@ -8,6 +8,7 @@
     <string name="app_common_save">Speichern</string>
     <string name="app_exams_countdown_today">heute</string>
     <string name="app_exams_countdown_tomorrow">morgen</string>
+    <string name="app_feedback_send">Senden</string>
     <string name="app_friends_accept">Annehmen</string>
     <string name="app_friends_addSomeone">Jemanden hinzufügen</string>
     <string name="app_friends_decline">Ablehnen</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Gib unter Start ein Thema ein oder lade ein PDF, ein Foto oder eine Aufnahme hoch: Mika macht daraus einen Lernpfad.</string>
     <string name="lesson_lessons_emptyTitle">Deine erste Lektion wartet</string>
     <string name="lesson_lessons_finished">Lektion abgeschlossen</string>
+    <string name="lesson_lessons_new">Neue Lektion</string>
     <string name="lesson_lessons_toOpen">Nicht begonnen</string>
     <string name="lesson_menu_cancel">Abbrechen</string>
     <string name="lesson_menu_delete">Löschen</string>

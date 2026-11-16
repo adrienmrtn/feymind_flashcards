@@ -8,6 +8,7 @@
     <string name="app_common_save">Сохранить</string>
     <string name="app_exams_countdown_today">сегодня</string>
     <string name="app_exams_countdown_tomorrow">завтра</string>
+    <string name="app_feedback_send">Отправить</string>
     <string name="app_friends_accept">Принять</string>
     <string name="app_friends_addSomeone">Добавить друга</string>
     <string name="app_friends_decline">Отклонить</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Введи тему на Главной или загрузи PDF, фото или запись: Mika превратит это в маршрут.</string>
     <string name="lesson_lessons_emptyTitle">Твой первый урок ждёт</string>
     <string name="lesson_lessons_finished">Урок пройден</string>
+    <string name="lesson_lessons_new">Новый урок</string>
     <string name="lesson_lessons_toOpen">Не начат</string>
     <string name="lesson_menu_cancel">Отмена</string>
     <string name="lesson_menu_delete">Удалить</string>

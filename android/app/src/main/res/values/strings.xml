@@ -9,6 +9,7 @@
     <string name="app_common_save">Save</string>
     <string name="app_exams_countdown_today">today</string>
     <string name="app_exams_countdown_tomorrow">tomorrow</string>
+    <string name="app_feedback_send">Send</string>
     <string name="app_friends_accept">Accept</string>
     <string name="app_friends_addSomeone">Add someone</string>
     <string name="app_friends_decline">Decline</string>
@@ -1109,6 +1110,7 @@
     <string name="lesson_lessons_emptyBody">Type a topic on Home, or drop a PDF, a photo or a recording: Mika turns it into a path.</string>
     <string name="lesson_lessons_emptyTitle">Your first lesson is waiting</string>
     <string name="lesson_lessons_finished">Lesson complete</string>
+    <string name="lesson_lessons_new">New lesson</string>
     <string name="lesson_lessons_toOpen">Not started</string>
     <string name="lesson_menu_cancel">Cancel</string>
     <string name="lesson_menu_delete">Delete</string>

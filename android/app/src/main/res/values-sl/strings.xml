@@ -8,6 +8,7 @@
     <string name="app_common_save">Shrani</string>
     <string name="app_exams_countdown_today">danes</string>
     <string name="app_exams_countdown_tomorrow">jutri</string>
+    <string name="app_feedback_send">Pošlji</string>
     <string name="app_friends_accept">Sprejmi</string>
     <string name="app_friends_addSomeone">Dodaj nekoga</string>
     <string name="app_friends_decline">Zavrni</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Vpiši temo na zavihku Domov ali dodaj PDF, fotografijo ali posnetek: Mika iz tega naredi učno pot.</string>
     <string name="lesson_lessons_emptyTitle">Tvoja prva lekcija te čaka</string>
     <string name="lesson_lessons_finished">Lekcija končana</string>
+    <string name="lesson_lessons_new">Nova lekcija</string>
     <string name="lesson_lessons_toOpen">Ni začeto</string>
     <string name="lesson_menu_cancel">Prekliči</string>
     <string name="lesson_menu_delete">Izbriši</string>

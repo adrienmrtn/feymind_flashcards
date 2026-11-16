@@ -8,6 +8,7 @@
     <string name="app_common_save">Αποθήκευση</string>
     <string name="app_exams_countdown_today">σήμερα</string>
     <string name="app_exams_countdown_tomorrow">αύριο</string>
+    <string name="app_feedback_send">Αποστολή</string>
     <string name="app_friends_accept">Αποδοχή</string>
     <string name="app_friends_addSomeone">Πρόσθεσε κάποιον</string>
     <string name="app_friends_decline">Απόρριψη</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Γράψε ένα θέμα στην Αρχική ή ανέβασε ένα PDF, μια φωτογραφία ή μια ηχογράφηση: ο Mika το κάνει διαδρομή.</string>
     <string name="lesson_lessons_emptyTitle">Το πρώτο σου μάθημα σε περιμένει</string>
     <string name="lesson_lessons_finished">Ολοκληρώθηκε</string>
+    <string name="lesson_lessons_new">Νέο μάθημα</string>
     <string name="lesson_lessons_toOpen">Δεν ξεκίνησε</string>
     <string name="lesson_menu_cancel">Ακύρωση</string>
     <string name="lesson_menu_delete">Διαγραφή</string>

@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="canvas">#F6F4ED</color>
+    <!-- Le marine de la V3.3 : le fond de l'app avant la première image, et celui du lancement. -->
+    <color name="canvas">#0B0F1C</color>
+    <color name="launch">#0B0F1C</color>
 </resources>

@@ -67,10 +67,11 @@ class CommitmentHoldTest {
         val model = start()
         val button = rule.onNodeWithTag("commitHold")
         button.performTouchInput { down(center) }
-        rule.mainClock.advanceTimeBy(2_000)
+        // Le doigt reste posé deux secondes : l'horloge avance image par image.
+        repeat(125) { rule.mainClock.advanceTimeByFrame() }
+        assertTrue("le maintien de 2 s doit signer", model.hasCommitted)
         button.performTouchInput { up() }
-        assertTrue(model.hasCommitted)
-        rule.mainClock.advanceTimeBy(1_500)
+        repeat(100) { rule.mainClock.advanceTimeByFrame() }
         assertEquals(OnboardingStep.planBuilding, model.step)
     }
 }

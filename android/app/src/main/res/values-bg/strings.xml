@@ -8,6 +8,7 @@
     <string name="app_common_save">Запази</string>
     <string name="app_exams_countdown_today">днес</string>
     <string name="app_exams_countdown_tomorrow">утре</string>
+    <string name="app_feedback_send">Изпрати</string>
     <string name="app_friends_accept">Приеми</string>
     <string name="app_friends_addSomeone">Добави човек</string>
     <string name="app_friends_decline">Откажи</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Напиши тема в Начало или качи PDF, снимка или запис: Mika го превръща в път.</string>
     <string name="lesson_lessons_emptyTitle">Първият ти урок те чака</string>
     <string name="lesson_lessons_finished">Урокът е завършен</string>
+    <string name="lesson_lessons_new">Нов урок</string>
     <string name="lesson_lessons_toOpen">Незапочнат</string>
     <string name="lesson_menu_cancel">Отказ</string>
     <string name="lesson_menu_delete">Изтрий</string>

@@ -8,6 +8,7 @@
     <string name="app_common_save">Enregistrer</string>
     <string name="app_exams_countdown_today">aujourd\'hui</string>
     <string name="app_exams_countdown_tomorrow">demain</string>
+    <string name="app_feedback_send">Envoyer</string>
     <string name="app_friends_accept">Accepter</string>
     <string name="app_friends_addSomeone">Ajouter quelqu\'un</string>
     <string name="app_friends_decline">Refuser</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Tape un sujet sur Home, ou dépose un PDF, une photo, un audio : Mika en fait un parcours.</string>
     <string name="lesson_lessons_emptyTitle">Ta première leçon t\'attend</string>
     <string name="lesson_lessons_finished">Leçon terminée</string>
+    <string name="lesson_lessons_new">Nouvelle leçon</string>
     <string name="lesson_lessons_toOpen">À ouvrir</string>
     <string name="lesson_menu_cancel">Annuler</string>
     <string name="lesson_menu_delete">Supprimer</string>

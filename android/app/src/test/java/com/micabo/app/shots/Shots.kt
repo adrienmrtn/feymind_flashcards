@@ -65,7 +65,7 @@ data class Device(
     /** La barre d'état ; plus haute avec une encoche ou une découpe. */
     val statusDp: Int = 24,
 ) {
-    val qualifiers: String get() = "$language-w${widthDp}dp-h${heightDp}dp-$density" + if (night) "-night" else "-notnight"
+    val qualifiers: String get() = "$language-w${widthDp}dp-h${heightDp}dp-" + (if (night) "night" else "notnight") + "-$density"
     val rtl: Boolean get() = language in setOf("ar", "iw", "he")
 
     override fun toString() = name
@@ -198,7 +198,7 @@ private fun check(rule: ComposeTestRule, device: Device, report: ShotReport) {
     }
     val ctas = nodes.filter { node ->
         val tag = node.config.getOrNull(SemanticsProperties.TestTag)
-        tag == "cta" || tag == "commitHold"
+        tag == "cta" || tag == "commitHold" || tag == "homeCta"
     }
     if (ctas.isEmpty()) {
         report.problems += "bouton principal absent"

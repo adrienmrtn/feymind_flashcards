@@ -8,6 +8,7 @@
     <string name="app_common_save">Kaydet</string>
     <string name="app_exams_countdown_today">bugün</string>
     <string name="app_exams_countdown_tomorrow">yarın</string>
+    <string name="app_feedback_send">Gönder</string>
     <string name="app_friends_accept">Kabul et</string>
     <string name="app_friends_addSomeone">Birini ekle</string>
     <string name="app_friends_decline">Reddet</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Ana sayfada bir konu yaz ya da PDF, fotoğraf veya ses ekle: Mika bunu bir yola dönüştürür.</string>
     <string name="lesson_lessons_emptyTitle">İlk dersin seni bekliyor</string>
     <string name="lesson_lessons_finished">Ders tamamlandı</string>
+    <string name="lesson_lessons_new">Yeni ders</string>
     <string name="lesson_lessons_toOpen">Açılmadı</string>
     <string name="lesson_menu_cancel">Vazgeç</string>
     <string name="lesson_menu_delete">Sil</string>

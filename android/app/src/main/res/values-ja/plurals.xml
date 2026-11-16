@@ -52,6 +52,12 @@
     <plurals name="ios_streak_unit">
         <item quantity="other">日連続</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="other">あと%1$d日で終了</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="other">復習するカード %1$d枚</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="other">まちがえた%1$d問をカードに追加</item>
     </plurals>

@@ -8,6 +8,7 @@
     <string name="app_common_save">Salvesta</string>
     <string name="app_exams_countdown_today">täna</string>
     <string name="app_exams_countdown_tomorrow">homme</string>
+    <string name="app_feedback_send">Saada</string>
     <string name="app_friends_accept">Nõustu</string>
     <string name="app_friends_addSomeone">Lisa keegi</string>
     <string name="app_friends_decline">Keeldu</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Kirjuta avalehel teema või lisa PDF, foto või salvestis: Mika teeb sellest teekonna.</string>
     <string name="lesson_lessons_emptyTitle">Sinu esimene tund ootab</string>
     <string name="lesson_lessons_finished">Tund läbitud</string>
+    <string name="lesson_lessons_new">Uus tund</string>
     <string name="lesson_lessons_toOpen">Alustamata</string>
     <string name="lesson_menu_cancel">Tühista</string>
     <string name="lesson_menu_delete">Kustuta</string>

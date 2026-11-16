@@ -76,6 +76,16 @@
         <item quantity="one">יום ברצף</item>
         <item quantity="other">ימים ברצף</item>
     </plurals>
+    <plurals name="kx_league_endsIn">
+        <item quantity="one">מסתיימת בעוד יום אחד</item>
+        <item quantity="two">מסתיימת בעוד יומיים</item>
+        <item quantity="other">מסתיימת בעוד %1$d ימים</item>
+    </plurals>
+    <plurals name="kx_today_due">
+        <item quantity="one">כרטיסייה אחת לחזרה</item>
+        <item quantity="two">%1$d כרטיסיות לחזרה</item>
+        <item quantity="other">%1$d כרטיסיות לחזרה</item>
+    </plurals>
     <plurals name="lesson_exam_addCards">
         <item quantity="one">להוסיף את הטעות שלי לכרטיסיות</item>
         <item quantity="other">להוסיף את %1$d הטעויות שלי לכרטיסיות</item>

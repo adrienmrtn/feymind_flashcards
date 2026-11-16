@@ -8,6 +8,7 @@
     <string name="app_common_save">Mentés</string>
     <string name="app_exams_countdown_today">ma</string>
     <string name="app_exams_countdown_tomorrow">holnap</string>
+    <string name="app_feedback_send">Küldés</string>
     <string name="app_friends_accept">Elfogadás</string>
     <string name="app_friends_addSomeone">Ismerős hozzáadása</string>
     <string name="app_friends_decline">Elutasítás</string>
@@ -1108,6 +1109,7 @@
     <string name="lesson_lessons_emptyBody">Írj be egy témát a Kezdőlapon, vagy tölts fel PDF-et, fotót vagy felvételt: Mika útvonalat készít belőle.</string>
     <string name="lesson_lessons_emptyTitle">Vár az első leckéd</string>
     <string name="lesson_lessons_finished">Lecke kész</string>
+    <string name="lesson_lessons_new">Új lecke</string>
     <string name="lesson_lessons_toOpen">Nincs elkezdve</string>
     <string name="lesson_menu_cancel">Mégse</string>
     <string name="lesson_menu_delete">Törlés</string>

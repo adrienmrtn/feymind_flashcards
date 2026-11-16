@@ -287,7 +287,26 @@ private fun Generating(request: LessonRequest, stage: CreationStage, error: Thro
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    Spacer(Modifier.height(28.dp))
+                    Spacer(Modifier.height(16.dp))
+                    // « Étape 3 sur 4 · J'écris tes notes » : où en est le vrai travail (lot 13).
+                    val labels = listOf(
+                        if (request.topic != null) R.string.lesson_create_stageTopic else R.string.lesson_create_stageReading,
+                        R.string.lesson_create_stageCutting,
+                        R.string.lesson_create_stageWriting,
+                        R.string.lesson_create_stageQuestions,
+                    )
+                    Text(
+                        com.micabo.app.i18n.t(
+                            "ios.core13.gen.step",
+                            "n" to (stage.ordinal + 1).coerceAtMost(labels.size),
+                            "total" to labels.size,
+                            "step" to stringResource(labels[stage.ordinal.coerceIn(0, labels.lastIndex)]),
+                        ),
+                        style = com.micabo.app.ui.theme.Type.mention,
+                        color = colors.inkSecondary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(16.dp))
                     Stages(stage, fromTopic = request.topic != null)
                 }
             } else {
