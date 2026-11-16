@@ -86,12 +86,14 @@ fun SourceStrip(highlighted: OnbSource? = null, tile: Int = 46, modifier: Modifi
                     ) {
                         Icon(source.icon, null, tint = tone, modifier = Modifier.size((tile * 0.55f).dp))
                     }
-                    Text(
+                    androidx.compose.foundation.text.BasicText(
                         t(source.titleKey),
-                        style = text(13.sp, FontWeight.SemiBold, 16.sp),
-                        color = if (source == highlighted || highlighted == null) colors.ink else colors.inkSecondary,
-                        textAlign = TextAlign.Center,
+                        style = text(13.sp, FontWeight.SemiBold, 16.sp).copy(
+                            color = if (source == highlighted || highlighted == null) colors.ink else colors.inkSecondary,
+                            textAlign = TextAlign.Center,
+                        ),
                         maxLines = 2,
+                        autoSize = androidx.compose.foundation.text.TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 13.sp, stepSize = 0.5.sp),
                     )
                 }
             }

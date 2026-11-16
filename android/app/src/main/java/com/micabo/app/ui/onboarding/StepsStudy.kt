@@ -219,7 +219,9 @@ fun DemoStage(title: String, playLabel: String?, played: Boolean, onPlay: () -> 
     OnbScreen(
         centered = true,
         header = { V3Title(title, Modifier.padding(top = 16.dp)) },
-        body = { Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, content = panel) },
+        // La démo est une illustration : son texte suit le réglage du téléphone jusqu'à 130 %,
+        // puis garde ses proportions (sinon « Mathématiques » se casse en trois morceaux).
+        body = { com.micabo.app.ui.v3.CappedFontScale { Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, content = panel) } },
         footer = {
             MicaboButton(if (played || playLabel == null) t("common.continue") else playLabel, onClick = { if (played) onContinue() else onPlay() }, modifier = Modifier.testTag("cta"))
         },

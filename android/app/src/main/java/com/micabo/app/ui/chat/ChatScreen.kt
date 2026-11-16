@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -224,10 +225,12 @@ fun ChatContent(
             RoundIcon(Icons.Rounded.Edit, t("ios.chat12.new"), onNew)
         }
         if (conversation.messages.isEmpty() && !thinking) {
-            Column(Modifier.weight(1f).fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Mika(MikaMood.WAVE, 140.dp)
+            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
+            Column(Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).heightIn(min = maxHeight).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                Mika(MikaMood.WAVE, if (androidx.compose.ui.platform.LocalDensity.current.fontScale >= 1.5f) 88.dp else 140.dp)
                 Text(t("ios.chat12.empty.title"), style = display(28.sp), color = colors.ink, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 12.dp))
                 Text(t("ios.chat12.empty.body"), style = Type.body, color = colors.ink, textAlign = TextAlign.Center, modifier = Modifier.padding(top = 8.dp))
+            }
             }
         } else {
             LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = list, contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

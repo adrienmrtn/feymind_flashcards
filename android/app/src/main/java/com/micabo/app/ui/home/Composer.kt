@@ -284,7 +284,8 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
             }) {
                 Column(
                     Modifier
-                        .width(138.dp)
+                        // Plus large quand le texte du téléphone est agrandi : le sous-titre reste lisible.
+                        .width(138.dp * androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceIn(1f, 1.6f))
                         .clip(RoundedCornerShape(20.dp))
                         .background(colors.surface)
                         .border(1.5.dp, colors.stroke, RoundedCornerShape(20.dp))
@@ -305,8 +306,6 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
                         stringResource(chip.subtitle),
                         style = nunito(13.sp, FontWeight.Medium, lineHeight = 17.sp),
                         color = colors.inkSecondary,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }

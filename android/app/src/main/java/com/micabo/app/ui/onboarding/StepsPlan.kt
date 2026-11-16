@@ -224,7 +224,7 @@ private fun PlanBlock(label: String, value: String, detail: String, tone: Color,
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        com.micabo.app.ui.v3.FitText(value, figure(if (LocalCompact.current) 34 else 40), tone, Modifier.widthIn(min = 76.dp, max = 160.dp))
+        com.micabo.app.ui.v3.FitText(value, figure(if (LocalCompact.current) 34 else 40), tone, Modifier.widthIn(min = 76.dp, max = 120.dp))
         Column(Modifier.weight(1f)) {
             Text(label, style = text(17.sp, FontWeight.SemiBold), color = colors.inkSecondary)
             Text(detail, style = text(17.sp, FontWeight.SemiBold, 22.sp), color = colors.ink)
@@ -240,17 +240,19 @@ fun StoryStage(title: String, model: OnboardingModel, cta: String? = null, ctaIc
     OnbScreen(
         centered = true,
         header = { V3Title(title, Modifier.padding(top = 16.dp)) },
-        body = { panel() },
+        body = { com.micabo.app.ui.v3.CappedFontScale(1.5f) { panel() } },
         footer = { MicaboButton(cta ?: t("common.continue"), onClick = { model.advance() }, icon = ctaIcon, modifier = Modifier.testTag("cta")) },
     )
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun StoryCreateStep(model: OnboardingModel) {
     val colors = Micabo.colors
     StoryStage(t("ios.onb15.story.create.title"), model, cta = t("ios.onb14.story.create.cta"), ctaIcon = Icons.Rounded.AutoAwesome) {
         Panel {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Les deux sources passent l'une sous l'autre quand le texte est très agrandi.
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(OnbSource.PDF, OnbSource.PHOTO).forEach { source ->
                     val tone = source.tone()
                     Row(

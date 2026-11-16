@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -253,14 +254,15 @@ private fun ExamDate(onClose: () -> Unit, onPick: (Long) -> Unit) {
 @Composable
 internal fun Generating(request: LessonRequest, stage: CreationStage, error: Throwable?, onClose: () -> Unit, onRetry: () -> Unit) {
     val colors = Micabo.colors
+    androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
     Column(
-        Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(20.dp),
+        Modifier.fillMaxWidth().verticalScroll(androidx.compose.foundation.rememberScrollState()).heightIn(min = maxHeight).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
         Row(Modifier.fillMaxWidth().height(44.dp)) {
             if (error != null) CloseButton(onClick = onClose)
         }
-        Spacer(Modifier.weight(0.6f))
         AnimatedContent(targetState = error, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "state") { failure ->
             if (failure == null) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -324,7 +326,6 @@ internal fun Generating(request: LessonRequest, stage: CreationStage, error: Thr
                 }
             }
         }
-        Spacer(Modifier.weight(1f))
         if (error != null) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if ((error as? ApiException)?.isDailyLimit != true) {
@@ -332,7 +333,10 @@ internal fun Generating(request: LessonRequest, stage: CreationStage, error: Thr
                 }
                 MicaboSecondaryButton(stringResource(R.string.lesson_create_cancel), onClick = onClose)
             }
+        } else {
+            Spacer(Modifier.height(44.dp))
         }
+    }
     }
 }
 
@@ -396,7 +400,7 @@ private fun Stages(stage: CreationStage, fromTopic: Boolean) {
                     }
                 }
                 Spacer(Modifier.width(12.dp))
-                Text(stringResource(label), style = nunito(16.sp, if (active) FontWeight.ExtraBold else FontWeight.SemiBold), color = ink)
+                Text(stringResource(label), style = nunito(16.sp, if (active) FontWeight.ExtraBold else FontWeight.SemiBold), color = ink, modifier = Modifier.weight(1f))
             }
         }
     }

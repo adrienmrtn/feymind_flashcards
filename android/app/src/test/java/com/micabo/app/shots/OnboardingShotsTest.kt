@@ -1,5 +1,6 @@
 package com.micabo.app.shots
 
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import com.micabo.app.onboarding.OnboardingModel
 import com.micabo.app.onboarding.OnboardingStep
@@ -15,6 +16,12 @@ import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import java.time.LocalDate
+
+/** Un écran posé seul, sous la barre d'état, comme le parcours le pose. */
+@androidx.compose.runtime.Composable
+fun Alone(content: @androidx.compose.runtime.Composable () -> Unit) {
+    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.statusBarsPadding()) { content() }
+}
 
 /** Un hôte de test : l'essai du catalogue (3 jours), rien ne part, rien ne se termine. */
 object TestHost : OnboardingHost {
@@ -70,17 +77,17 @@ class OnboardingShotsTest(private val device: Device) {
         }.toMutableMap()
         // Les démos jouées et le maintien à mi-course : ce que l'élève voit après avoir touché.
         reports["lessonDemo-jouee"] = shoot(rule, device, "onboarding-etats", "lessonDemo-jouee") {
-            LessonDemoStep(linaOn(OnboardingStep.lessonDemo), previewPlayed = true)
+            Alone { LessonDemoStep(linaOn(OnboardingStep.lessonDemo), previewPlayed = true) }
         }
         reports["scanDemo-resolu"] = shoot(rule, device, "onboarding-etats", "scanDemo-resolu") {
-            ScanDemoStep(linaOn(OnboardingStep.scanDemo), previewStage = 3)
+            Alone { ScanDemoStep(linaOn(OnboardingStep.scanDemo), previewStage = 3) }
         }
         reports["commitment-maintien"] = shoot(rule, device, "onboarding-etats", "commitment-maintien") {
-            CommitmentStep(linaOn(OnboardingStep.commitment), previewHold = 0.6f)
+            Alone { CommitmentStep(linaOn(OnboardingStep.commitment), previewHold = 0.6f) }
         }
         for (page in 1..4) {
             reports["histoire-$page"] = shoot(rule, device, "onboarding-etats", "hookLogo-histoire-$page") {
-                StoriesStep(linaOn(OnboardingStep.hookLogo), TestHost, page = page)
+                Alone { StoriesStep(linaOn(OnboardingStep.hookLogo), TestHost, page = page) }
             }
         }
         assertClean(reports)

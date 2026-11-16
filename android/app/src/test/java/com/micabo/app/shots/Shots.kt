@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -236,7 +237,7 @@ private fun SemanticsNode.isVisibleOnScreen(screen: Rect): Boolean {
 @Composable
 private fun SystemBars(device: Device) {
     val ink = if (device.night) Color.White else Color.Black
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().clearAndSetSemantics {}) {
         Row(
             Modifier.fillMaxWidth().height(device.statusDp.dp).padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,

@@ -119,13 +119,16 @@ fun NewLessonContent(
     modifier: Modifier = Modifier,
 ) {
     val colors = Micabo.colors
-    Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 12.dp)) {
-        Text(t("lesson.lessons.new"), style = display(30.sp), color = colors.ink, modifier = Modifier.padding(horizontal = 20.dp))
-        Text(t("ios.core13.new.promise"), style = Type.body, color = colors.ink, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 6.dp))
-        Text(t("ios.core13.new.topicLabel"), style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp))
-        ComposerCard(composer, onSend = onSend)
-        Text(t("ios.core13.new.orSupport"), style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, modifier = Modifier.padding(horizontal = 20.dp))
-        SourceRow(composer, isPro = canImport, onFull = onFull, onLocked = onLocked)
+    // Le contenu défile ; « Écrire ma leçon » reste en bas, toujours visible.
+    Column(modifier.fillMaxWidth().navigationBarsPadding().padding(bottom = 12.dp)) {
+        Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
+            Text(t("lesson.lessons.new"), style = display(30.sp), color = colors.ink, modifier = Modifier.padding(horizontal = 20.dp))
+            Text(t("ios.core13.new.promise"), style = Type.body, color = colors.ink, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 6.dp))
+            Text(t("ios.core13.new.topicLabel"), style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp))
+            ComposerCard(composer, onSend = onSend)
+            Text(t("ios.core13.new.orSupport"), style = text(15.sp, FontWeight.SemiBold), color = colors.inkSecondary, modifier = Modifier.padding(horizontal = 20.dp))
+            SourceRow(composer, isPro = canImport, onFull = onFull, onLocked = onLocked)
+        }
         MicaboButton(
             t("ios.core13.cta.write"),
             onClick = onSend,

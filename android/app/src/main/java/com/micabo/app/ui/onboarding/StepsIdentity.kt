@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -233,16 +234,22 @@ private fun StoryPage(story: Story, exam: String) {
                 .background(Brush.verticalGradient(listOf(colors.surface, colors.canvas)))
                 .border(2.dp, colors.stroke, shape)
                 .padding(start = 18.dp, end = 18.dp, top = 26.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            // L'illustration garde ses proportions quand le texte du téléphone est très agrandi.
-            com.micabo.app.ui.v3.CappedFontScale {
-                when (story) {
-                    Story.INTRO -> StoryIntro()
-                    Story.LESSON -> StoryLesson()
-                    Story.QUIZ -> StoryQuiz()
-                    Story.SCAN -> StoryScan()
-                    Story.PLAN -> StoryPlan(exam)
+            // L'illustration garde ses proportions quand le texte du téléphone est très agrandi,
+            // et se mesure à sa hauteur naturelle : sur un petit écran, la carte la coupe en bas
+            // (elle se fond dans le fond) au lieu d'écraser ses lignes.
+            Column(
+                Modifier.fillMaxWidth().wrapContentHeight(Alignment.Top, unbounded = true),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                com.micabo.app.ui.v3.CappedFontScale {
+                    when (story) {
+                        Story.INTRO -> StoryIntro()
+                        Story.LESSON -> StoryLesson()
+                        Story.QUIZ -> StoryQuiz()
+                        Story.SCAN -> StoryScan()
+                        Story.PLAN -> StoryPlan(exam)
+                    }
                 }
             }
         }
