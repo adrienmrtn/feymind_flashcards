@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>App Store Micabo — DA V3</title>
+<!--
+  Les sept images de la fiche App Store dans la direction artistique V3.3 (« marine, net, adulte ») :
+  une page de 7 × 1320 px, coupée en sept images 1320 × 2868 (iPhone 6,9″) par `render.mjs`.
+
+  Le parti pris : un seul fond marine pour toute la bande, traversé par une même lumière bleue ;
+  sur chaque image, le téléphone reste en retrait et l'élément qui compte en sort, agrandi
+  (la bonne réponse, la carte, le compte à rebours). On lit l'image en une seconde, même en vignette.
+
+  Les écrans de l'app sont redessinés en HTML avec les jetons de `V3Color.swift` (thème marine),
+  à 393 pt de large puis agrandis : ils restent nets. Mika vient de `design/mika-v3/mika.js`.
+-->
+<style>
+  @font-face { font-family: "Sofia"; font-weight: 900; src: url("../../../Micabo/Resources/Fonts/SofiaSansCondensed-Black.ttf"); }
+  @font-face { font-family: "Sofia"; font-weight: 800; src: url("../../../Micabo/Resources/Fonts/SofiaSansCondensed-ExtraBold.ttf"); }
+  @font-face { font-family: "Inter"; font-weight: 400; src: url("fonts/inter-latin-400-normal.woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 500; src: url("fonts/inter-latin-500-normal.woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 600; src: url("fonts/inter-latin-600-normal.woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 700; src: url("fonts/inter-latin-700-normal.woff2"); }
+  @font-face { font-family: "Inter"; font-weight: 800; src: url("fonts/inter-latin-800-normal.woff2"); }
+
+  /* Les autres écritures */
+  @font-face { font-family: "Inter"; font-weight: 400; src: url("fonts/inter-cyrillic-ext-400-normal.woff2"); unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F; }
+  @font-face { font-family: "Inter"; font-weight: 400; src: url("fonts/inter-cyrillic-400-normal.woff2"); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+  @font-face { font-family: "Inter"; font-weight: 400; src: url("fonts/inter-greek-ext-400-normal.woff2"); unicode-range: U+1F00-1FFF; }
+  @font-face { font-family: "Inter"; font-weight: 400; src: url("fonts/inter-greek-400-normal.woff2"); unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF; }
+  @font-face { font-family: "Inter"; font-weight: 400; src: url("fonts/inter-latin-ext-400-normal.woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+  @font-face { font-family: "Inter"; font-weight: 500; src: url("fonts/inter-cyrillic-ext-500-normal.woff2"); unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F; }
+  @font-face { font-family: "Inter"; font-weight: 500; src: url("fonts/inter-cyrillic-500-normal.woff2"); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+  @font-face { font-family: "Inter"; font-weight: 500; src: url("fonts/inter-greek-ext-500-normal.woff2"); unicode-range: U+1F00-1FFF; }
+  @font-face { font-family: "Inter"; font-weight: 500; src: url("fonts/inter-greek-500-normal.woff2"); unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF; }
+  @font-face { font-family: "Inter"; font-weight: 500; src: url("fonts/inter-latin-ext-500-normal.woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+  @font-face { font-family: "Inter"; font-weight: 600; src: url("fonts/inter-cyrillic-ext-600-normal.woff2"); unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F; }
+  @font-face { font-family: "Inter"; font-weight: 600; src: url("fonts/inter-cyrillic-600-normal.woff2"); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+  @font-face { font-family: "Inter"; font-weight: 600; src: url("fonts/inter-greek-ext-600-normal.woff2"); unicode-range: U+1F00-1FFF; }
+  @font-face { font-family: "Inter"; font-weight: 600; src: url("fonts/inter-greek-600-normal.woff2"); unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF; }
+  @font-face { font-family: "Inter"; font-weight: 600; src: url("fonts/inter-latin-ext-600-normal.woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+  @font-face { font-family: "Inter"; font-weight: 700; src: url("fonts/inter-cyrillic-ext-700-normal.woff2"); unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F; }
+  @font-face { font-family: "Inter"; font-weight: 700; src: url("fonts/inter-cyrillic-700-normal.woff2"); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+  @font-face { font-family: "Inter"; font-weight: 700; src: url("fonts/inter-greek-ext-700-normal.woff2"); unicode-range: U+1F00-1FFF; }
+  @font-face { font-family: "Inter"; font-weight: 700; src: url("fonts/inter-greek-700-normal.woff2"); unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF; }
+  @font-face { font-family: "Inter"; font-weight: 700; src: url("fonts/inter-latin-ext-700-normal.woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+  @font-face { font-family: "Inter"; font-weight: 800; src: url("fonts/inter-cyrillic-ext-800-normal.woff2"); unicode-range: U+0460-052F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F; }
+  @font-face { font-family: "Inter"; font-weight: 800; src: url("fonts/inter-cyrillic-800-normal.woff2"); unicode-range: U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116; }
+  @font-face { font-family: "Inter"; font-weight: 800; src: url("fonts/inter-greek-ext-800-normal.woff2"); unicode-range: U+1F00-1FFF; }
+  @font-face { font-family: "Inter"; font-weight: 800; src: url("fonts/inter-greek-800-normal.woff2"); unicode-range: U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF; }
+  @font-face { font-family: "Inter"; font-weight: 800; src: url("fonts/inter-latin-ext-800-normal.woff2"); unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+  @font-face { font-family: "NotoHe"; font-weight: 900; src: url("fonts/noto-sans-hebrew-hebrew-900-normal.woff2"); }
+  @font-face { font-family: "NotoHe"; font-weight: 700; src: url("fonts/noto-sans-hebrew-hebrew-700-normal.woff2"); }
+  @font-face { font-family: "NotoAr"; font-weight: 900; src: url("fonts/noto-sans-arabic-arabic-900-normal.woff2"); }
+  @font-face { font-family: "NotoAr"; font-weight: 700; src: url("fonts/noto-sans-arabic-arabic-700-normal.woff2"); }
+  @font-face { font-family: "NotoAr"; font-weight: 500; src: url("fonts/noto-sans-arabic-arabic-500-normal.woff2"); }
+  @font-face { font-family: "NotoJa"; font-weight: 900; src: url("fonts/noto-sans-jp-subset-900.woff2"); }
+  :lang(he) .title h2, :lang(he) .say, :lang(he) .rating { font-family: "Sofia", "NotoHe"; }
+  :lang(ar) .title h2, :lang(ar) .say, :lang(ar) .rating, :lang(ar) .ui-h, :lang(ar) .cta { font-family: "Sofia", "NotoAr"; }
+  :lang(ar) body, :lang(ar) .screen, :lang(ar) .pop { font-family: "Inter", "NotoAr"; }
+  :lang(ja) .title h2, :lang(ja) .say, :lang(ja) .rating { font-family: "Sofia", "NotoJa"; }
+  :lang(ar) .title h2, :lang(he) .title h2, :lang(ja) .title h2 { line-height: 1.15; }
+  :lang(ar) .say, :lang(he) .say, :lang(ja) .say { line-height: 1.2; }
+
+  :root {
+    /* V3Palette.night */
+    --bg: #0B0F1C; --surface: #171C2C; --soft: #20263A; --line: #262D42; --lip: #3A4260;
+    --ink: #F5F6FB; --ink2: #A9B1C6; --ink3: #6E7791;
+    --accent: #5C88FF; --bright: #7FA2FF; --deep: #3F6BE8; --wash: #18224A; --wash2: #22306A;
+    --yellow: #F7B41F; --yellowWash: #2B2412;
+    --green: #34D399; --greenWash: #0F2E26;
+    --red: #F87171; --redWash: #3A1820; --redInk: #FCA5A5;
+    --brand: #3870FE;
+    --S: 1320px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 9240px; height: 2868px; overflow: hidden; }
+  body { position: relative; background: #EEF1F8; font-family: "Inter", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  /* Le fond clair (V3Palette.day) et son quadrillage */
+  .grid { position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background-image: linear-gradient(rgba(56,112,254,.07) 2px, transparent 2px), linear-gradient(90deg, rgba(56,112,254,.07) 2px, transparent 2px);
+    background-size: 120px 120px; }
+  /* La lumière qui traverse toute la bande */
+  .light { position: absolute; left: 0; top: 0; z-index: 0; }
+
+  .fit { display: inline-block; white-space: nowrap; }
+
+  /* ---------- Titres ---------- */
+  .title { position: absolute; z-index: 5; top: 175px; width: var(--S); text-align: center; }
+  .title h2 { font-family: "Sofia"; font-weight: 900; font-size: 236px; line-height: .9; text-transform: uppercase; color: #0F1324; }
+  em { font-style: normal; color: #3870FE; }
+
+  /* ---------- Le téléphone : titane sombre, discret ---------- */
+  .device {
+    position: absolute; z-index: 2; top: 700px;
+    --sw: 900px; padding: 14px;
+    background: linear-gradient(150deg, #6F97FF, #3870FE 35%, #2A5BE0 75%, #5A86FF);
+    border-radius: 150px;
+    box-shadow: inset 0 0 0 4px rgba(255,255,255,.25), 0 70px 140px rgba(31,71,184,.30);
+  }
+  .bezel { padding: 14px; background: #040508; border-radius: 137px; }
+  .screen { width: 393px; height: 852px; zoom: calc(var(--sw) / 393px); border-radius: 54px; overflow: hidden; position: relative; background: var(--bg); }
+  .mid   { left: 178px; }
+  .right { left: 300px; }
+  .left  { left: 56px; }
+
+  /* ---------- L'élément qui sort du téléphone ---------- */
+  .pop { position: absolute; z-index: 4; zoom: 2.9; filter: drop-shadow(0 14px 24px rgba(15,19,36,.35)); }
+
+  /* ================== L'interface de l'app (en points iPhone) ================== */
+  .sb { height: 54px; display: flex; align-items: center; justify-content: space-between; padding: 6px 30px 0 44px; font-weight: 600; font-size: 17px; }
+  .sb .r { display: flex; gap: 6px; align-items: center; }
+  .island { position: absolute; top: 11px; left: 50%; width: 124px; height: 36px; margin-left: -62px; background: #000; border-radius: 20px; z-index: 5; }
+  .ui-h { font-family: "Sofia"; font-weight: 900; }
+  .muted { color: var(--ink2); }
+  .faint { color: var(--ink3); }
+  .eyebrow { font-size: 11.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--ink3); }
+  .card { background: var(--surface); border-radius: 20px; box-shadow: inset 0 0 0 1px var(--line); }
+  .ic { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .bar { height: 10px; background: var(--soft); border-radius: 8px; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 8px; }
+  .cta { background: #fff; color: var(--bg); border-radius: 999px; font-family: "Sofia"; font-weight: 900; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0 #BFC6D9; }
+
+  .tl div { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+  .y { background: var(--wash2); color: var(--bright); border-radius: 8px; padding: 4px 8px; font-weight: 700; }
+
+  .node { position: absolute; width: 112px; height: 112px; border-radius: 50%; display: grid; place-items: center; }
+  .node.done { background: var(--accent); box-shadow: 0 6px 0 var(--deep); }
+  .node.cur { background: var(--accent); box-shadow: 0 6px 0 var(--deep), 0 0 0 12px rgba(92,136,255,.18), 0 0 0 24px rgba(92,136,255,.07); }
+  .node.lock { background: var(--soft); box-shadow: 0 6px 0 #151a29; color: var(--ink3); }
+  .node svg { width: 46px; height: 46px; }
+
+  .opt { padding: 24px 22px; border-radius: 18px; background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--line), 0 3px 0 var(--line);
+         font-size: 19px; font-weight: 600; display: flex; align-items: center; gap: 12px; }
+  .opt.ok { background: var(--greenWash); box-shadow: inset 0 0 0 2px var(--green), 0 4px 0 #1d7a5a; }
+  .opt.no { opacity: .5; }
+
+  .bubble-me { align-self: flex-end; background: var(--accent); color: #fff; padding: 16px 20px; border-radius: 22px 22px 6px 22px; font-size: 19px; font-weight: 600; max-width: 80%; }
+  .bubble-mika { font-size: 19px; line-height: 1.5; color: var(--ink2); }
+  .screen b, .pop b { color: var(--ink); font-weight: 700; }
+  .bubble-mika b { color: var(--ink); font-weight: 700; }
+
+  .src { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink2); }
+  .src span { width: 54px; height: 54px; border-radius: 16px; display: grid; place-items: center; background: var(--soft); }
+  .src svg { width: 26px; height: 26px; }
+  /* ---------- Ouverture : grand titre et preuves ---------- */
+  .hero { position: absolute; z-index: 5; left: 90px; top: 190px; font-family: "Sofia"; font-weight: 900; font-size: 250px; line-height: .86; text-transform: uppercase; color: #0F1324; }
+  .proof { position: absolute; z-index: 5; width: 620px; text-align: center; color: #0F1324; }
+  .proof .big { font-family: "Sofia"; font-weight: 900; font-size: 220px; line-height: .9; }
+  .proof .lab { font-family: "Sofia"; font-weight: 800; font-size: 72px; color: #566078; margin-top: 4px; }
+  .proof .stars { font-size: 70px; letter-spacing: 6px; color: #F7B41F; margin-top: 6px; }
+  .proof .pic { width: 170px; height: 170px; margin: 0 auto 28px; border-radius: 48px; background: #3870FE; display: grid; place-items: center; box-shadow: 0 8px 0 #1F47B8, 0 30px 60px rgba(31,71,184,.3); }
+  .proof .pic svg { width: 92px; height: 92px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .laurel { display: flex; align-items: center; justify-content: center; gap: 0; }
+  .laurel .branch { width: 165px; height: 430px; flex: none; }
+  .laurel .big { font-size: 270px; }
+  .laurel .flip { transform: scaleX(-1); }
+  /* ---------- Ouverture : la copie Seyès et la fiche ---------- */
+  @font-face { font-family: "Caveat"; font-weight: 500; src: url("fonts/caveat-latin-500-normal.woff2"); }
+  @font-face { font-family: "Caveat"; font-weight: 700; src: url("fonts/caveat-latin-700-normal.woff2"); }
+  mark { background: none; color: #0F1324; position: relative; z-index: 0; }
+  mark::after { content: ""; position: absolute; left: -2%; right: -2%; top: 52%; height: 38%; background: #FFD84D; z-index: -1; transform: rotate(-1.5deg); border-radius: 8px; }
+  .rating { position: absolute; z-index: 5; top: 1010px; width: var(--S); display: flex; justify-content: center; align-items: center; gap: 18px;
+    font-family: "Sofia"; font-weight: 800; font-size: 76px; color: #566078; }
+  .rating .stars { color: #F7B41F; letter-spacing: 4px; font-size: 70px; }
+  .rating b { font-weight: 900; color: #0F1324; }
+  .sheet { position: absolute; z-index: 2; width: 980px; height: 1300px; border-radius: 10px;
+    background-color: #FFFFFF;
+    background-image:
+      linear-gradient(90deg, transparent 158px, #E8505B 158px, #E8505B 162px, transparent 162px),
+      linear-gradient(#A9B9EA 2px, transparent 2px),
+      linear-gradient(#DCE3F6 1px, transparent 1px),
+      linear-gradient(90deg, #DCE3F6 1px, transparent 1px);
+    background-size: 100% 100%, 100% 72px, 100% 18px, 72px 100%;
+    background-position: 0 0, 0 22px, 0 22px, 162px 0;
+    box-shadow: 0 50px 100px rgba(15,19,36,.18), 0 2px 0 rgba(15,19,36,.06); }
+  .hand { font-family: "Caveat"; font-weight: 700; font-size: 64px; line-height: 108px; color: #23379A; padding-left: 200px; padding-right: 30px; }
+  .hand > div { white-space: nowrap; }
+  .hand .hl { background: linear-gradient(transparent 30%, #FFE35A 30%, #FFE35A 90%, transparent 90%); }
+  .hand s { color: #23379A; text-decoration-thickness: 5px; }
+  .postit { position: absolute; z-index: 3; width: 380px; height: 360px; padding: 70px 30px 0 40px; background: #FFE35A;
+    font-family: "Caveat"; font-weight: 700; font-size: 82px; line-height: .95; color: #3B2C00;
+    box-shadow: 0 40px 70px rgba(15,19,36,.18); clip-path: polygon(0 0, 100% 0, 100% 86%, 88% 100%, 0 100%); }
+  .swoosh { position: absolute; z-index: 4; overflow: visible; filter: drop-shadow(0 12px 18px rgba(31,71,184,.3)); }
+  /* ---------- Ouverture : Mika en héros ---------- */
+  .brand { position: absolute; z-index: 5; top: 170px; width: var(--S); display: flex; justify-content: center; align-items: center; gap: 36px; }
+  .brand img { width: 200px; height: 200px; border-radius: 46px; box-shadow: 0 30px 60px rgba(15,19,36,.25); }
+  .brand span { font-family: "Sofia"; font-weight: 900; font-size: 150px; color: #0F1324; letter-spacing: -.01em; }
+  .say { position: absolute; z-index: 6; white-space: nowrap; padding: 46px 50px; border-radius: 70px; background: #fff;
+    font-family: "Sofia"; font-weight: 900; font-size: 118px; line-height: .92; text-transform: uppercase; color: #0F1324;
+    box-shadow: 0 40px 80px rgba(15,19,36,.18); }
+  .say::after { content: ""; position: absolute; left: 90px; bottom: -58px; width: 90px; height: 90px; background: #fff;
+    clip-path: polygon(0 0, 100% 0, 10% 100%); }
+</style>
+</head>
+<body>
+
+<div class="grid"></div>
+<!-- Une seule lumière pour les sept images : elle ondule d'un écran à l'autre -->
+<svg class="light" width="9240" height="2868" viewBox="0 0 9240 2868">
+  <defs>
+    <filter id="blur" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="140"/></filter>
+    <filter id="soft" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>
+  </defs>
+  <path d="M-200 1900 C 600 1500, 1100 2300, 1980 1800 S 3300 1200, 3960 1700 S 5200 2300, 5940 1700 S 7300 1200, 7920 1750 S 9000 2100, 9440 1700"
+        fill="none" stroke="#7FA2FF" stroke-opacity=".35" stroke-width="700" filter="url(#blur)"/>
+  <path d="M-200 1900 C 600 1500, 1100 2300, 1980 1800 S 3300 1200, 3960 1700 S 5200 2300, 5940 1700 S 7300 1200, 7920 1750 S 9000 2100, 9440 1700"
+        fill="none" stroke="#FFFFFF" stroke-opacity=".7" stroke-width="80" filter="url(#soft)"/>
+</svg>
+
+<!-- ================= 1 + 2 : Mika en héros ================= -->
+<!-- 1 : Mika se présente -->
+<div class="brand" style="left: 0"><img src="../../../Micabo/Resources/Assets.xcassets/AppIcon.appiconset/AppIcon.png" alt=""><span>Micabo</span></div>
+<div class="title" style="left: 0; top: 460px !important"><h2><span class="fit" data-t="t1"></span></h2></div>
+<div class="rating" style="left: 0"><span class="stars">★★★★★</span><b data-t="score"></b><span data-t="rating"></span></div>
+<div class="say" style="left: 470px; top: 1330px; transform: rotate(3deg)" data-t="say"></div>
+<div style="position:absolute; z-index:4; left: 40px; top: 1500px" data-mika='{"size":1180,"leftArm":"wave","eyes":"happy","mouth":"open","sticker":4}'></div>
+
+<!-- 2 : et hop, une fiche -->
+<div class="title" style="left: var(--S)"><h2><span class="fit" data-t="t2"></span></h2></div>
+<div class="device right" style="margin-left: var(--S)"><div class="bezel"><div class="screen" data-sb>
+  <div style="display:flex; align-items:center; gap:10px; padding: 12px 18px 0">
+    <svg class="ic" width="26" height="26" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    <span style="font-weight:700; font-size:17px">🌍 <span data-t="subject"></span></span>
+  </div>
+  <div style="padding: 18px 24px 0">
+    <div class="ui-h" style="font-size:46px; line-height:1"><span data-t="topic"></span></div>
+    <p style="font-size:18px; line-height:1.5; margin-top:12px" class="muted"><span data-t="lead"></span></p>
+    <div class="ui-h" style="font-size:25px; margin-top:34px; font-weight:800"><span data-t="dates"></span></div>
+    <div class="tl" style="display:flex; flex-direction:column; gap:12px; margin-top:12px">
+      <div class="card" style="font-size:18px; padding:17px 16px"><span class="y" style="font-size:15px">1947</span><span data-t="d1"></span></div>
+      <div class="card" style="font-size:18px; padding:17px 16px"><span class="y" style="font-size:15px">1961</span><span data-t="d2"></span></div>
+      <div class="card" style="font-size:18px; padding:17px 16px"><span class="y" style="font-size:15px">1989</span><span data-t="d3"></span></div>
+    </div>
+  </div>
+</div></div></div>
+<!-- Ce qu'on peut lui envoyer, sorti du téléphone -->
+<div class="pop" style="left: calc(var(--S) / 2.9 + 16px); top: calc(2020px / 2.9); transform: rotate(-3deg)">
+  <div class="card" style="display:flex; gap:12px; padding: 14px 14px 12px; border-radius: 26px; box-shadow: inset 0 0 0 1.5px var(--lip)">
+    <div class="src"><span><svg class="ic" viewBox="0 0 24 24" stroke="#60A5FA"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></span><span data-t="pdf"></span></div>
+    <div class="src"><span><svg class="ic" viewBox="0 0 24 24" stroke="#F472B6"><path d="M3 8a2 2 0 0 1 2-2h2l2-2.5h6L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="3.6"/></svg></span><span data-t="photo"></span></div>
+    <div class="src"><span><svg class="ic" viewBox="0 0 24 24" stroke="#34D399"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3.5"/></svg></span><span data-t="audio"></span></div>
+    <div class="src"><span><svg class="ic" viewBox="0 0 24 24" stroke="#F87171"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M10 9.2v5.6l4.8-2.8z" fill="#F87171"/></svg></span><span data-t="yt"></span></div>
+    <div class="src"><span><svg class="ic" viewBox="0 0 24 24" stroke="#FBBF24"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/></svg></span><span data-t="text"></span></div>
+  </div>
+</div>
+
+<!-- ================= 3 : le parcours ================= -->
+<div class="title" style="left: calc(var(--S) * 2)"><h2><span class="fit" data-t="t3"></span></h2></div>
+<div class="device left" style="margin-left: calc(var(--S) * 2)"><div class="bezel"><div class="screen" data-sb>
+  <div style="padding: 10px 24px 0">
+    <div class="bar"><i style="width:40%"></i></div>
+    <div class="ui-h" style="font-size:38px; margin-top:30px"><span data-t="topic"></span></div>
+  </div>
+  <div style="position:relative; height:600px">
+    <svg style="position:absolute; left:0; top:0" width="393" height="600"><path d="M196 270 C 120 330, 120 410, 196 470" fill="none" stroke="var(--soft)" stroke-width="16" stroke-linecap="round"/><path d="M196 80 C 270 150, 270 210, 196 270" fill="none" stroke="var(--accent)" stroke-width="16" stroke-linecap="round"/></svg>
+    <div class="node done" style="left:140px; top:28px"><svg class="ic" viewBox="0 0 24 24" stroke="#fff" stroke-width="3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+    <div class="node cur" style="left:140px; top:214px"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2.6l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg></div>
+    <div class="node lock" style="left:140px; top:430px"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>
+  </div>
+</div></div></div>
+<!-- L'étape en cours, sortie du téléphone -->
+<div class="pop" style="left: calc((var(--S) * 2 + 470px) / 2.9); top: calc(1560px / 2.9); transform: rotate(3deg)">
+  <div class="card" style="width: 236px; padding: 18px; border-radius: 26px; box-shadow: inset 0 0 0 1.5px var(--lip)">
+    <div style="display:flex; align-items:center; gap:12px">
+      <span style="width:48px; height:48px; border-radius:50%; background:var(--accent); display:grid; place-items:center; box-shadow: 0 4px 0 var(--deep); flex:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 2.6l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17l-5.6 3 1.1-6.3-4.6-4.4 6.3-.9z"/></svg></span>
+      <div><div class="eyebrow" style="color:var(--bright); font-size:10px"><span data-t="step"></span></div><div class="ui-h" style="font-size:22px; line-height:1; margin-top:3px"><span data-t="stepTitle"></span></div></div>
+    </div>
+    <div class="cta" style="height:44px; font-size:18px; margin-top:16px"><span data-t="cont"></span></div>
+  </div>
+  <span data-mika='{"size":96,"noShadow":true,"leftArm":"wave","mouth":"open"}' style="position:absolute; right:-34px; top:-62px"></span>
+</div>
+
+<!-- ================= 4 : le quiz ================= -->
+<div class="title" style="left: calc(var(--S) * 3)"><h2><span class="fit" data-t="t4"></span></h2></div>
+<div class="device right" style="margin-left: calc(var(--S) * 3)"><div class="bezel"><div class="screen" data-sb>
+  <div style="padding: 10px 24px 0">
+    <div class="bar"><i style="width:30%"></i></div>
+    <div class="ui-h" style="font-size:38px; line-height:1.02; margin-top:60px"><span data-t="q"></span></div>
+    <div style="display:flex; flex-direction:column; gap:20px; margin-top:50px">
+      <div class="opt no"><span data-t="a1"></span></div>
+      <div class="opt no"><span data-t="a2"></span></div>
+      <div class="opt" style="opacity:0"><span data-t="a3"></span></div>
+    </div>
+  </div>
+</div></div></div>
+<!-- La bonne réponse, sortie du téléphone -->
+<div class="pop" style="left: calc((var(--S) * 3 + 60px) / 2.9); top: calc(1700px / 2.9); transform: rotate(-3deg)">
+  <div class="opt ok" style="width: 330px; font-size:21px"><span style="flex:1"><span data-t="a3"></span></span>
+    <svg class="ic" width="30" height="30" viewBox="0 0 24 24" stroke="#34D399" stroke-width="3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+  <div style="display:inline-flex; align-items:center; gap:10px; margin: 14px 0 0 10px; padding: 6px 18px 6px 8px; border-radius:999px; background: var(--bg); font-family:Sofia; font-weight:900; font-size:28px; color:var(--green)">
+    <span data-mika='{"size":58,"noShadow":true,"viewBox":"20 10 360 340","eyes":"happy","mouth":"open","rightArm":"rest"}'></span><span data-t="good"></span></div>
+</div>
+
+<!-- ================= 5 : Mika ================= -->
+<div class="title" style="left: calc(var(--S) * 4)"><h2><span class="fit" data-t="t5"></span></h2></div>
+<div class="device left" style="margin-left: calc(var(--S) * 4)"><div class="bezel"><div class="screen" data-sb>
+  <div style="padding: 50px 22px 0; display:flex; flex-direction:column; gap:34px">
+    <div class="bubble-me"><span data-t="ask"></span></div>
+  </div>
+  <div style="position:absolute; left:16px; right:16px; bottom:120px; display:flex; align-items:center; gap:10px; padding:10px 10px 10px 20px; border-radius:28px; background:var(--surface); box-shadow: inset 0 0 0 1.5px var(--lip)">
+    <span style="flex:1; font-size:18px; font-weight:500" class="faint"><span data-t="input"></span></span>
+    <span style="width:44px; height:44px; border-radius:50%; background:var(--accent); display:grid; place-items:center"><svg class="ic" width="22" height="22" viewBox="0 0 24 24" stroke="#fff" stroke-width="2.6"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span>
+  </div>
+</div></div></div>
+<!-- La réponse de Mika, sortie du téléphone -->
+<div class="pop" style="left: calc((var(--S) * 4 + 430px) / 2.9); top: calc(1260px / 2.9); transform: rotate(2deg)">
+  <div class="card" style="width: 290px; padding: 18px 20px; border-radius: 24px 24px 24px 6px; box-shadow: inset 0 0 0 1.5px var(--lip)">
+    <div class="bubble-mika"><span data-t="answer"></span></div>
+  </div>
+</div>
+<div style="position:absolute; z-index:5; left: calc(var(--S) * 4 + 790px); top: 2060px; transform: rotate(6deg)" data-mika='{"size":430,"leftArm":"wave","eyes":"open","mouth":"open","sticker":5}'></div>
+
+<!-- ================= 6 : les flashcards ================= -->
+<div class="title" style="left: calc(var(--S) * 5)"><h2><span class="fit" data-t="t6"></span></h2></div>
+<div class="device right" style="margin-left: calc(var(--S) * 5)"><div class="bezel"><div class="screen" data-sb>
+  <div style="padding: 10px 24px 0"><div class="bar"><i style="width:58%"></i></div></div>
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; padding: 560px 22px 0">
+    <div style="border-radius:16px; padding:18px 6px; text-align:center; font-family:Sofia; font-weight:800; font-size:22px; background:var(--redWash); color:var(--redInk)"><span data-t="again"></span></div>
+    <div style="border-radius:16px; padding:18px 6px; text-align:center; font-family:Sofia; font-weight:800; font-size:22px; background:var(--greenWash); color:var(--green)"><span data-t="know"></span></div>
+  </div>
+</div></div></div>
+<!-- La carte, sortie du téléphone -->
+<div class="pop" style="left: calc((var(--S) * 5 + 90px) / 2.9); top: calc(1080px / 2.9); transform: rotate(-5deg)">
+  <div class="card" style="width: 290px; height: 330px; padding: 30px 24px; display:flex; flex-direction:column; justify-content:center; text-align:center; border-radius: 28px; box-shadow: inset 0 0 0 1.5px var(--lip)">
+    <div class="ui-h" style="font-size:32px; line-height:1.05"><span data-t="fq"></span></div>
+    <div style="height:1.5px; background:var(--line); margin: 30px 30px"></div>
+    <div style="font-family:Sofia; font-weight:900; font-size:62px; color:var(--bright); line-height:1">1989</div>
+  </div>
+</div>
+
+<!-- ================= 7 : les examens ================= -->
+<div class="title" style="left: calc(var(--S) * 6)"><h2><span class="fit" data-t="t7"></span></h2></div>
+<div class="device left" style="margin-left: calc(var(--S) * 6)"><div class="bezel"><div class="screen" data-sb>
+  <div class="ui-h" style="font-size:42px; padding: 14px 22px 0"><span data-t="exams"></span></div>
+  <div style="height: 300px"></div>
+  <div class="card" style="display:flex; align-items:center; gap:16px; padding:18px; margin: 30px 16px 0">
+    <div style="width:60px; text-align:center; background:var(--wash); border-radius:14px; padding:8px 0; color:var(--bright)"><div class="ui-h" style="font-size:28px; line-height:1">16</div><div style="font-size:10px; font-weight:700"><span data-t="dshort"></span></div></div>
+    <div style="flex:1; font-weight:700; font-size:18px"><span data-t="e2"></span></div>
+  </div>
+  <div class="card" style="display:flex; align-items:center; gap:16px; padding:18px; margin: 12px 16px 0">
+    <div style="width:60px; text-align:center; background:var(--wash); border-radius:14px; padding:8px 0; color:var(--bright)"><div class="ui-h" style="font-size:28px; line-height:1">23</div><div style="font-size:10px; font-weight:700"><span data-t="dshort"></span></div></div>
+    <div style="flex:1; font-weight:700; font-size:18px"><span data-t="e3"></span></div>
+  </div>
+</div></div></div>
+<!-- Le compte à rebours, sorti du téléphone -->
+<div class="pop" style="left: calc((var(--S) * 6 + 300px) / 2.9); top: calc(1000px / 2.9); transform: rotate(3deg)">
+  <div style="width: 330px; border-radius:30px; padding:24px 24px; position:relative; overflow:hidden; background: linear-gradient(150deg, #4C80FF, #3870FE 45%, #2A4FCB)">
+    <div class="eyebrow" style="color:rgba(255,255,255,.8); font-size:12px"><span data-t="exam"></span></div>
+    <div style="display:flex; align-items:baseline; gap:10px; margin-top:6px">
+      <div style="font-family:Sofia; font-weight:900; font-size:120px; line-height:.85">9</div>
+      <div style="font-family:Sofia; font-weight:900; font-size:30px"><span data-t="days"></span></div>
+    </div>
+    <div style="margin-top:22px; background:var(--bg); color:#fff; border-radius:999px; height:54px; display:flex; align-items:center; justify-content:center; font-family:Sofia; font-weight:900; font-size:20px"><span data-t="mock"></span></div>
+    <span data-mika='{"size":140,"noShadow":true,"eyes":"happy","mouth":"open"}' style="position:absolute; right:-6px; top:18px"></span>
+  </div>
+</div>
+
+<script src="i18n.js"></script>
+<script src="../../../design/mika-v3/mika.js"></script>
+<script>
+  // La langue vient de l'adresse : index.html?lang=de. Par défaut, le français.
+  const LANG = new URLSearchParams(location.search).get("lang") || "fr";
+  const T = window.I18N[LANG];
+  if (!T) throw new Error(`langue inconnue : ${LANG}`);
+  document.documentElement.lang = T._lang;
+  for (const el of document.querySelectorAll("[data-t]")) el.innerHTML = T[el.dataset.t];
+  // Le sens de lecture : les titres suivent la langue, l'écran suit celle de l'app.
+  for (const el of document.querySelectorAll(".title, .say, .rating")) el.dir = T._dir;
+  for (const el of document.querySelectorAll(".screen, .pop")) el.dir = T._uiDir;
+  const say = document.querySelector(".say");
+  say.innerHTML = `<span class="fit">${say.innerHTML}</span>`;
+</script>
+<script>
+  const sbHTML = `<div class="sb"><span>9:41</span><span class="r">
+      <svg width="18" height="12" viewBox="0 0 18 12" fill="#F5F6FB"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none" stroke="#F5F6FB" stroke-width="2" stroke-linecap="round"><path d="M1.5 4.2a9.5 9.5 0 0 1 13 0"/><path d="M4.2 7a5.5 5.5 0 0 1 7.6 0"/><circle cx="8" cy="10" r="1" fill="#F5F6FB"/></svg>
+      <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="#F5F6FB" opacity=".4"/><rect x="2" y="2" width="20" height="9" rx="2" fill="#F5F6FB"/><rect x="24.5" y="4.5" width="2" height="4" rx="1" fill="#F5F6FB" opacity=".4"/></svg>
+    </span></div>`;
+
+  // Les lauriers : des feuilles le long d'un arc.
+  for (const svg of document.querySelectorAll('[data-laurel]')) {
+    let g = '<path d="M150 500 C 40 420, 30 200, 120 30" fill="none" stroke="#0F1324" stroke-width="10" stroke-linecap="round"/>';
+    for (let i = 0; i < 9; i++) {
+      const t = i / 8, x = 150 - 120*Math.sin(t*Math.PI*.82) + 0, y = 490 - t*460;
+      const a = -50 + t*40;
+      g += `<ellipse cx="${x-22}" cy="${y}" rx="34" ry="14" transform="rotate(${a} ${x-22} ${y})" fill="#0F1324"/>`;
+      g += `<ellipse cx="${x+20}" cy="${y-18}" rx="30" ry="12" transform="rotate(${a-70} ${x+20} ${y-18})" fill="#0F1324"/>`;
+    }
+    svg.innerHTML = g;
+  }
+  for (const s of document.querySelectorAll('[data-sb]')) s.insertAdjacentHTML('afterbegin', '<div class="island"></div>' + sbHTML);
+
+  for (const el of document.querySelectorAll('[data-mika]')) {
+    const o = JSON.parse(el.dataset.mika);
+    if (o.extra) o.extra = MIKA[o.extra] || '';
+    el.innerHTML = mika(o);
+  }
+  for (const el of document.querySelectorAll('[data-mika] svg')) el.style.display = 'block';
+
+  // Une seule taille pour tous les titres : la plus grande qui laisse tout tenir.
+  function fit(selector, maxWidth) {
+    const spans = [...document.querySelectorAll(selector)];
+    const hosts = spans.map(s => s.parentElement);
+    let size = parseFloat(getComputedStyle(hosts[0]).fontSize);
+    while (spans.some(s => s.getBoundingClientRect().width > maxWidth) && size > 40) {
+      size -= 2;
+      hosts.forEach(h => h.style.fontSize = size + "px");
+    }
+    return size;
+  }
+  // La bulle de Mika : la plus grande taille qui tient dans l'image.
+  function fitSay() {
+    const span = document.querySelector(".say > .fit"), host = span.parentElement;
+    let size = parseFloat(getComputedStyle(host).fontSize);
+    while (span.getBoundingClientRect().width > 700 && size > 40) { size -= 2; host.style.fontSize = size + "px"; }
+    return size;
+  }
+  document.fonts.ready.then(() => {
+    document.body.dataset.sizes = JSON.stringify([fitSay(), ...document.querySelectorAll(".title h2 > .fit")].map(el => { if (typeof el === "number") return el; el.classList.add("me"); const v = fit(".me", 1220); el.classList.remove("me"); return v; }));
+    document.body.dataset.ready = "1";
+  });
+</script>
+</body>
+</html>

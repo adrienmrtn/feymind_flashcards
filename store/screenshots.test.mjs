@@ -47,7 +47,7 @@ test("les images du dépôt sont prêtes pour le 6,9″ : taille, pas d'alpha, s
   for (const lang of LANGUAGES) {
     assert.deepEqual(
       pictures.get(lang).map((picture) => picture.fileName),
-      ["01-fiches.png", "02-chiffres.png", "03-reviser.png", "04-quiz.png", "05-mika.png", "06-formules.png", "07-paquets.png"],
+      ["01-mika.png", "02-fiche.png", "03-parcours.png", "04-quiz.png", "05-question.png", "06-flashcards.png", "07-examens.png"],
     );
   }
 });
@@ -69,10 +69,15 @@ test("une fiche prend les images de sa langue, quelle que soit sa région", () =
   assert.equal(languageOf("fr-FR"), "fr");
   assert.equal(languageOf("fr-CA"), "fr");
   assert.equal(languageOf("en-GB"), "en");
-  assert.equal(languageOf("es-MX"), "es");
+  assert.equal(languageOf("es-ES"), "es");
+  assert.equal(languageOf("es-MX"), "es-419");
+  assert.equal(languageOf("pt-BR"), "pt-BR");
+  assert.equal(languageOf("no"), "no");
+  assert.equal(languageOf("ar-SA"), "ar");
   assert.equal(languageOf("tr"), "tr");
   assert.equal(languageOf("zh-Hans"), null);
-  assert.equal(languageOf("pt-BR"), null);
+  assert.equal(languageOf("pt-PT"), null);
+  assert.equal(languageOf("et"), null);
 });
 
 const picture = (fileName, checksum) => ({ fileName, checksum });
@@ -112,7 +117,7 @@ test("les autres tailles d'iPhone qui ont des images sont vidées ; l'iPad et le
 });
 
 test("une fiche dans une langue sans images n'est pas touchée", () => {
-  const plan = planLocalization("it", [{ id: "s65", type: "APP_IPHONE_65", screenshots: [shot("o1", "old.png", "z")] }], byDisplay);
+  const plan = planLocalization("et", [{ id: "s65", type: "APP_IPHONE_65", screenshots: [shot("o1", "old.png", "z")] }], byDisplay);
   assert.equal(plan.lang, null);
   assert.deepEqual(plan.steps, []);
   assert.deepEqual(plan.obsolete, []);
