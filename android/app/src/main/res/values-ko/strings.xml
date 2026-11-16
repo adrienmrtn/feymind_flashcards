@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">그 밖에</string>
     <string name="ios_onb16_time_max">아주 강하게</string>
     <string name="ios_onb16_welcome_cta">응, 시작하자</string>
+    <string name="ios_onb18_q_gender">**너**는…?</string>
+    <string name="ios_onb18_say_gender">너에게 알맞게 말하려고 물어봐.</string>
+    <string name="ios_onb18_gender_male">남성</string>
+    <string name="ios_onb18_gender_female">여성</string>
+    <string name="ios_onb18_gender_other">기타</string>
     <string name="ios_onb16_welcome_say">안녕, 나는 Mika야. 공부를 도와줄 새 어시스턴트지. 네 계획을 준비하려고 몇 가지 물어볼게. 괜찮아?</string>
     <string name="ios_onb17_offer_say">잠깐만요, %1$s! **특별 가격**이 있어요.</string>
     <string name="ios_onb17_offer_sayAnon">잠깐만요! **특별 가격**이 있어요.</string>

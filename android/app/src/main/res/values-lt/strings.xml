@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Ir dar</string>
     <string name="ios_onb16_time_max">Labai intensyviai</string>
     <string name="ios_onb16_welcome_cta">Taip, pradedam</string>
+    <string name="ios_onb18_q_gender">O **tu** esi…?</string>
+    <string name="ios_onb18_say_gender">Kad tinkamai į tave kreipčiausi.</string>
+    <string name="ios_onb18_gender_male">Vyras</string>
+    <string name="ios_onb18_gender_female">Moteris</string>
+    <string name="ios_onb18_gender_other">Kita</string>
     <string name="ios_onb16_welcome_say">Labas, aš Mika, tavo naujas mokymosi asistentas. Užduosiu tau kelis klausimus, kad paruoščiau tavo planą. Gerai?</string>
     <string name="ios_onb17_offer_say">Palauk, %1$s! Turiu tau **geresnę kainą**.</string>
     <string name="ios_onb17_offer_sayAnon">Palauk! Turiu tau **geresnę kainą**.</string>

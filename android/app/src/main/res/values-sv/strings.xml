@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Och även</string>
     <string name="ios_onb16_time_max">Mycket intensivt</string>
     <string name="ios_onb16_welcome_cta">Ja, vi kör</string>
+    <string name="ios_onb18_q_gender">Och **du** är …?</string>
+    <string name="ios_onb18_say_gender">Så att jag tilltalar dig rätt.</string>
+    <string name="ios_onb18_gender_male">En man</string>
+    <string name="ios_onb18_gender_female">En kvinna</string>
+    <string name="ios_onb18_gender_other">Annat</string>
     <string name="ios_onb16_welcome_say">Hej, jag heter Mika och är din nya assistent för att plugga. Jag ställer några frågor för att förbereda din plan. Är det okej?</string>
     <string name="ios_onb17_offer_say">Vänta, %1$s! Jag har ett **bättre pris** till dig.</string>
     <string name="ios_onb17_offer_sayAnon">Vänta! Jag har ett **bättre pris** till dig.</string>

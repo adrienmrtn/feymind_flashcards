@@ -236,6 +236,13 @@ data class GradeGap(val size: Size, val from: String, val to: String, val amount
 /** **Ce qui le bloque** : plusieurs réponses, dans l'ordre de la liste. */
 enum class StudyWorry { examStress, hardLessons, homework, forgetting, noStart, motivation }
 
+/** **Le genre de l'élève**, tel qu'il le dit. Les noms sont ceux des statistiques (`gender`). */
+enum class StudentGender {
+    male, female, other;
+
+    val titleKey: String get() = "ios.onb18.gender.$name"
+}
+
 /** **Le temps de révision d'aujourd'hui, par semaine** (lot 12). */
 enum class WeeklyStudy(val titleKey: String, val reactionKey: String) {
     underOne("ios.onb12.hours.underOne", "ios.onb16.react.hours.underOne"),

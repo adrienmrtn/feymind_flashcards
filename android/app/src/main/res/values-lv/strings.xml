@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Un vēl</string>
     <string name="ios_onb16_time_max">Ļoti intensīvi</string>
     <string name="ios_onb16_welcome_cta">Jā, sākam</string>
+    <string name="ios_onb18_q_gender">Un **tu** esi…?</string>
+    <string name="ios_onb18_say_gender">Lai es tevi pareizi uzrunātu.</string>
+    <string name="ios_onb18_gender_male">Vīrietis</string>
+    <string name="ios_onb18_gender_female">Sieviete</string>
+    <string name="ios_onb18_gender_other">Cits</string>
     <string name="ios_onb16_welcome_say">Čau, es esmu Mika, tavs jaunais mācību palīgs. Uzdošu tev dažus jautājumus, lai sagatavotu tavu plānu. Labi?</string>
     <string name="ios_onb17_offer_say">Pagaidi, %1$s! Man tev ir **labāka cena**.</string>
     <string name="ios_onb17_offer_sayAnon">Pagaidi! Man tev ir **labāka cena**.</string>

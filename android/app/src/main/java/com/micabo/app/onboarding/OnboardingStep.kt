@@ -15,6 +15,8 @@ enum class OnboardingStep(val kind: Kind, val chapter: Int) {
     welcome(Kind.CHAPTER, 0),
     /** « Comment tu t'appelles ? » : `name` dans les statistiques (le nom Kotlin est pris). */
     yourName(Kind.QUESTION, 0),
+    /** « Et toi, tu es… ? » : un homme, une femme, autre. Facultative (« Passer »). */
+    gender(Kind.QUESTION, 0),
     country(Kind.QUESTION, 0),
     level(Kind.QUESTION, 0),
     schoolType(Kind.QUESTION, 0),
@@ -74,6 +76,9 @@ enum class OnboardingStep(val kind: Kind, val chapter: Int) {
     val showsChrome: Boolean get() = this !in setOf(hookLogo, planBuilding, profileSummary, paywall)
 
     val isLoading: Boolean get() = this == planBuilding
+
+    /** Les écrans dont la réponse est facultative (« Passer », en haut) : le genre, la moyenne. */
+    val isSkippable: Boolean get() = this == gender || this == currentAverage
 
     val allowsReturn: Boolean get() = this !in setOf(hookLogo, profileSummary, paywall) && !isLoading
 

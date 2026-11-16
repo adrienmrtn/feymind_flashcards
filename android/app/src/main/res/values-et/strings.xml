@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Ja veel</string>
     <string name="ios_onb16_time_max">Väga intensiivne</string>
     <string name="ios_onb16_welcome_cta">Jah, alustame</string>
+    <string name="ios_onb18_q_gender">Ja **sina** oled…?</string>
+    <string name="ios_onb18_say_gender">Et saaksin sinu poole õigesti pöörduda.</string>
+    <string name="ios_onb18_gender_male">Mees</string>
+    <string name="ios_onb18_gender_female">Naine</string>
+    <string name="ios_onb18_gender_other">Muu</string>
     <string name="ios_onb16_welcome_say">Tere, mina olen Mika, sinu uus õppimisabiline. Esitan sulle paar küsimust, et su plaan ette valmistada. Kas sobib?</string>
     <string name="ios_onb17_offer_say">Oota, %1$s! Mul on sulle **parem hind**.</string>
     <string name="ios_onb17_offer_sayAnon">Oota! Mul on sulle **parem hind**.</string>

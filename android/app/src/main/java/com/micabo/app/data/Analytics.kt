@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import androidx.core.content.edit
 import com.micabo.app.BuildConfig
+import com.micabo.app.i18n.AppLocale
+import com.micabo.app.onboarding.OnboardingModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -34,6 +36,8 @@ import java.util.UUID
  */
 class Analytics(context: Context, private val prefs: Prefs, private val auth: SupabaseAuth, private val isPro: () -> Boolean) {
     private val store = context.getSharedPreferences("micabo.analytics", Context.MODE_PRIVATE)
+    /** Les préférences de l'app, où le parcours d'accueil garde ses réponses. */
+    private val answers = context.getSharedPreferences("micabo", Context.MODE_PRIVATE)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val lock = Mutex()
     private val pending = mutableListOf<JsonObject>()
@@ -71,15 +75,24 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
             store.edit { putBoolean("installed", true) }
             track("app_installed")
         }
-        track("app_opened")
+        track("app_opened", openingProps())
     }
+
+    /**
+     * Ce que porte chaque ouverture : la langue choisie dans l'app (la colonne `locale`, elle,
+     * est celle du téléphone) et le genre donné à l'accueil, s'il l'a été.
+     */
+    private fun openingProps(): Map<String, Any?> = mapOf(
+        "ui_language" to AppLocale.resolved(prefs.profile.value.language).code,
+        "gender" to answers.getString(OnboardingModel.GENDER_KEY, null),
+    )
 
     /** Retour au premier plan : une nouvelle session après trente minutes d'absence. */
     fun resumed() {
         val now = System.currentTimeMillis()
         if (now - lastSeen > SESSION_GAP) {
             sessionId = UUID.randomUUID().toString()
-            track("app_opened")
+            track("app_opened", openingProps())
         }
         lastSeen = now
     }

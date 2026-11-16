@@ -77,6 +77,7 @@ import com.micabo.app.onboarding.ExamChoice
 import com.micabo.app.onboarding.OnboardingModel
 import com.micabo.app.onboarding.OnboardingStep
 import com.micabo.app.onboarding.SchoolSystem
+import com.micabo.app.onboarding.StudentGender
 import com.micabo.app.onboarding.SubjectCatalog
 import com.micabo.app.onboarding.SubjectDisplay
 import com.micabo.app.onboarding.SubjectGroup
@@ -415,6 +416,18 @@ fun NameStep(model: OnboardingModel) {
             )
         }
         MicaboButton(t("common.continue"), onClick = { model.advance() }, enabled = name.isNotEmpty(), modifier = Modifier.padding(top = 10.dp).testTag("cta"))
+    }
+}
+
+/** **« Et toi, tu es… ? »** Une réponse, juste après le prénom ; « Passer », en haut, continue sans rien garder. */
+@Composable
+fun GenderStep(model: OnboardingModel) {
+    Question(t("ios.onb18.q.gender"), t("ios.onb18.say.gender"), MikaMood.HAPPY, footer = {
+        ChoiceFooter(model, enabled = model.gender != null)
+    }) {
+        StudentGender.entries.forEach { gender ->
+            V3OptionRow(t(gender.titleKey), selected = model.gender == gender, onClick = { model.chooseGender(gender) })
+        }
     }
 }
 

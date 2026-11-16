@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">А ещё</string>
     <string name="ios_onb16_time_max">Очень интенсивно</string>
     <string name="ios_onb16_welcome_cta">Да, поехали</string>
+    <string name="ios_onb18_q_gender">А **ты**…?</string>
+    <string name="ios_onb18_say_gender">Чтобы правильно к тебе обращаться.</string>
+    <string name="ios_onb18_gender_male">Мужчина</string>
+    <string name="ios_onb18_gender_female">Женщина</string>
+    <string name="ios_onb18_gender_other">Другое</string>
     <string name="ios_onb16_welcome_say">Привет, я Mika, твой новый помощник для учёбы. Я задам тебе несколько вопросов, чтобы подготовить твой план. Хорошо?</string>
     <string name="ios_onb17_offer_say">Подожди, %1$s! У меня для тебя **цена получше**.</string>
     <string name="ios_onb17_offer_sayAnon">Подожди! У меня для тебя **цена получше**.</string>

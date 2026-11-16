@@ -60,6 +60,9 @@ class OnboardingModel(
     private var restoring = false
 
     var displayName by mutableStateOf("")
+    /** « Et toi, tu es… ? » : facultatif, nul quand la question est passée. */
+    var gender by mutableStateOf<StudentGender?>(null)
+        private set
     var country by mutableStateOf("fr")
         private set
     var customCountry by mutableStateOf<String?>(null)
@@ -108,6 +111,22 @@ class OnboardingModel(
 
     private fun answer(field: String, value: Any) {
         if (!restoring) track("onboarding_answer", mapOf("field" to field, "value" to value))
+    }
+
+    // MARK: Le genre
+
+    fun chooseGender(value: StudentGender) {
+        if (gender == value) return
+        gender = value
+        answer("gender", value.name)
+    }
+
+    /** « Passer » le genre : rien n'est gardé, et le parcours continue. */
+    fun skipGender() {
+        if (step != OnboardingStep.gender) return
+        gender = null
+        answer("gender", "passer")
+        advance()
     }
 
     // MARK: Le pays et l'école
@@ -367,11 +386,61 @@ class OnboardingModel(
             return true
         }
         persist()
+        if (step == OnboardingStep.subjects && subjects.isNotEmpty() && !restoring) {
+            track("onboarding_answer", mapOf<String, Any>("field" to "subjects") + analyticsList("value", subjects.sorted()))
+        }
         var next = step.next
         while (next != null && isSkipped(next)) next = next.next
         next ?: return false
         move(next, forward = true)
         return true
+    }
+
+    /**
+     * **Toutes les réponses, à plat**, pour `onboarding_profile` (`analyticsProfile`). Des
+     * identifiants et des nombres ; les seuls textes libres sont des noms de matières,
+     * raccourcis. Le prénom n'y est pas, et n'y sera pas.
+     */
+    fun analyticsProfile(uiLanguage: String): Map<String, Any> {
+        val profile = LinkedHashMap<String, Any>()
+        fun putText(key: String, value: String?) {
+            value?.trim()?.take(120)?.takeIf { it.isNotEmpty() }?.let { profile[key] = it }
+        }
+        fun putNumber(key: String, value: Int?) {
+            value?.let { profile[key] = it }
+        }
+        putText("ui_language", uiLanguage)
+        putText("country", country)
+        putText("custom_country", customCountry)
+        profile["gender"] = gender?.name ?: "passer"
+        putText("stage", stage?.id)
+        putText("level", level)
+        putText("track", schoolTrack?.id)
+        putText("year", schoolYear?.id)
+        putText("exam", examChoice?.id)
+        if (examChoice?.hasDate == true) putText("exam_date", examDate?.toString())
+        if (subjects.isNotEmpty()) {
+            profile.putAll(analyticsList("subjects", subjects.sorted()))
+            profile["subject_count"] = subjects.size
+        }
+        putText("hardest_subject", hardestSubject)
+        putText("goal", mainGoal?.name)
+        if (worriesInOrder.isNotEmpty()) putText("worries", worriesInOrder.joinToString(",") { it.name })
+        putText("weekly_study", weeklyStudy?.name)
+        putText("study_method", studyMethod?.name)
+        putNumber("current_score", currentScore)
+        putNumber("target_score", targetScore)
+        putNumber("daily_minutes", dailyMinutes)
+        putNumber("study_hour", studyHour)
+        profile["first_lesson"] = when (firstLessonChoice) {
+            FirstLessonChoice.TOPIC -> "topic"
+            FirstLessonChoice.IMPORT -> "import"
+            null -> "later"
+        }
+        profile["committed"] = hasCommitted
+        profile["has_account"] = hasAccount
+        profile["skipped_averages"] = didSkipAverages
+        return profile
     }
 
     val canGoBack: Boolean get() = step.allowsReturn && returnTarget != null
@@ -430,6 +499,7 @@ class OnboardingModel(
     private object Keys {
         const val STEP = "onb.step"
         const val NAME = "onb.name"
+        const val GENDER = GENDER_KEY
         const val COUNTRY = "onb.country"
         const val CUSTOM = "onb.customCountry"
         const val STAGE = "onb.stage"
@@ -457,6 +527,7 @@ class OnboardingModel(
     fun persist() {
         if (restoring) return
         store.putString(Keys.NAME, displayName.trim().ifEmpty { null })
+        store.putString(Keys.GENDER, gender?.name)
         store.putString(Keys.COUNTRY, country)
         store.putString(Keys.CUSTOM, customCountry)
         store.putString(Keys.STAGE, stage?.id)
@@ -491,6 +562,7 @@ class OnboardingModel(
         restoring = true
         try {
             displayName = store.string(Keys.NAME).orEmpty()
+            gender = store.string(Keys.GENDER)?.let { name -> StudentGender.entries.firstOrNull { it.name == name } }
             if (store.string(Keys.CHOSEN) != null) {
                 hasChosenCountry = true
                 country = store.string(Keys.COUNTRY) ?: country
@@ -536,6 +608,23 @@ class OnboardingModel(
     companion object {
         /** L'heure du rappel quotidien par défaut (`DailyReminder.defaultHour`). */
         const val DEFAULT_HOUR = 18
+
+        /** Où le genre est gardé : les statistiques le relisent à chaque ouverture (`app_opened`). */
+        const val GENDER_KEY = "onb.gender"
+
+        /**
+         * **Une liste de noms, en morceaux** (`analyticsList`) : une valeur est coupée à 120
+         * signes, dix matières n'y tiennent pas. La liste part sous `key`, puis `key_2`, `key_3`,
+         * chaque morceau fait de noms entiers (60 signes au plus) ; la suite est omise.
+         */
+        fun analyticsList(key: String, names: List<String>): Map<String, Any> {
+            val chunks = mutableListOf<String>()
+            for (name in names.map { it.take(60) }) {
+                val last = chunks.lastOrNull()
+                if (last != null && last.length + 1 + name.length <= 120) chunks[chunks.size - 1] = "$last,$name" else chunks.add(name)
+            }
+            return chunks.take(3).withIndex().associate { (index, chunk) -> (if (index == 0) key else "${key}_${index + 1}") to chunk }
+        }
 
         /** **Les réponses de Lina** (France, Terminale, 45 min, 18 h), pour les rendus et les tests. */
         fun lina(step: OnboardingStep = OnboardingStep.hookLogo, trial: Boolean = true, today: LocalDate = LocalDate.of(2026, 11, 12)): OnboardingModel {

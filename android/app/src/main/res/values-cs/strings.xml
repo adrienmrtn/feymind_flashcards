@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">A také</string>
     <string name="ios_onb16_time_max">Velmi intenzivně</string>
     <string name="ios_onb16_welcome_cta">Ano, jdeme na to</string>
+    <string name="ios_onb18_q_gender">A **ty** jsi…?</string>
+    <string name="ios_onb18_say_gender">Abych tě správně oslovoval.</string>
+    <string name="ios_onb18_gender_male">Muž</string>
+    <string name="ios_onb18_gender_female">Žena</string>
+    <string name="ios_onb18_gender_other">Jiné</string>
     <string name="ios_onb16_welcome_say">Ahoj, já jsem Mika, tvůj nový asistent na učení. Položím ti pár otázek, abych připravil tvůj plán. Souhlasíš?</string>
     <string name="ios_onb17_offer_say">Počkej, %1$s! Mám pro tebe **lepší cenu**.</string>
     <string name="ios_onb17_offer_sayAnon">Počkej! Mám pro tebe **lepší cenu**.</string>

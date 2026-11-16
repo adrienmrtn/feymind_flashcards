@@ -207,6 +207,7 @@ fun ProfileScreen() {
             onPick = { code ->
                 picker = null
                 if (code != language.code) {
+                    app.analytics.track("language_changed", mapOf("from" to language.code, "to" to code))
                     app.prefs.update { it.copy(language = code) }
                     (context as? Activity)?.recreate()
                 }

@@ -703,6 +703,11 @@
     <string name="ios_onb16_subjects_other">Și altele</string>
     <string name="ios_onb16_time_max">Foarte intens</string>
     <string name="ios_onb16_welcome_cta">Da, hai să începem</string>
+    <string name="ios_onb18_q_gender">Iar **tu** ești…?</string>
+    <string name="ios_onb18_say_gender">Ca să mă adresez corect.</string>
+    <string name="ios_onb18_gender_male">Bărbat</string>
+    <string name="ios_onb18_gender_female">Femeie</string>
+    <string name="ios_onb18_gender_other">Altceva</string>
     <string name="ios_onb16_welcome_say">Salut, eu sunt Mika, noul tău asistent pentru învățat. Îți pun câteva întrebări ca să-ți pregătesc parcursul. E în regulă?</string>
     <string name="ios_onb17_offer_say">Stai, %1$s! Am un **preț** mai bun pentru tine.</string>
     <string name="ios_onb17_offer_sayAnon">Stai! Am un **preț** mai bun pentru tine.</string>
