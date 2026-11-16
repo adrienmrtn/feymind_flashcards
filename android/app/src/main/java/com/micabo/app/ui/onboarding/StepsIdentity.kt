@@ -60,7 +60,9 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -128,11 +130,10 @@ fun Question(
     )
 }
 
-/** Un choix unique avance tout seul, à la fin du petit ressort de la ligne. */
-fun pick(model: OnboardingModel, step: OnboardingStep, apply: () -> Unit) {
-    if (model.step != step) return
-    apply()
-    model.advance()
+/** Le pied d'un choix unique : toucher une ligne la choisit seulement, « Continuer » avance. */
+@Composable
+fun ChoiceFooter(model: OnboardingModel, enabled: Boolean) {
+    MicaboButton(t("common.continue"), onClick = { model.advance() }, enabled = enabled, modifier = Modifier.testTag("cta"))
 }
 
 // MARK: - Les stories
@@ -266,7 +267,7 @@ private fun StoryIntro() {
     val colors = Micabo.colors
     Mika(MikaMood.WAVE, 96.dp, Modifier.fillMaxWidth())
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        listOf("Mathématiques", "Histoire", "Physique", "Anglais").forEach { subject ->
+        listOf("Mathématiques", "Histoire", "SVT", "Anglais").forEach { subject ->
             StoryTile {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     val tone = subjectTone(subject)
@@ -384,7 +385,7 @@ private fun StoryPlan(exam: String) {
 
 @Composable
 fun WelcomeStep(model: OnboardingModel) =
-    ChapterOpener(t("ios.onb15.open.welcome.title"), t("ios.onb16.welcome.say"), MikaMood.WAVE, t("ios.onb16.welcome.cta")) { model.advance() }
+    ChapterOpener(t("ios.onb15.open.welcome.title"), t("ios.onb16.welcome.say"), MikaMood.WAVE, t("ios.onb16.welcome.cta"), instant = !model.isMovingForward) { model.advance() }
 
 @Composable
 fun NameStep(model: OnboardingModel) {
@@ -427,10 +428,19 @@ fun CountryStep(model: OnboardingModel) {
     var query by remember { mutableStateOf("") }
     val name = model.displayName.trim()
     val locale = currentLocale
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     Question(
         title = t("ios.onb12.q.country"),
         say = if (name.isEmpty()) t("ios.onb12.say.countryAny") else t("ios.onb12.say.country", "name" to name),
         mood = if (name.isEmpty()) MikaMood.LOOK else MikaMood.HAPPY,
+        footer = {
+            // Le pays présélectionné, gardé sans y toucher, compte comme choisi (il se retrouve à la reprise).
+            MicaboButton(t("common.continue"), onClick = {
+                if (model.country != "other") model.selectCountry(model.country)
+                model.advance()
+            }, enabled = model.hasAnsweredCountry, modifier = Modifier.testTag("cta"))
+        },
     ) {
         Row(
             Modifier.fillMaxWidth().clip(CircleShape).background(colors.surfaceMuted).padding(horizontal = 16.dp, vertical = 12.dp),
@@ -457,17 +467,23 @@ fun CountryStep(model: OnboardingModel) {
                 Text(t("ios.countryNone"), style = text(17.sp), color = colors.inkSecondary, modifier = Modifier.padding(top = 6.dp))
             }
             matches.forEach { country ->
-                V3OptionRow(country.name, selected = false, emoji = country.flag, onClick = { pick(model, OnboardingStep.country) { model.selectWorld(country.code) } })
+                // Un résultat choisi : la recherche se vide, le clavier se range, la liste le montre coché.
+                V3OptionRow(country.name, selected = false, emoji = country.flag, onClick = {
+                    model.selectWorld(country.code)
+                    query = ""
+                    focus.clearFocus()
+                    keyboard?.hide()
+                })
             }
         } else {
             val custom = model.customCountry
             if (model.country == "other" && custom != null) {
-                V3OptionRow(WorldCountries.country(custom, locale)?.name ?: custom, selected = true, emoji = Countries.flag(custom), onClick = { model.advance() })
+                V3OptionRow(WorldCountries.country(custom, locale)?.name ?: custom, selected = true, emoji = Countries.flag(custom), onClick = {})
             }
             val guessed = Countries.detected(listOf(locale.toLanguageTag()))
             val listed = listOfNotNull(guessed) + Countries.listed.filter { it != guessed }
             listed.forEach { code ->
-                V3OptionRow(countryName(code), selected = model.country == code, emoji = Countries.flag(code), onClick = { pick(model, OnboardingStep.country) { model.selectCountry(code) } })
+                V3OptionRow(countryName(code), selected = model.country == code, emoji = Countries.flag(code), onClick = { model.selectCountry(code) })
             }
         }
     }
@@ -475,9 +491,11 @@ fun CountryStep(model: OnboardingModel) {
 
 @Composable
 fun SchoolTypeStep(model: OnboardingModel) {
-    Question(t("ios.onb12.q.schoolType"), t("ios.onb12.react.country", "country" to countryLabel(model)), MikaMood.HAPPY) {
+    Question(t("ios.onb12.q.schoolType"), t("ios.onb12.react.country", "country" to countryLabel(model)), MikaMood.HAPPY, footer = {
+        ChoiceFooter(model, enabled = model.tracks.any { it.id == model.schoolTrack?.id })
+    }) {
         model.tracks.forEach { track ->
-            V3OptionRow(track.title, selected = model.schoolTrack?.id == track.id, icon = MicaboIcons.tier(track.tier), onClick = { pick(model, OnboardingStep.schoolType) { model.chooseTrack(track) } })
+            V3OptionRow(track.title, selected = model.schoolTrack?.id == track.id, icon = MicaboIcons.tier(track.tier), onClick = { model.chooseTrack(track) })
         }
     }
 }
@@ -489,16 +507,20 @@ fun SchoolYearStep(model: OnboardingModel) {
         "lowerSecondary", "upperSecondary", null -> t("ios.onb12.q.year")
         else -> t("ios.onb12.q.yearHigher")
     }
-    Question(title, if (track == null) t("ios.onb12.say.level") else t("ios.onb12.react.track", "track" to track.title), if (track == null) MikaMood.IDLE else MikaMood.HAPPY) {
+    Question(title, if (track == null) t("ios.onb12.say.level") else t("ios.onb12.react.track", "track" to track.title), if (track == null) MikaMood.IDLE else MikaMood.HAPPY, footer = {
+        ChoiceFooter(model, enabled = track?.years.orEmpty().any { it.id == model.schoolYear?.id })
+    }) {
         track?.years.orEmpty().forEach { year ->
-            V3OptionRow(year.title, selected = model.schoolYear?.id == year.id, onClick = { pick(model, OnboardingStep.year) { model.chooseYear(year) } })
+            V3OptionRow(year.title, selected = model.schoolYear?.id == year.id, onClick = { model.chooseYear(year) })
         }
     }
 }
 
 @Composable
 fun LevelStep(model: OnboardingModel) {
-    Question(t("ios.onb12.q.level"), t("ios.onb12.react.countryAny", "country" to countryLabel(model)), MikaMood.HAPPY) {
+    Question(t("ios.onb12.q.level"), t("ios.onb12.react.countryAny", "country" to countryLabel(model)), MikaMood.HAPPY, footer = {
+        ChoiceFooter(model, enabled = Countries.genericStages.any { it.id == model.stage?.id })
+    }) {
         Countries.genericStages.forEach { stage ->
             val title = when (stage.id) {
                 "generic.middle" -> t("ios.level.generic.middle")
@@ -507,7 +529,7 @@ fun LevelStep(model: OnboardingModel) {
                 "generic.university" -> t("ios.level.generic.university")
                 else -> t("ios.level.other")
             }
-            V3OptionRow(title, selected = model.stage?.id == stage.id, icon = MicaboIcons.tier(stage.tier), onClick = { pick(model, OnboardingStep.level) { model.chooseStage(stage.copy(title = title)) } })
+            V3OptionRow(title, selected = model.stage?.id == stage.id, icon = MicaboIcons.tier(stage.tier), onClick = { model.chooseStage(stage.copy(title = title)) })
         }
     }
 }
@@ -635,14 +657,16 @@ private fun SubjectChips(model: OnboardingModel, subjects: List<String>) {
 
 @Composable
 fun HardestSubjectStep(model: OnboardingModel) {
-    Question(t("ios.onb16.q.hardest"), t("ios.onb16.say.hardest"), MikaMood.WINK) {
+    Question(t("ios.onb16.q.hardest"), t("ios.onb16.say.hardest"), MikaMood.WINK, footer = {
+        ChoiceFooter(model, enabled = model.hardestSubject != null)
+    }) {
         model.subjects.sorted().forEach { subject ->
             V3OptionRow(
                 SubjectDisplay.subject(subject, appLanguageCode),
                 selected = model.hardestSubject == subject,
                 icon = MicaboIcons.subject(SubjectKind.of(subject)),
                 iconTone = subjectTone(subject),
-                onClick = { pick(model, OnboardingStep.hardestSubject) { model.chooseHardest(subject) } },
+                onClick = { model.chooseHardest(subject) },
             )
         }
     }
@@ -659,5 +683,5 @@ fun ChapterOpenerStep(step: OnboardingStep, model: OnboardingModel) {
         else -> Triple("ios.onb15.open.story.title", t("ios.onb16.story.intro.say", "topic" to t(model.story.lessonKey)), MikaMood.WINK)
     }
     val cta = if (step == OnboardingStep.helpIntro || step == OnboardingStep.storyIntro) t("ios.onb12.recap.cta") else t("common.continue")
-    ChapterOpener(t(title), say, mood, cta) { model.advance() }
+    ChapterOpener(t(title), say, mood, cta, instant = !model.isMovingForward) { model.advance() }
 }

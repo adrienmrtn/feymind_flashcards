@@ -2,6 +2,7 @@ package com.micabo.app.ui.onboarding
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -55,8 +56,10 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathMeasure
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
@@ -93,10 +96,12 @@ import com.micabo.app.ui.v3.MicaboIcons
 import com.micabo.app.ui.v3.MikaRow
 import com.micabo.app.ui.v3.OnbScreen
 import com.micabo.app.ui.v3.Panel
+import com.micabo.app.ui.v3.RevealedButton
 import com.micabo.app.ui.v3.V3Chip
 import com.micabo.app.ui.v3.V3Title
 import com.micabo.app.ui.v3.XpPill
 import com.micabo.app.ui.v3.figure
+import com.micabo.app.ui.v3.rememberStill
 import com.micabo.app.ui.v3.v3Card
 import kotlinx.coroutines.delay
 import java.time.LocalDate
@@ -224,6 +229,16 @@ fun StartingPointStep(model: OnboardingModel) {
         exam != null -> t("ios.onb16.start.titleExam", "exam" to examTitle(exam.first))
         else -> t("ios.onb16.start.titleBare")
     }
+    // La courbe se trace, puis le bouton arrive ; au retour (ou sans animations), tout est posé.
+    val instant = rememberStill() || !model.isMovingForward
+    val curve = remember { Animatable(if (instant) 1f else 0f) }
+    var drawn by remember { mutableStateOf(instant) }
+    LaunchedEffect(Unit) {
+        if (drawn) return@LaunchedEffect
+        delay(350)
+        curve.animateTo(1f, tween(1_300, easing = FastOutSlowInEasing))
+        drawn = true
+    }
     OnbScreen(
         header = {
             V3Title(title, Modifier.padding(top = 16.dp), size = 40, keyword = colors.green)
@@ -231,7 +246,7 @@ fun StartingPointStep(model: OnboardingModel) {
         },
         body = {
             Column(Modifier.fillMaxWidth().padding(top = 16.dp).v3Card().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                ProjectionChart(target, Modifier.fillMaxWidth().height(170.dp))
+                ProjectionChart(target, { curve.value }, Modifier.fillMaxWidth().height(170.dp))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Column(Modifier.weight(1f)) {
                         model.currentScore?.let { Text(gradeLabel(model, it), style = text(17.sp, FontWeight.SemiBold), color = colors.ink) }
@@ -241,13 +256,16 @@ fun StartingPointStep(model: OnboardingModel) {
                 }
             }
         },
-        footer = { MicaboButton(t("ios.onb12.start.cta"), onClick = { model.advance() }, modifier = Modifier.testTag("cta")) },
+        footer = { RevealedButton(drawn, t("ios.onb12.start.cta"), onClick = { model.advance() }, modifier = Modifier.testTag("cta")) },
     )
 }
 
-/** **La courbe qui monte**, d'aujourd'hui à la date visée, l'objectif au bout. */
+/**
+ * **La courbe qui monte**, d'aujourd'hui à la date visée, l'objectif au bout. `progress` (0 à 1)
+ * dit jusqu'où elle est tracée ; le point d'arrivée et l'objectif paraissent à la fin.
+ */
 @Composable
-private fun ProjectionChart(target: String?, modifier: Modifier) {
+private fun ProjectionChart(target: String?, progress: () -> Float, modifier: Modifier) {
     val colors = Micabo.colors
     LeftToRight {
         Box(modifier) {
@@ -260,12 +278,29 @@ private fun ProjectionChart(target: String?, modifier: Modifier) {
                     val y = size.height * row / 4f
                     drawLine(colors.stroke, Offset(0f, y), Offset(size.width, y), strokeWidth = 1.5f)
                 }
-                drawPath(path, colors.green, style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round))
+                val reach = progress().coerceIn(0f, 1f)
+                val traced = if (reach >= 1f) path else Path().also { part ->
+                    val measure = PathMeasure()
+                    measure.setPath(path, false)
+                    measure.getSegment(0f, measure.length * reach, part, true)
+                }
+                val arrival = ((reach - 0.85f) / 0.15f).coerceIn(0f, 1f)
+                drawPath(traced, colors.green, style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round))
                 drawCircle(colors.accent, 7.dp.toPx(), Offset(8f, size.height * 0.82f))
-                drawCircle(colors.green, 9.dp.toPx(), Offset(size.width - 24f, size.height * 0.16f))
+                drawCircle(colors.green, 9.dp.toPx() * arrival, Offset(size.width - 24f, size.height * 0.16f))
             }
             if (target != null) {
-                Text(target, style = display(22.sp), color = colors.onYellow, modifier = Modifier.align(Alignment.TopEnd).clip(CircleShape).background(colors.green).padding(horizontal = 10.dp, vertical = 3.dp))
+                Text(
+                    target,
+                    style = display(22.sp),
+                    color = colors.onYellow,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .graphicsLayer { alpha = ((progress() - 0.85f) / 0.15f).coerceIn(0f, 1f) }
+                        .clip(CircleShape)
+                        .background(colors.green)
+                        .padding(horizontal = 10.dp, vertical = 3.dp),
+                )
             }
         }
     }

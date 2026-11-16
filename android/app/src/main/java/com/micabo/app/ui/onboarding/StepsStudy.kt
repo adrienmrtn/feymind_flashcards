@@ -52,7 +52,6 @@ import androidx.compose.ui.unit.sp
 import com.micabo.app.i18n.t
 import com.micabo.app.onboarding.LearningGoal
 import com.micabo.app.onboarding.OnboardingModel
-import com.micabo.app.onboarding.OnboardingStep
 import com.micabo.app.onboarding.ScanExercise
 import com.micabo.app.onboarding.StudyMethod
 import com.micabo.app.onboarding.StudyWorry
@@ -125,9 +124,11 @@ fun methodIcon(value: StudyMethod): ImageVector = when (value) {
 fun GoalStep(model: OnboardingModel) {
     val hardest = model.hardestSubject
     val say = if (hardest != null) t("ios.onb16.react.hardest", "subject" to SubjectDisplay.subject(hardest, appLanguageCode)) else t("ios.onb12.say.goal")
-    Question(t("ios.onb10.q.goal"), say, if (hardest != null) MikaMood.HAPPY else MikaMood.IDLE) {
+    Question(t("ios.onb10.q.goal"), say, if (hardest != null) MikaMood.HAPPY else MikaMood.IDLE, footer = {
+        ChoiceFooter(model, enabled = model.mainGoal != null)
+    }) {
         LearningGoal.offered(model.tier).forEach { goal ->
-            V3OptionRow(t(goal.titleKey), selected = model.mainGoal == goal, icon = goalIcon(goal), onClick = { pick(model, OnboardingStep.goal) { model.chooseGoal(goal) } })
+            V3OptionRow(t(goal.titleKey), selected = model.mainGoal == goal, icon = goalIcon(goal), onClick = { model.chooseGoal(goal) })
         }
     }
 }
@@ -163,9 +164,11 @@ fun WorriesStep(model: OnboardingModel) {
 
 @Composable
 fun StudyHoursStep(model: OnboardingModel) {
-    Question(t("ios.onb12.q.hours"), t("ios.onb12.react.worries"), MikaMood.HAPPY) {
+    Question(t("ios.onb12.q.hours"), t("ios.onb12.react.worries"), MikaMood.HAPPY, footer = {
+        ChoiceFooter(model, enabled = model.weeklyStudy != null)
+    }) {
         WeeklyStudy.entries.forEach { value ->
-            V3OptionRow(t(value.titleKey), selected = model.weeklyStudy == value, icon = weeklyIcon(value), onClick = { pick(model, OnboardingStep.studyHours) { model.chooseWeekly(value) } })
+            V3OptionRow(t(value.titleKey), selected = model.weeklyStudy == value, icon = weeklyIcon(value), onClick = { model.chooseWeekly(value) })
         }
     }
 }
@@ -177,9 +180,10 @@ fun StudyMethodStep(model: OnboardingModel) {
         t("ios.onb12.q.method"),
         if (hours == null) t("ios.onb12.say.method") else t(hours.reactionKey),
         if (hours == WeeklyStudy.overSix) MikaMood.SURPRISE else if (hours == null) MikaMood.IDLE else MikaMood.HAPPY,
+        footer = { ChoiceFooter(model, enabled = model.studyMethod != null) },
     ) {
         StudyMethod.entries.forEach { value ->
-            V3OptionRow(t(value.titleKey), selected = model.studyMethod == value, icon = methodIcon(value), onClick = { pick(model, OnboardingStep.studyMethod) { model.chooseMethod(value) } })
+            V3OptionRow(t(value.titleKey), selected = model.studyMethod == value, icon = methodIcon(value), onClick = { model.chooseMethod(value) })
         }
     }
 }

@@ -1,7 +1,12 @@
 package com.micabo.app.ui.onboarding
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -36,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -53,13 +59,18 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.micabo.app.i18n.t
@@ -86,14 +97,19 @@ import com.micabo.app.ui.v3.MicaboIcons
 import com.micabo.app.ui.v3.OnbScreen
 import com.micabo.app.ui.v3.Panel
 import com.micabo.app.ui.v3.Reassurance
+import com.micabo.app.ui.v3.RevealedButton
 import com.micabo.app.ui.v3.V3Check
 import com.micabo.app.ui.v3.V3Metric
 import com.micabo.app.ui.v3.V3OptionRow
 import com.micabo.app.ui.v3.V3Title
 import com.micabo.app.ui.v3.XpPill
 import com.micabo.app.ui.v3.figure
+import com.micabo.app.ui.v3.popIn
+import com.micabo.app.ui.v3.rememberStill
+import com.micabo.app.ui.v3.riseIn
 import com.micabo.app.ui.v3.v3Card
 import com.micabo.app.ui.v3.wash
+import kotlinx.coroutines.delay
 
 // MARK: - Ton plan
 
@@ -177,7 +193,10 @@ fun tonightTopic(model: OnboardingModel): String = when (model.firstLessonChoice
     ?: model.subjects.sorted().firstOrNull()?.let { SubjectDisplay.subject(it, appLanguageCode) }
     ?: t("ios.onb11.plan.lesson")
 
-/** **Le plan prêt**, comme un objet : ce soir, cette semaine, l'objectif. */
+/**
+ * **Le plan prêt**, comme un objet : ce soir, cette semaine, l'objectif. Le titre arrive, puis
+ * les blocs un à un (un ressort, un tic), et seulement alors le bouton. Mika, lui, reste vivant.
+ */
 @Composable
 fun ProfileSummaryStep(model: OnboardingModel) {
     val colors = Micabo.colors
@@ -194,37 +213,89 @@ fun ProfileSummaryStep(model: OnboardingModel) {
         exam != null -> examTitle(exam.first) to Words.date(exam.second, locale)
         else -> null
     }
+    // Les étapes de l'arrivée : 1 le titre, puis un bloc par cran, enfin le bouton.
+    val still = rememberStill()
+    val haptics = rememberHaptics()
+    val blocks = if (goal != null) 3 else 2
+    var stage by remember { mutableIntStateOf(if (still || !model.isMovingForward) blocks + 2 else 0) }
+    LaunchedEffect(Unit) {
+        if (stage > 0) return@LaunchedEffect
+        delay(350)
+        stage = 1
+        repeat(blocks) {
+            delay(380)
+            haptics.selection()
+            stage += 1
+        }
+        delay(450)
+        stage = blocks + 2
+    }
     OnbScreen(
         header = {
-            Mika(MikaMood.CELEBRATE, if (compact) 84.dp else 120.dp, Modifier.fillMaxWidth())
-            V3Title(if (name.isEmpty()) t("ios.onb10.plan.titleNoName") else t("ios.onb10.plan.title", "name" to name), Modifier.padding(top = 4.dp), size = 40, align = TextAlign.Center)
+            LivelyMika(if (compact) 84.dp else 120.dp, settled = stage >= blocks + 2, still = still, modifier = Modifier.fillMaxWidth())
+            V3Title(if (name.isEmpty()) t("ios.onb10.plan.titleNoName") else t("ios.onb10.plan.title", "name" to name), Modifier.padding(top = 4.dp).riseIn(stage >= 1), size = 40, align = TextAlign.Center)
         },
         body = {
             Column(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                PlanBlock(t("ios.onb12.plan.tonightLabel"), Words.hour(model.reminderHour, locale), t("ios.onb12.plan.tonightDetail", "topic" to tonightTopic(model), "min" to minutes), colors.accentBright, highlighted = true)
+                PlanBlock(MicaboIcons.alarm, t("ios.onb12.plan.tonightLabel"), Words.hour(model.reminderHour, locale), t("ios.onb12.plan.tonightDetail", "topic" to tonightTopic(model), "min" to minutes), colors.accentBright, highlighted = true, visible = stage >= 2)
                 PlanBlock(
+                    MicaboIcons.exam,
                     t("ios.onb12.plan.weekLabel"),
                     "${7 * sessions.size}",
                     if (sessions.size > 1) t("ios.onb16.plan.weekSplit", "min" to minutes, "count" to sessions.size) else t("ios.onb12.plan.weekDetail", "min" to minutes),
                     colors.ink,
                     highlighted = false,
+                    visible = stage >= 3,
+                    iconTone = colors.iconLilac,
                 )
-                if (goal != null) PlanBlock(t("ios.onb12.plan.goalLabel"), goal.first, goal.second, colors.green, highlighted = false)
+                if (goal != null) PlanBlock(MicaboIcons.trophy, t("ios.onb12.plan.goalLabel"), goal.first, goal.second, colors.green, highlighted = false, visible = stage >= 4)
             }
         },
-        footer = { MicaboButton(t("ios.deckBuild.seePlan"), onClick = { model.advance() }, modifier = Modifier.testTag("cta")) },
+        footer = { RevealedButton(stage >= blocks + 2, t("ios.deckBuild.seePlan"), onClick = { model.advance() }, modifier = Modifier.testTag("cta")) },
     )
 }
 
+/**
+ * **Mika reste vivant après sa fête** : il flotte doucement et, une fois le plan posé, passe
+ * d'une humeur joyeuse à l'autre en fondu. Sans animations, il fête, immobile.
+ */
 @Composable
-private fun PlanBlock(label: String, value: String, detail: String, tone: Color, highlighted: Boolean) {
+private fun LivelyMika(size: Dp, settled: Boolean, still: Boolean, modifier: Modifier = Modifier) {
+    if (still) {
+        Mika(MikaMood.CELEBRATE, size, modifier)
+    } else {
+        var mood by remember { mutableStateOf(MikaMood.CELEBRATE) }
+        LaunchedEffect(settled) {
+            if (!settled) return@LaunchedEffect
+            val moods = listOf(MikaMood.HAPPY, MikaMood.WINK, MikaMood.CELEBRATE)
+            var index = 0
+            while (true) {
+                delay(2_200)
+                mood = moods[index % moods.size]
+                index += 1
+            }
+        }
+        val drift by rememberInfiniteTransition(label = "mika").animateFloat(
+            initialValue = -1f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(1_600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "float",
+        )
+        Mika(mood, size, modifier.graphicsLayer { translationY = drift * 4.dp.toPx() })
+    }
+}
+
+/** Un bloc du plan : sa pastille d'icône, sa valeur en grand, son libellé et son détail. */
+@Composable
+private fun PlanBlock(icon: ImageVector, label: String, value: String, detail: String, tone: Color, highlighted: Boolean, visible: Boolean, iconTone: Color = tone) {
     val colors = Micabo.colors
     Row(
-        Modifier.fillMaxWidth().v3Card(selected = highlighted).padding(16.dp),
+        Modifier.fillMaxWidth().popIn(visible).v3Card(selected = highlighted).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        com.micabo.app.ui.v3.FitText(value, figure(if (LocalCompact.current) 34 else 40), tone, Modifier.widthIn(min = 76.dp, max = 120.dp))
+        IconTile(icon, iconTone, size = 40.dp, iconSize = 22.dp, radius = 12.dp)
+        com.micabo.app.ui.v3.FitText(value, figure(if (LocalCompact.current) 34 else 40), tone, Modifier.widthIn(min = 64.dp, max = 110.dp))
         Column(Modifier.weight(1f)) {
             Text(label, style = text(17.sp, FontWeight.SemiBold), color = colors.inkSecondary)
             Text(detail, style = text(17.sp, FontWeight.SemiBold, 22.sp), color = colors.ink)
@@ -234,14 +305,17 @@ private fun PlanBlock(label: String, value: String, detail: String, tone: Color,
 
 // MARK: - Ta première leçon : le récit
 
-/** Une page du récit (`OnbStoryStage`) : le titre, un panneau, « Continuer ». */
+/**
+ * Une page du récit (`OnbStoryStage`) : le titre, un panneau, « Continuer ». `ready` retient le
+ * bouton jusqu'à la fin de l'animation du panneau.
+ */
 @Composable
-fun StoryStage(title: String, model: OnboardingModel, cta: String? = null, ctaIcon: ImageVector? = null, panel: @Composable () -> Unit) {
+fun StoryStage(title: String, model: OnboardingModel, cta: String? = null, ctaIcon: ImageVector? = null, ready: Boolean = true, panel: @Composable () -> Unit) {
     OnbScreen(
         centered = true,
         header = { V3Title(title, Modifier.padding(top = 16.dp)) },
         body = { com.micabo.app.ui.v3.CappedFontScale(1.5f) { panel() } },
-        footer = { MicaboButton(cta ?: t("common.continue"), onClick = { model.advance() }, icon = ctaIcon, modifier = Modifier.testTag("cta")) },
+        footer = { RevealedButton(ready, cta ?: t("common.continue"), onClick = { model.advance() }, modifier = Modifier.testTag("cta"), icon = ctaIcon) },
     )
 }
 
@@ -249,14 +323,35 @@ fun StoryStage(title: String, model: OnboardingModel, cta: String? = null, ctaIc
 @Composable
 fun StoryCreateStep(model: OnboardingModel) {
     val colors = Micabo.colors
-    StoryStage(t("ios.onb15.story.create.title"), model, cta = t("ios.onb14.story.create.cta"), ctaIcon = Icons.Rounded.AutoAwesome) {
+    val question = t(model.story.questionKey)
+    val sources = listOf(OnbSource.PDF, OnbSource.PHOTO)
+    // Les pièces jointes surgissent, la question se tape seule, puis le bouton arrive.
+    val instant = rememberStill() || !model.isMovingForward
+    var attached by remember { mutableIntStateOf(if (instant) sources.size else 0) }
+    var typed by remember(question) { mutableIntStateOf(if (instant) question.length else 0) }
+    LaunchedEffect(question) {
+        if (typed >= question.length) return@LaunchedEffect
+        delay(350)
+        repeat(sources.size) {
+            attached += 1
+            delay(220)
+        }
+        delay(150)
+        while (typed < question.length) {
+            delay(28)
+            // Un caractère à la fois, sans couper une paire (un emoji).
+            val next = typed + 1
+            typed = if (next < question.length && question[next].isLowSurrogate()) next + 1 else next
+        }
+    }
+    StoryStage(t("ios.onb15.story.create.title"), model, cta = t("ios.onb14.story.create.cta"), ctaIcon = Icons.Rounded.AutoAwesome, ready = typed >= question.length) {
         Panel {
             // Les deux sources passent l'une sous l'autre quand le texte est très agrandi.
             androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(OnbSource.PDF, OnbSource.PHOTO).forEach { source ->
+                sources.forEachIndexed { index, source ->
                     val tone = source.tone()
                     Row(
-                        Modifier.heightIn(min = 44.dp).clip(CircleShape).background(wash(tone)).padding(horizontal = 10.dp),
+                        Modifier.heightIn(min = 44.dp).popIn(index < attached, from = 0.6f).clip(CircleShape).background(wash(tone)).padding(horizontal = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -266,8 +361,12 @@ fun StoryCreateStep(model: OnboardingModel) {
                     }
                 }
             }
+            // La phrase entière est posée d'emblée : ce qui n'est pas encore tapé est transparent.
             Text(
-                t(model.story.questionKey),
+                buildAnnotatedString {
+                    append(question.take(typed))
+                    withStyle(SpanStyle(color = Color.Transparent)) { append(question.drop(typed)) }
+                },
                 style = Type.body,
                 color = colors.ink,
                 modifier = Modifier
@@ -294,7 +393,25 @@ fun StoryPathStep(model: OnboardingModel) {
         Triple(MicaboIcons.cards, colors.iconLilac, t("lesson.nav.flashcards")),
         Triple(MicaboIcons.alarm, colors.iconYellow, t("ios.onb14.story.node.review")),
     )
-    StoryStage(t("ios.onb15.story.path.title"), model) {
+    // Le chemin se construit : le trait file jusqu'à l'étape suivante, qui surgit avec un tic
+    // (plus marqué sur la dernière) ; environ 450 ms entre deux étapes, puis le bouton.
+    val instant = rememberStill() || !model.isMovingForward
+    val haptics = rememberHaptics()
+    var shown by remember { mutableIntStateOf(if (instant) nodes.size else 0) }
+    val line = remember { Animatable(if (instant) (nodes.size - 1).toFloat() else 0f) }
+    var ready by remember { mutableStateOf(instant) }
+    LaunchedEffect(Unit) {
+        if (ready) return@LaunchedEffect
+        delay(350)
+        for (index in nodes.indices) {
+            if (index > 0) line.animateTo(index.toFloat(), tween(250, easing = LinearEasing))
+            shown = index + 1
+            if (index == nodes.lastIndex) haptics.success() else haptics.selection()
+            delay(if (index == nodes.lastIndex) 400L else 200L)
+        }
+        ready = true
+    }
+    StoryStage(t("ios.onb15.story.path.title"), model, ready = ready) {
         Panel {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(MicaboIcons.book, null, tint = colors.accentBright, modifier = Modifier.size(26.dp))
@@ -310,8 +427,15 @@ fun StoryPathStep(model: OnboardingModel) {
                     Canvas(Modifier.matchParentSize()) {
                         val points = nodes.indices.mapNotNull { centers[it]?.minus(origin) }
                         if (points.size == nodes.size) {
+                            val reach = line.value
                             val path = Path()
-                            points.forEachIndexed { index, point -> if (index == 0) path.moveTo(point.x, point.y) else path.lineTo(point.x, point.y) }
+                            path.moveTo(points[0].x, points[0].y)
+                            for (index in 1 until points.size) {
+                                val part = (reach - (index - 1)).coerceIn(0f, 1f)
+                                if (part <= 0f) break
+                                val end = points[index - 1] + (points[index] - points[index - 1]) * part
+                                path.lineTo(end.x, end.y)
+                            }
                             drawPath(path, colors.accent.copy(alpha = 0.55f), style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round, pathEffect = PathEffect.dashPathEffect(floatArrayOf(2.dp.toPx(), 9.dp.toPx()))))
                         }
                     }
@@ -326,6 +450,7 @@ fun StoryPathStep(model: OnboardingModel) {
                                     Modifier
                                         .size(54.dp)
                                         .onGloballyPositioned { centers[index] = it.positionInRoot() + Offset(it.size.width / 2f, it.size.height / 2f) }
+                                        .popIn(index < shown, from = 0.4f)
                                         .clip(CircleShape)
                                         .background(wash(tone))
                                         .border(2.5.dp, tone.copy(alpha = 0.7f), CircleShape),
@@ -333,7 +458,7 @@ fun StoryPathStep(model: OnboardingModel) {
                                 ) {
                                     Icon(icon, null, tint = tone, modifier = Modifier.size(28.dp))
                                 }
-                                Text(label, style = text(17.sp, FontWeight.SemiBold, 21.sp), color = if (index == 4) colors.yellow else colors.ink, modifier = Modifier.weight(1f))
+                                Text(label, style = text(17.sp, FontWeight.SemiBold, 21.sp), color = if (index == 4) colors.yellow else colors.ink, modifier = Modifier.weight(1f).riseIn(index < shown))
                             }
                         }
                     }
@@ -401,7 +526,7 @@ fun StoryAskStep(model: OnboardingModel) {
 
 @Composable
 fun StoryCloseStep(model: OnboardingModel) =
-    ChapterOpener(t("ios.onb15.story.close.title"), t("ios.onb14.story.close.title"), MikaMood.CELEBRATE, t("common.continue")) { model.advance() }
+    ChapterOpener(t("ios.onb15.story.close.title"), t("ios.onb14.story.close.title"), MikaMood.CELEBRATE, t("common.continue"), instant = !model.isMovingForward) { model.advance() }
 
 /** **« Et toi, ta première leçon, ce sera quoi ? »** Rien ne s'écrit ici : l'accueil la proposera. */
 @Composable
