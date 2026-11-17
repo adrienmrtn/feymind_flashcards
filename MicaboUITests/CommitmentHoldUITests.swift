@@ -24,6 +24,8 @@ final class CommitmentHoldUITests: XCTestCase {
             // Le parcours s'affiche même si une autre suite l'a marqué fini sur ce simulateur.
             "-micabo.onboarding.completed", "NO",
         ]
+        // Une machine de test n'envoie aucune statistique (`AnalyticsQueue.isSilenced`).
+        app.launchEnvironment["MICABO_NO_ANALYTICS"] = "1"
         app.launch()
 
         let commitment = app.descendants(matching: .any)["onboarding.step.commitment"]

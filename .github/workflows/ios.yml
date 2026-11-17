@@ -121,6 +121,8 @@ jobs:
           set -o pipefail
           mkdir -p build/renders
           export TEST_RUNNER_MICABO_RENDER_DIR="$PWD/build/renders"
+          # L'app hôte des tests n'envoie aucune statistique à la vraie table (`AnalyticsQueue.isSilenced`).
+          export TEST_RUNNER_MICABO_NO_ANALYTICS=1
           # Un test qui ne rend pas la main en une minute est arrêté et compté en échec,
           # au lieu de tenir le runner jusqu'à la limite du job.
           xcodebuild test-without-building \

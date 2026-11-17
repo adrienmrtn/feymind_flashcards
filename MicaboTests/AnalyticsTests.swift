@@ -7,6 +7,17 @@ import XCTest
 /// plate. C'est la panne la plus difficile à voir, et c'est pour ça que ces règles-là sont
 /// vérifiées plutôt que relues.
 final class AnalyticsTests: XCTestCase {
+    /// **Une machine de test n'envoie rien** : la CI (tests, rendus, test d'interface)
+    /// remplissait la vraie table de lignes `build = 'debug'`.
+    func testTestMachinesSendNothing() {
+        XCTAssertTrue(AnalyticsQueue.isSilenced, "Ce processus de test enverrait ses statistiques")
+        XCTAssertTrue(AnalyticsQueue.silenced(environment: [:], arguments: [], xctestLoaded: true))
+        XCTAssertTrue(AnalyticsQueue.silenced(environment: ["MICABO_NO_ANALYTICS": "1"], arguments: [], xctestLoaded: false))
+        XCTAssertTrue(AnalyticsQueue.silenced(environment: ["XCTestSessionIdentifier": "x"], arguments: [], xctestLoaded: false))
+        XCTAssertTrue(AnalyticsQueue.silenced(environment: [:], arguments: ["Micabo", "-micaboNoAnalytics"], xctestLoaded: false))
+        XCTAssertFalse(AnalyticsQueue.silenced(environment: ["HOME": "/"], arguments: ["Micabo"], xctestLoaded: false), "L'app d'un élève envoie")
+    }
+
     /// **Chaque nom doit passer la contrainte de `app_events`.**
     ///
     /// Recopiée de `supabase/migrations/20260917220000_app_events.sql`. Un nom refusé ferait

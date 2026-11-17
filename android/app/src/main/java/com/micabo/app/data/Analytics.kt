@@ -104,8 +104,8 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
     }
 
     fun track(name: String, props: Map<String, Any?> = emptyMap()) {
-        // Les rendus des tests (Robolectric) n'envoient rien.
-        if (android.os.Build.FINGERPRINT == "robolectric") return
+        // Les tests et leurs rendus (Robolectric) n'envoient rien : la CI polluait la vraie table.
+        if (isTestRun) return
         // La table refuse un nom hors de sa forme, et avec lui tout le lot où il voyage.
         if (!NAME.matches(name)) {
             Log.w(TAG, "Nom d'événement refusé : $name")
@@ -161,6 +161,7 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
     }
 
     private suspend fun flush() {
+        if (isTestRun) return
         val batch = lock.withLock {
             pending.toList().also {
                 pending.clear()
@@ -205,13 +206,23 @@ class Analytics(context: Context, private val prefs: Prefs, private val auth: Su
     private fun now(): String =
         SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ROOT).apply { timeZone = TimeZone.getTimeZone("UTC") }.format(Date())
 
-    private companion object {
-        const val TAG = "Analytics"
-        const val SESSION_GAP = 30 * 60_000L
-        const val BATCH = 20
-        const val MAX_PENDING = 200
-        const val MAX_PROPS = 1_900
-        const val QUEUE = "queue"
-        val NAME = Regex("^[a-z][a-z0-9_]{1,46}[a-z0-9]$")
+    companion object {
+        /**
+         * **Une machine de test** : Robolectric (son empreinte, ou sa classe chargée), ou une
+         * instrumentation JUnit. Lu une fois.
+         */
+        val isTestRun: Boolean by lazy {
+            listOf("org.robolectric.Robolectric", "androidx.test.platform.app.InstrumentationRegistry", "org.junit.runner.JUnitCore")
+                .any { runCatching { Class.forName(it) }.isSuccess } ||
+                runCatching { android.os.Build.FINGERPRINT == "robolectric" }.getOrDefault(false)
+        }
+
+        private const val TAG = "Analytics"
+        private const val SESSION_GAP = 30 * 60_000L
+        private const val BATCH = 20
+        private const val MAX_PENDING = 200
+        private const val MAX_PROPS = 1_900
+        private const val QUEUE = "queue"
+        private val NAME = Regex("^[a-z][a-z0-9_]{1,46}[a-z0-9]$")
     }
 }

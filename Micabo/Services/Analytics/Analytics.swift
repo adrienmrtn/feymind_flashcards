@@ -92,8 +92,24 @@ enum Analytics {
 actor AnalyticsQueue {
     static let shared = AnalyticsQueue()
 
-    /// Vrai quand l'app ne sert que d'hôte aux tests (le même signe que `MicaboApp`).
-    private static let isHostingTests = ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] != nil
+    /// **Rien ne part d'une machine de test** : l'app hôte des tests unitaires et des rendus
+    /// (XCTest est chargé dans le processus, ou ses variables sont posées), l'app lancée par un
+    /// test d'interface (`MICABO_NO_ANALYTICS`, posé par `MicaboUITests` et par la CI). Les
+    /// constructions Debug de la CI envoyaient leurs `course_imported` et `lesson_theme_failed`
+    /// dans la vraie table (`build = 'debug'`).
+    static let isSilenced: Bool = silenced(
+        environment: ProcessInfo.processInfo.environment,
+        arguments: ProcessInfo.processInfo.arguments,
+        xctestLoaded: NSClassFromString("XCTestCase") != nil
+    )
+
+    /// La règle de `isSilenced`, sans le processus : de quoi la tester.
+    static func silenced(environment: [String: String], arguments: [String], xctestLoaded: Bool) -> Bool {
+        if xctestLoaded { return true }
+        let markers = ["XCTestConfigurationFilePath", "XCTestBundlePath", "XCTestSessionIdentifier", "MICABO_NO_ANALYTICS"]
+        if markers.contains(where: { environment[$0] != nil }) { return true }
+        return arguments.contains("-micaboNoAnalytics")
+    }
 
     // MARK: Réglages
 
@@ -216,7 +232,7 @@ actor AnalyticsQueue {
     private func enqueue(name: String, props: [String: AnalyticsValue], at date: Date) {
         // Sous les tests, rien ne part : le banc d'essai pose de vrais écrans, qui tracent comme
         // dans l'app, et la table des événements ne doit pas recevoir ceux d'une machine de CI.
-        guard !Self.isHostingTests, AppConfig.isConfigured, let context else { return }
+        guard !Self.isSilenced, AppConfig.isConfigured, let context else { return }
 
         pending.append(AnalyticsRow(
             deviceID: context.deviceID,
@@ -262,7 +278,7 @@ actor AnalyticsQueue {
         // tentative, et un `defer` qui remettrait `nil` après eux laisserait deux tâches de
         // vidage tourner en parallèle sur la même file.
         flush = nil
-        guard !pending.isEmpty else { return }
+        guard !Self.isSilenced, !pending.isEmpty else { return }
 
         // Le lot part en entier : PostgREST accepte un tableau, et vingt lignes en une
         // requête coûtent le prix d'une.
