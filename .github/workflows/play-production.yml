@@ -1,0 +1,60 @@
+# **Préparer la mise en production sur Google Play**, sans l'envoyer à l'examen.
+#
+# Prend un build déjà envoyé en test interne (son versionCode = le numéro du run « Android ») et
+# le met dans une version de production **en brouillon**. Il ne reste qu'à l'ouvrir dans la Play
+# Console (Publication → Production) et à cliquer « Envoyer pour examen ».
+#
+# Lancement : onglet Actions → « Production Google Play » → Run workflow, avec le versionCode.
+# Rien n'est réinstallé ni recompilé ; la fiche (textes, captures) n'est pas touchée.
+#
+# Secret du dépôt : PLAY_SERVICE_ACCOUNT_JSON (docs/google-play.md), le même que android.yml.
+
+name: Production Google Play
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: "versionCode du build en test interne (numéro du run « Android »)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: play-listing
+  cancel-in-progress: false
+
+env:
+  PACKAGE_NAME: com.micabo.app
+
+jobs:
+  promote:
+    name: Brouillon de production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Un Ruby à part : celui du système installe les gems hors du PATH (fastlane introuvable).
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+
+      - name: Test interne → production (brouillon)
+        env:
+          PLAY_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          VERSION_CODE: ${{ inputs.version_code }}
+        run: |
+          case "$VERSION_CODE" in ''|*[!0-9]*) echo "::error::versionCode invalide : $VERSION_CODE"; exit 1;; esac
+          gem install fastlane --no-document -q
+          echo "$PLAY_JSON" > "$RUNNER_TEMP/play.json"
+          fastlane run supply \
+            package_name:"$PACKAGE_NAME" \
+            json_key:"$RUNNER_TEMP/play.json" \
+            track:internal \
+            track_promote_to:production \
+            version_code:"$VERSION_CODE" \
+            release_status:draft \
+            skip_upload_apk:true skip_upload_aab:true skip_upload_metadata:true \
+            skip_upload_changelogs:true skip_upload_images:true skip_upload_screenshots:true
+          rm -f "$RUNNER_TEMP/play.json"
