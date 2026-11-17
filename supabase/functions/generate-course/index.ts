@@ -142,7 +142,7 @@ async function repaintMarks(
          * La température n'est pas au plancher non plus : à 0,1, recopier l'entrée est la
          * réponse la plus probable, et c'est exactement ce qu'on veut éviter.
          */
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-flash-lite",
         temperature: 0.4,
         maxTokens: ANCHOR_TOKEN_LIMIT,
         meter,

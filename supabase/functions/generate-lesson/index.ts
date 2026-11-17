@@ -28,6 +28,7 @@
  */
 import {
   ANON_DAILY_CEILING,
+  DAILY_CEILING,
   type Caller,
   consumeQuota,
   readCaller,
@@ -196,6 +197,15 @@ const THEME_DAILY_CEILING = 60;
  * le plan une seule. Le même rapport qu'entre `THEME_DAILY_CEILING` et `DAILY_CEILING`.
  */
 const ANON_THEME_CEILING = ANON_DAILY_CEILING * 3;
+/**
+ * **Les plafonds Pro, par jour** (17 novembre 2026). Sans eux, un abonné n'avait que le
+ * fusible de deux mille appels : jusqu'à ~18 € d'IA par jour sur un seul compte. Trente leçons
+ * par jour, c'est au-delà de tout usage d'élève (le plus gros compte en a fait ~50 en un jour,
+ * une seule fois sur trente jours).
+ */
+const PRO_LESSON_CEILING = 30;
+const PRO_THEME_CEILING = PRO_LESSON_CEILING * 12;
+const PRO_EXTRA_CEILING = 60;
 /** La passe visuelle du plan : elle ne doit pas laisser le plan lui-même sans temps. */
 const VISION_BUDGET_MS = 60_000;
 const CONVERT_CHAPTER_TEXT = 3_000;
@@ -205,11 +215,12 @@ const PRACTICE_TOTAL_NOTES = 24_000;
 const PRACTICE_AVOID = 80;
 
 /**
- * **Le modèle de l'écriture** : les notes et les questions sont ce que l'élève apprend par
- * cœur. Flash coûte quelques centimes de plus par leçon que Flash-Lite, et ne se trompe pas
- * de bonne réponse aussi souvent. Les replis de `fal.ts` restent les mêmes.
+ * **Le modèle de l'écriture : le moins cher de fal** (décision du 17 novembre 2026). Flash-Lite
+ * coûte environ six fois moins que Flash en sortie et ne « réfléchit » pas à nos frais. Flash
+ * se trompait un peu moins souvent de bonne réponse : à surveiller sur les signalements. Les
+ * replis de `fal.ts` restent les mêmes.
  */
-const WRITING_MODEL = "google/gemini-2.5-flash";
+const WRITING_MODEL = "google/gemini-2.5-flash-lite";
 
 function acceptedImages(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
@@ -362,7 +373,7 @@ async function writePlan(
 ): Promise<Response> {
   const { caller, fromScratch, shortened, text, images, topic, source, deadline } = options;
   const lessonId = body.lessonId!;
-  await consumeQuota(caller, "generate-lesson");
+  await consumeQuota(caller, "generate-lesson", 1, DAILY_CEILING, PRO_LESSON_CEILING);
 
   const meter: ModelUsage[] = [];
 
@@ -498,7 +509,7 @@ async function theme(request: Request, body: RequestBody, deadline: number): Pro
   if (index < 0 || index >= themes.length) throw new FalError("Thème inconnu.", 400);
 
   await admitThemeCall(caller, body.lessonId);
-  await consumeQuota(caller, "generate-lesson-theme", 1, THEME_DAILY_CEILING, undefined, ANON_THEME_CEILING);
+  await consumeQuota(caller, "generate-lesson-theme", 1, THEME_DAILY_CEILING, PRO_THEME_CEILING, ANON_THEME_CEILING);
 
   // L'en-tête du texte de référence dit la nature du support et le rôle de chaque thème ; une
   // leçon d'avant n'en a pas, et les deux se devinent alors sur le texte et sur le titre.
@@ -659,7 +670,7 @@ async function convert(request: Request, body: RequestBody, deadline: number): P
   if (chapters.length === 0) throw new FalError("Ce cours n'a aucun chapitre.", 400);
 
   await beginLesson(caller, { lessonId: body.lessonId, kind: "convert", source: "convert", themes: chapters.length });
-  await consumeQuota(caller, "generate-lesson");
+  await consumeQuota(caller, "generate-lesson", 1, DAILY_CEILING, PRO_LESSON_CEILING);
 
   const title = sanitizeMeta(body.title, 200) || chapters[0]!.title;
   const groups = groupThemes(chapters.length);
@@ -761,7 +772,7 @@ async function practice(request: Request, body: RequestBody, deadline: number): 
   const extra = { kind: "practice", lessonId: body.lessonId } as const;
   await beginExtra(caller, extra);
   try {
-    await consumeQuota(caller, "generate-lesson-practice");
+    await consumeQuota(caller, "generate-lesson-practice", 1, DAILY_CEILING, PRO_EXTRA_CEILING);
 
     const kinds = readKinds(body.kinds);
     const count = Math.min(LIMITS.practiceMax, Math.max(4, Math.round(typeof body.count === "number" ? body.count : 10)));
@@ -865,7 +876,7 @@ async function exam(request: Request, body: RequestBody, deadline: number): Prom
   const extra = { kind: "exam", lessonId: body.lessonId } as const;
   await beginExtra(caller, extra);
   try {
-    await consumeQuota(caller, "generate-lesson-exam");
+    await consumeQuota(caller, "generate-lesson-exam", 1, DAILY_CEILING, PRO_EXTRA_CEILING);
 
     const kinds = readKinds(body.kinds);
     const minutes = Math.min(120, Math.max(10, Math.round(typeof body.minutes === "number" ? body.minutes : 30)));
