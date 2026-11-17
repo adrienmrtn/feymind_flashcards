@@ -112,8 +112,6 @@ enum PaywallStyle {
     /// refermer. Derrière une porte de l'app, et sur l'offre de réduction, la croix est là
     /// d'emblée (`PaywallFlowView.closeDelay(for:)`).
     static let closeDelay: Double = 5
-    /// Le fondu de son arrivée : doux, sans saut, à sa place.
-    static let closeFade: Double = 0.6
     static let touch: CGFloat = 44
     /// L'icône d'une rangée, et la colonne qui la porte.
     static let glyph: CGFloat = V3Metric.optionIcon

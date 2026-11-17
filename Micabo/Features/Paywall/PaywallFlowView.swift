@@ -456,7 +456,7 @@ struct PaywallFlowView: View {
         guard !closeReady else { return }
         try? await Task.sleep(for: .seconds(Self.closeDelay(for: trigger)))
         guard !Task.isCancelled else { return }
-        withAnimation(motion(.easeInOut(duration: PaywallStyle.closeFade))) { closeReady = true }
+        withAnimation(motion(MicaboMotion.gentle)) { closeReady = true }
     }
 
     /// La première fois qu'une autre offre est cochée.

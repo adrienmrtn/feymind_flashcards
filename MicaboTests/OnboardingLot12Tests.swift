@@ -304,7 +304,6 @@ final class OnboardingLot12Tests: XCTestCase {
         for trigger in PaywallTrigger.allCases {
             XCTAssertEqual(PaywallFlowView.closeDelay(for: trigger), 0, "\(trigger) : la croix est là d'emblée")
         }
-        XCTAssertGreaterThan(PaywallStyle.closeFade, 0, "La croix arrive en fondu, sans saut")
     }
 
     /// **Après les refus, la Home propose la première leçon en grand**, avec le sujet choisi,
