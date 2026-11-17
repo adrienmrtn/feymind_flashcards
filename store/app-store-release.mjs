@@ -56,6 +56,7 @@ const WHATS_NEW = {
   sl: "Novo: zbiraj XP ob vsakem učenju, doseži dnevni cilj in se pomeri s prijatelji v tedenski ligi. Skeniraj nalogo in Mika ti jo razloži korak za korakom, zaženi časovnik za zbranost in ustvari brezplačno lekcijo iz fotografije ali PDF-ja.",
   sk: "Novinka: získavaj XP pri každom učení, splň denný cieľ a súťaž s kamarátmi v týždennej lige. Naskenuj príklad a Mika ti ho vysvetlí krok za krokom, spusti časovač sústredenia a vytvor si lekciu zadarmo z fotky alebo PDF.",
   hu: "Újdonság: szerezz XP-t minden tanulással, teljesítsd a napi célodat, és versenyezz a barátaiddal a heti ligában. Szkennelj be egy feladatot, és Mika lépésről lépésre elmagyarázza, indítsd el a fókuszidőzítőt, és készítsd el az ingyenes leckédet egy fotóból vagy PDF-ből.",
+  ja: "新機能：勉強するたびにXPを獲得し、1日の目標を達成して、週間リーグで友だちと競おう。問題をスキャンするとMikaが一歩ずつ解説。集中タイマーを使い、写真やPDFから無料のレッスンを作ろう。",
   he: "חדש: צברו XP בכל פעם שאתם לומדים, עמדו ביעד היומי והתחרו בחברים בליגה השבועית. סרקו תרגיל ומיקה יסביר אותו צעד אחר צעד, הפעילו את טיימר הריכוז וצרו את השיעור החינמי מתמונה או מ-PDF.",
 };
 
@@ -117,12 +118,19 @@ if (version && !EDITABLE.has(stateOf(version))) {
   process.exit(1);
 }
 const other = versions.find((candidate) => candidate !== version && EDITABLE.has(stateOf(candidate)));
+// Apple n'accepte qu'une version en préparation. Plutôt que de demander un détour par App Store
+// Connect, on renomme celle qui attend : elle garde ses captures, ses textes et ses réglages.
 if (!version && other) {
-  console.error(
-    `La version ${other.attributes?.versionString} est déjà en préparation : Apple n'en accepte qu'une. ` +
-      `La renommer en ${versionString} dans App Store Connect, ou la supprimer, puis relancer.`,
-  );
-  process.exit(1);
+  steps.push(`renommer la version ${other.attributes?.versionString} en ${versionString}`);
+  if (apply) {
+    version = (
+      await asc.request("PATCH", `/v1/appStoreVersions/${other.id}`, {
+        data: { type: "appStoreVersions", id: other.id, attributes: { versionString } },
+      })
+    ).data;
+  } else {
+    version = other;
+  }
 }
 
 if (!version) {
