@@ -211,7 +211,9 @@ fun PaywallScreen(reason: String, trigger: String = "") {
                     mapOf("trigger" to door, "stage" to "paywall", "seconds" to (System.currentTimeMillis() - openedAt) / 100 / 10.0),
                 )
             }
-            if (app.billing.enabled && !awaitingApproval) app.gift.paywallClosed(pro)
+            // Un achat abouti n'est pas une fermeture, même si le droit Pro arrive en retard : pas
+            // d'offre −40 % derrière lui (comme `didSubscribe` sur l'iPhone).
+            if (app.billing.enabled && !awaitingApproval && !subscribed) app.gift.paywallClosed(pro)
         }
     }
 
