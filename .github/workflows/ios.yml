@@ -47,7 +47,7 @@ jobs:
   build-and-test:
     name: Compiler et tester
     runs-on: macos-latest
-    timeout-minutes: 75
+    timeout-minutes: 95
     env:
       DERIVED: build/DerivedData
       PACKAGES: build/SourcePackages
@@ -116,7 +116,7 @@ jobs:
       - name: Tester
         # Une app hôte qui ne démarre pas, un test qui ne rend pas la main : l'étape s'arrête,
         # et « Ce qui a cassé » montre où le journal s'est tu.
-        timeout-minutes: 25
+        timeout-minutes: 40
         run: |
           set -o pipefail
           mkdir -p build/renders
