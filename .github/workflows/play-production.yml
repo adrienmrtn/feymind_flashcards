@@ -55,6 +55,7 @@ jobs:
             track_promote_to:production \
             version_code:"$VERSION_CODE" \
             release_status:draft \
+            track_promote_release_status:draft \
             skip_upload_apk:true skip_upload_aab:true skip_upload_metadata:true \
             skip_upload_changelogs:true skip_upload_images:true skip_upload_screenshots:true
           rm -f "$RUNNER_TEMP/play.json"
