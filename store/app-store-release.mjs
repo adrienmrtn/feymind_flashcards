@@ -117,12 +117,19 @@ if (version && !EDITABLE.has(stateOf(version))) {
   process.exit(1);
 }
 const other = versions.find((candidate) => candidate !== version && EDITABLE.has(stateOf(candidate)));
+// Apple n'accepte qu'une version en préparation. Plutôt que de demander un détour par App Store
+// Connect, on renomme celle qui attend : elle garde ses captures, ses textes et ses réglages.
 if (!version && other) {
-  console.error(
-    `La version ${other.attributes?.versionString} est déjà en préparation : Apple n'en accepte qu'une. ` +
-      `La renommer en ${versionString} dans App Store Connect, ou la supprimer, puis relancer.`,
-  );
-  process.exit(1);
+  steps.push(`renommer la version ${other.attributes?.versionString} en ${versionString}`);
+  if (apply) {
+    version = (
+      await asc.request("PATCH", `/v1/appStoreVersions/${other.id}`, {
+        data: { type: "appStoreVersions", id: other.id, attributes: { versionString } },
+      })
+    ).data;
+  } else {
+    version = other;
+  }
 }
 
 if (!version) {
