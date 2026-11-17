@@ -86,7 +86,7 @@ fun HomeStage(
 
 /**
  * **La feuille « Nouvelle leçon »** (lot 13) : la promesse, un sujet à apprendre, ou son cours
- * (photo, PDF, enregistrement, YouTube…), puis « Écrire ma leçon ».
+ * (photo, PDF, enregistrement…), puis « Écrire ma leçon ».
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -12,7 +12,8 @@ import UniformTypeIdentifiers
 /// - Photo : l'appareil (scan de document) ou la photothèque, OCR sur l'appareil.
 /// - Notes manuscrites : le scanner d'abord, puis le même OCR, en mode précis (`OnDeviceOCR`).
 /// - Page web : un lien, la page récupérée et nettoyée sur l'appareil (`WebPageImportService`).
-/// - YouTube : un lien, sous-titres puis repli serveur (`YouTubeImportService`).
+///   L'import de vidéo YouTube est retiré (novembre 2026, la fonction d'IA la plus chère) : un
+///   lien YouTube collé ici est refusé comme une page qui ne se lit pas.
 /// - Cours en direct : l'enregistreur, puis la transcription sur l'appareil (`AudioTranscriber`).
 /// - Audio : un enregistrement ou un fichier, transcrit de même.
 /// - Texte : un texte collé.
@@ -61,20 +62,14 @@ struct LessonImportPickers: ViewModifier {
     @State private var showRecorder = false
     /// La pastille d'un enregistrement : un cours en direct ou une note vocale.
     @State private var recordingKind: LessonComposer.Kind = .audio
-    @State private var showLink = false
     @State private var showWeb = false
     @State private var showText = false
     @State private var showFlashcards = false
     /// Le deck tout juste créé depuis des flashcards, ouvert par-dessus Home.
     @State private var openedDeck: Course?
 
-    private let youtube = YouTubeImportService()
-    /// Le paywall de l'import, quand le serveur refuse de lire une vidéo (`import_pro`).
-    @State private var paywall: PaywallTrigger?
-
     func body(content: Content) -> some View {
         content
-            .micaboPaywall($paywall)
             .onChange(of: request) { _, kind in
                 guard let kind else { return }
                 request = nil
@@ -134,14 +129,6 @@ struct LessonImportPickers: ViewModifier {
                 .presentationDetents([.height(recordingKind == .lecture ? 470 : 420)])
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled()
-            }
-            .sheet(isPresented: $showLink) {
-                LinkEntrySheet { link in
-                    showLink = false
-                    readVideo(link)
-                }
-                .presentationDetents([.height(300)])
-                .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $showWeb) {
                 WebLinkSheet { link in
@@ -218,8 +205,6 @@ struct LessonImportPickers: ViewModifier {
         case .lecture:
             recordingKind = .lecture
             showRecorder = true
-        case .youtube:
-            showLink = true
         case .web:
             showWeb = true
         case .text:
@@ -342,40 +327,15 @@ struct LessonImportPickers: ViewModifier {
         }
     }
 
-    private func readVideo(_ link: String) {
-        guard YouTubeLink.isValid(link) else {
-            if let id = composer.begin(.youtube, title: "YouTube") {
-                composer.fail(id, message: L10n.t("ios.yt.invalidLink", locale: .resolved()))
-            }
-            return
-        }
-        guard let id = composer.begin(.youtube, title: "YouTube") else { return }
-        Task {
-            do {
-                let video = try await youtube.preview(link: link)
-                let transcript = try await youtube.transcript(link: link)
-                let cover = await youtube.cover(for: video)
-                composer.finish(id, with: YouTubeImportService.document(video: video, transcript: transcript, cover: cover))
-            } catch YouTubeImportError.importPro {
-                // Un refus commercial, pas une panne : la case le dit, et le paywall de
-                // l'import s'ouvre, comme pour un PDF importé sans abonnement.
-                composer.fail(id, message: YouTubeImportError.importPro.localizedDescription)
-                paywall = .generateCourse
-            } catch {
-                composer.fail(id, message: error.localizedDescription)
-            }
-        }
-    }
-
-    /// Une page web. Un lien YouTube collé ici part par le support YouTube, qui lit les
-    /// sous-titres au lieu de la page du lecteur.
+    /// Une page web. **Un lien YouTube n'est pas lu** : l'import de vidéo est retiré, et la page
+    /// du lecteur n'a rien d'un cours. La pastille le dit, sans rien demander au réseau.
     private func readWebPage(_ link: String) {
-        if YouTubeLink.isValid(link) {
-            readVideo(link)
-            return
-        }
         let host = WebPageImportService.url(from: link)?.host?.replacingOccurrences(of: "www.", with: "")
         guard let id = composer.begin(.web, title: host ?? L10n.t("ios.sup.source.web", locale: .resolved())) else { return }
+        if WebPageImportService.isVideoLink(link) {
+            composer.fail(id, message: WebPageImportService.ImportError.unsupported.localizedDescription)
+            return
+        }
         Task {
             do {
                 composer.finish(id, with: try await WebPageImportService.read(link))
@@ -407,47 +367,6 @@ extension View {
 }
 
 // MARK: - Les feuilles
-
-/// Coller un lien YouTube.
-struct LinkEntrySheet: View {
-    let onDone: (String) -> Void
-
-    @State private var link = ""
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                MicaboIconView(icon: .link, size: 40)
-                Text(L10n.t("lesson.import.youtubeTitle", locale: .resolved()))
-                    .font(MicaboFont.subtitle)
-                    .foregroundStyle(MicaboColor.ink)
-            }
-            TextField(L10n.t("lesson.import.youtubePlaceholder", locale: .resolved()), text: $link)
-                .font(MicaboFont.ui(17, weight: .medium))
-                .keyboardType(.URL)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .focused($focused)
-                .padding(16)
-                .background(MicaboColor.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(MicaboColor.stroke, lineWidth: 1.5))
-            HStack(spacing: 10) {
-                Button(L10n.t("lesson.import.paste", locale: .resolved())) {
-                    if let pasted = UIPasteboard.general.string { link = pasted }
-                }
-                .buttonStyle(MicaboSecondaryButtonStyle())
-                Button(L10n.t("lesson.import.add", locale: .resolved())) { onDone(link) }
-                    .buttonStyle(LessonPrimaryButtonStyle(enabled: link.nilIfBlank != nil))
-                    .disabled(link.nilIfBlank == nil)
-            }
-        }
-        .padding(MicaboSpacing.screen)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .background(MicaboColor.canvas.ignoresSafeArea())
-        .onAppear { focused = true }
-    }
-}
 
 /// Coller un texte.
 struct TextEntrySheet: View {

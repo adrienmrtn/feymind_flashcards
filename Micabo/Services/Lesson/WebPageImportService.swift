@@ -5,7 +5,8 @@ import Foundation
 /// Aucune fonction serveur ne lit une page : l'app la télécharge elle-même, en retire le
 /// décor (menus, scripts, pieds de page, publicités), garde l'article quand la page en
 /// déclare un, et envoie le texte par le chemin d'un texte collé. Un lien vers un PDF est lu
-/// comme un PDF ; un lien YouTube passe par le support YouTube (`LessonImportPickers`).
+/// comme un PDF. **Un lien YouTube n'est pas lu** (`isVideoLink`) : l'import de vidéo est
+/// retiré, et la page du lecteur n'a rien d'un cours.
 enum WebPageImportService {
     enum ImportError: LocalizedError, Equatable {
         case invalidLink
@@ -25,6 +26,19 @@ enum WebPageImportService {
 
     /// Au-delà, ce n'est plus une page de cours : on s'arrête.
     static let maximumBytes = 4_000_000
+
+    /// Les adresses de YouTube, dont l'import est retiré (novembre 2026).
+    private static let videoHosts: Set<String> = [
+        "youtube.com", "m.youtube.com", "music.youtube.com", "youtube-nocookie.com", "youtu.be",
+    ]
+
+    /// **Un lien vers une vidéo YouTube** : il n'est ni lu ni envoyé, la pastille dit que la page
+    /// ne se lit pas comme un cours.
+    static func isVideoLink(_ raw: String) -> Bool {
+        guard let host = url(from: raw)?.host?.lowercased() else { return false }
+        let bare = host.hasPrefix("www.") ? String(host.dropFirst(4)) : host
+        return videoHosts.contains(bare)
+    }
 
     /// Le lien tapé ou collé, en adresse `https` ; `nil` s'il n'en est pas une.
     static func url(from raw: String) -> URL? {

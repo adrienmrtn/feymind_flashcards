@@ -308,7 +308,7 @@ export const lessonRu = {
   profile: {
     me: "Мой профиль",
     goPro: "Перейти на Pro",
-    goProBody: "Безлимитные уроки из твоих PDF, фото, записей и видео YouTube.",
+    goProBody: "Безлимитные уроки из твоих PDF, фото и записей.",
     settings: "Настройки",
     language: "Язык",
     rate: "Оценить Micabo",

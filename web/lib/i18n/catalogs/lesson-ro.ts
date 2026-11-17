@@ -306,7 +306,7 @@ export const lessonRo = {
   profile: {
     me: "Profilul meu",
     goPro: "Treci la Pro",
-    goProBody: "Lecții nelimitate, din PDF-uri, poze, înregistrări și videoclipuri YouTube.",
+    goProBody: "Lecții nelimitate, din PDF-uri, poze și înregistrări.",
     settings: "Setări",
     language: "Limbă",
     rate: "Evaluează Micabo",

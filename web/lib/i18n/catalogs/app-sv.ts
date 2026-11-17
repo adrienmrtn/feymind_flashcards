@@ -275,7 +275,7 @@ export const appSv = {
       send: "Din gratislektion är klar: nästa ingår i Pro.",
       mika: "Du har ställt din gratisfråga till Mika: nästa ingår i Pro.",
       extra: "Ditt gratisextra är använt: obegränsad övning och provtentor i Pro.",
-      upgrade: "Obegränsat med lektioner, plus dina PDF:er, foton, inspelningar och YouTube-videor.",
+      upgrade: "Obegränsat med lektioner, plus dina PDF:er, foton och inspelningar.",
     },
     checkoutClosed: "Abonnemangen har inte öppnat än.",
     storeTitle: "Prenumerera i appen",
@@ -289,7 +289,7 @@ export const appSv = {
     features: {
       cards: {
         title: "Obegränsat med AI-kort",
-        detail: "Importera PDF, foton, Word och YouTube",
+        detail: "Importera PDF, foton och Word",
       },
       sheet: {
         title: "Automatiska kurssammanfattningar",
@@ -410,7 +410,7 @@ export const appSv = {
       },
       supports: {
         title: "Eller lägg in en källa",
-        body: "En PDF, ett foto av dina anteckningar, en inspelning, en YouTube-video, inklistrad text: upp till fem på en gång.",
+        body: "En PDF, ett foto av dina anteckningar, en inspelning, inklistrad text: upp till fem på en gång.",
       },
       numbers: {
         title: "Tre siffror, uppmätta",

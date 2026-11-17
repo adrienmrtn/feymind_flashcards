@@ -197,10 +197,18 @@ final class AuditFixesTests: XCTestCase {
         XCTAssertFalse(error.allowsOfflineFallback, "un refus Pro ne se contourne pas par une fiche hors ligne")
     }
 
-    func testReadingAVideoWithoutProIsAnImportRefusal() {
-        let refusal = SupabaseFunctionError.server(status: 402, message: "Importer une vidéo, c'est avec Micabo Pro.", code: "import_pro")
-        XCTAssertEqual(YouTubeImportError(refusal), .importPro)
-        XCTAssertFalse(YouTubeImportError.importPro.allowsRetry)
+    /// **L'import de vidéo YouTube est retiré** (novembre 2026) : un lien YouTube collé dans le
+    /// champ d'une page web n'est pas lu, et rien ne part chez le serveur.
+    func testAYouTubeLinkIsNoLongerRead() {
+        for link in ["https://www.youtube.com/watch?v=dQw4w9WgXcQ", "youtu.be/dQw4w9WgXcQ", "https://m.youtube.com/shorts/abcdefghijk"] {
+            XCTAssertTrue(WebPageImportService.isVideoLink(link), link)
+        }
+        XCTAssertFalse(WebPageImportService.isVideoLink("https://fr.wikipedia.org/wiki/Photosynth%C3%A8se"))
+        XCTAssertFalse(WebPageImportService.isVideoLink("https://myyoutube.com/watch?v=dQw4w9WgXcQ"))
+        XCTAssertFalse(LessonComposer.Kind.allCases.map(\.rawValue).contains("youtube"))
+        XCTAssertFalse(HomeSourcesSheet.grid.flatMap { $0 }.map(\.rawValue).contains("youtube"))
+        XCTAssertFalse(ToolItem.allCases.map(\.rawValue).contains("youtube"))
+        XCTAssertFalse(HomeShortcut.allCases.map(\.rawValue).contains("youtube"))
     }
 }
 

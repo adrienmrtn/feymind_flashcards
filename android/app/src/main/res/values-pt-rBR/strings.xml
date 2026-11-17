@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">A leitura acontece no seu celular.</string>
     <string name="ios_core13_home_ready">Já li sua matéria.\nQuer que eu faça **sua aula**?</string>
     <string name="ios_core13_lesson_mock">Simulado desta aula</string>
-    <string name="ios_core13_lessons_emptyBody">Um tema, uma foto, um PDF, um vídeo do YouTube ou um áudio: o Mika escreve as anotações, os quizzes, os cartões e o simulado.</string>
+    <string name="ios_core13_lessons_emptyBody">Um tema, uma foto, um PDF ou um áudio: o Mika escreve as anotações, os quizzes, os cartões e o simulado.</string>
     <string name="ios_core13_lessons_emptyTitle">Sua primeira aula, em trilha</string>
     <string name="ios_core13_new_orSupport">Ou comece pela sua matéria</string>
     <string name="ios_core13_new_promise">Mande sua matéria: o Mika transforma em trilha.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Fui pensado para ajudar os alunos **no nível deles**.</string>
     <string name="ios_onb14_lesson_ask">Escolha agora: eu escrevo assim que você entrar no app.</string>
     <string name="ios_onb14_lesson_import">Importo minha matéria</string>
-    <string name="ios_onb14_lesson_importHint">PDF, fotos, áudio, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, fotos, áudio…</string>
     <string name="ios_onb14_lesson_later">Escolho depois</string>
     <string name="ios_onb14_lesson_q">Qual vai ser sua **primeira lição**?</string>
     <string name="ios_onb14_lesson_reactImport">Perfeito: você importa assim que entrar no app.</string>
-    <string name="ios_onb14_lesson_say">PDF, aula gravada, fotos, YouTube ou texto: traga o que você tiver.</string>
+    <string name="ios_onb14_lesson_say">PDF, aula gravada, fotos ou texto: traga o que você tiver.</string>
     <string name="ios_onb14_lesson_title">Sua matéria vira **lições**.</string>
     <string name="ios_onb14_lesson_topic">Digito um tema</string>
     <string name="ios_onb14_open_goal">Agora, vamos definir **seu objetivo**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Me conta das suas aulas: quero saber **o que te trava**.</string>
     <string name="ios_onb14_origin_play">Organizar a pilha</string>
     <string name="ios_onb14_origin_title">Fui criado por estudantes que precisavam **organizar a pilha de matéria** num lugar só.</string>
-    <string name="ios_onb14_story1">PDF, áudio, fotos, YouTube: tudo vira uma **lição**.</string>
+    <string name="ios_onb14_story1">PDF, áudio, fotos: tudo vira uma **lição**.</string>
     <string name="ios_onb14_story_ask_a">Em junho de 1791, Luís XVI tenta chegar ao leste do país. Preso em Varennes, perde a confiança do povo.</string>
     <string name="ios_onb14_story_ask_q">Por que o rei foge para Varennes?</string>
     <string name="ios_onb14_story_ask_title">E você vai além, o bastante para **impressionar os professores**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Continuar</string>
     <string name="ios_pay10_cta_trial">Testar grátis</string>
     <string name="ios_pay10_hook_exportSheet">Sua **ficha em PDF**? Eu preparo com o Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Seus PDFs, fotos e vídeos: eu transformo em **aulas** com o Pro.</string>
+    <string name="ios_pay10_hook_generateCourse">Seus PDFs, fotos e gravações: eu transformo em **aulas** com o Pro.</string>
     <string name="ios_pay10_hook_lessonReady">**Sua aula está pronta** para ser escrita. Desbloqueie com o Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**O resto da sua ficha** está pronto. Eu abro com o Pro.</string>
     <string name="ios_pay10_hook_mika">Com o Pro eu respondo **todas as suas perguntas**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Assinar · %1$s por semana</string>
     <string name="ios_pay11_cta_year">Assinar · %1$s por ano</string>
     <string name="ios_pay11_hook_exportSheet">**Sua ficha em PDF**, pronta para imprimir: eu faço com o Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">Seu PDF, suas fotos, seu vídeo: eu transformo em **uma aula** com o Pro.</string>
+    <string name="ios_pay11_hook_generateCourse">Seu PDF, suas fotos, sua gravação: eu transformo em **uma aula** com o Pro.</string>
     <string name="ios_pay11_hook_lessonReady">Li seus documentos. **Sua aula**, eu escrevo assim que você assinar o Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**O resto desta ficha** está escrito. Eu abro com o Pro.</string>
     <string name="ios_pay11_hook_mika">Sua pergunta grátis já foi feita. **As próximas**, eu respondo com o Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">É seu recorde. Não perca.</string>
     <string name="ios_profile_streakStart">Volte amanhã e a sequência começa.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">Uma foto, um PDF ou um vídeo do YouTube: o Mika transforma isso em uma lição e cartões em poucos minutos.</string>
+    <string name="ios_reminder_import1_body">Uma foto ou um PDF: o Mika transforma isso em uma lição e cartões em poucos minutos.</string>
     <string name="ios_reminder_import1_title">Venha aprender seu primeiro curso com o Mika!</string>
     <string name="ios_reminder_import2_body">Importe seu curso e o Mika prepara tudo para você revisar.</string>
     <string name="ios_reminder_import2_title">Tem prova chegando?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Diferentes das que você já viu, focadas onde você erra.</string>
     <string name="lesson_profile_contact">Falar com o suporte</string>
     <string name="lesson_profile_goPro">Assinar o Pro</string>
-    <string name="lesson_profile_goProBody">Aulas ilimitadas, a partir dos seus PDFs, fotos, gravações e vídeos do YouTube.</string>
+    <string name="lesson_profile_goProBody">Aulas ilimitadas, a partir dos seus PDFs, fotos e gravações.</string>
     <string name="lesson_profile_language">Idioma</string>
     <string name="lesson_profile_me">Meu perfil</string>
     <string name="lesson_profile_privacy">Política de privacidade</string>

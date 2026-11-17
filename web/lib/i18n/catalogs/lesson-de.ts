@@ -309,7 +309,7 @@ export const lessonDe = {
   profile: {
     me: "Mein Profil",
     goPro: "Pro holen",
-    goProBody: "Unbegrenzte Lektionen, aus deinen PDFs, Fotos, Aufnahmen und YouTube-Videos.",
+    goProBody: "Unbegrenzte Lektionen, aus deinen PDFs, Fotos und Aufnahmen.",
     settings: "Einstellungen",
     language: "Sprache",
     rate: "Micabo bewerten",

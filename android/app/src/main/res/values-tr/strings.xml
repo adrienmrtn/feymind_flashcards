@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Okuma telefonunda yapılır.</string>
     <string name="ios_core13_home_ready">Dersini okudum.\n**Dersini** hazırlayayım mı?</string>
     <string name="ios_core13_lesson_mock">Bu derse deneme sınavı</string>
-    <string name="ios_core13_lessons_emptyBody">Bir konu, bir fotoğraf, bir PDF, bir YouTube videosu ya da bir ses kaydı: Mika notları, quizleri, kartları ve deneme sınavını yazar.</string>
+    <string name="ios_core13_lessons_emptyBody">Bir konu, bir fotoğraf, bir PDF ya da bir ses kaydı: Mika notları, quizleri, kartları ve deneme sınavını yazar.</string>
     <string name="ios_core13_lessons_emptyTitle">İlk dersin, adım adım</string>
     <string name="ios_core13_new_orSupport">Ya da dersinden başla</string>
     <string name="ios_core13_new_promise">Dersini Mika\'ya ver, o bir yola dönüştürsün.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Öğrencilere **kendi seviyelerinde** yardım etmek için tasarlandım.</string>
     <string name="ios_onb14_lesson_ask">Şimdi seç: uygulamaya girer girmez yazarım.</string>
     <string name="ios_onb14_lesson_import">Notlarımı içe aktarırım</string>
-    <string name="ios_onb14_lesson_importHint">PDF, fotoğraflar, ses, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, fotoğraflar, ses…</string>
     <string name="ios_onb14_lesson_later">Sonra seçerim</string>
     <string name="ios_onb14_lesson_q">**İlk dersin** ne olacak?</string>
     <string name="ios_onb14_lesson_reactImport">Harika: uygulamaya girince içe aktarırsın.</string>
-    <string name="ios_onb14_lesson_say">PDF, kaydedilmiş ders, fotoğraflar, YouTube ya da metin: elinde ne varsa getir.</string>
+    <string name="ios_onb14_lesson_say">PDF, kaydedilmiş ders, fotoğraflar ya da metin: elinde ne varsa getir.</string>
     <string name="ios_onb14_lesson_title">Notların **derslere** dönüşür.</string>
     <string name="ios_onb14_lesson_topic">Bir konu yazarım</string>
     <string name="ios_onb14_open_goal">Şimdi **hedefini** belirleyelim.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Bana derslerinden bahset: **seni neyin zorladığını** bilmek istiyorum.</string>
     <string name="ios_onb14_origin_play">Yığını topla</string>
     <string name="ios_onb14_origin_title">Beni, **ders notu yığınlarını** tek bir yerde toplamak isteyen öğrenciler yarattı.</string>
-    <string name="ios_onb14_story1">PDF, ses, fotoğraflar, YouTube: hepsi bir **derse** dönüşür.</string>
+    <string name="ios_onb14_story1">PDF, ses, fotoğraflar: hepsi bir **derse** dönüşür.</string>
     <string name="ios_onb14_story_ask_a">Haziran 1791\'de XVI. Louis ülkenin doğusuna ulaşmaya çalışır. Varennes\'de yakalanınca halkın güvenini kaybeder.</string>
     <string name="ios_onb14_story_ask_q">Kral neden Varennes\'e kaçar?</string>
     <string name="ios_onb14_story_ask_title">Ve daha ileri gidersin, **öğretmenlerini etkilemeye** yetecek kadar.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Devam et</string>
     <string name="ios_pay10_cta_trial">Ücretsiz dene</string>
     <string name="ios_pay10_hook_exportSheet">Özetin **PDF olarak** mı? Pro ile hazırlarım.</string>
-    <string name="ios_pay10_hook_generateCourse">PDF\'lerin, fotoğrafların ve videoların: Pro ile onları **derse** çeviririm.</string>
+    <string name="ios_pay10_hook_generateCourse">PDF\'lerin, fotoğrafların ve ses kayıtların: Pro ile onları **derse** çeviririm.</string>
     <string name="ios_pay10_hook_lessonReady">**Dersin yazılmaya hazır.** Pro ile kilidini aç.</string>
     <string name="ios_pay10_hook_lockedSheet">**Özetinin devamı** hazır. Pro ile sana açarım.</string>
     <string name="ios_pay10_hook_mika">Pro ile **tüm sorularını** yanıtlarım.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Abone ol · haftalık %1$s</string>
     <string name="ios_pay11_cta_year">Abone ol · yıllık %1$s</string>
     <string name="ios_pay11_hook_exportSheet">**Özetin PDF olarak**, yazdırmaya hazır: Pro ile hazırlarım.</string>
-    <string name="ios_pay11_hook_generateCourse">PDF\'in, fotoğrafların, videon: Pro ile onlardan **bir ders** yaparım.</string>
+    <string name="ios_pay11_hook_generateCourse">PDF\'in, fotoğrafların, ses kaydın: Pro ile onlardan **bir ders** yaparım.</string>
     <string name="ios_pay11_hook_lessonReady">Belgelerini okudum. **Dersini** Pro\'ya geçer geçmez yazarım.</string>
     <string name="ios_pay11_hook_lockedSheet">**Bu özetin devamı** yazıldı. Pro ile sana açarım.</string>
     <string name="ios_pay11_hook_mika">Ücretsiz sorunu sordun. **Sonraki soruları** Pro ile yanıtlarım.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Bu senin rekorun. Bırakma.</string>
     <string name="ios_profile_streakStart">Yarın gel, seri başlasın.</string>
     <string name="ios_quiz_time_short">%1$s dk</string>
-    <string name="ios_reminder_import1_body">Bir fotoğraf, bir PDF ya da bir YouTube videosu: Mika birkaç dakikada onu bir derse ve kartlara dönüştürür.</string>
+    <string name="ios_reminder_import1_body">Bir fotoğraf ya da bir PDF: Mika birkaç dakikada onu bir derse ve kartlara dönüştürür.</string>
     <string name="ios_reminder_import1_title">İlk dersini Mika ile öğrenmeye gel!</string>
     <string name="ios_reminder_import2_body">Dersini içe aktar, Mika tekrar etmen için her şeyi hazırlasın.</string>
     <string name="ios_reminder_import2_title">Yaklaşan bir sınav mı var?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Gördüklerinden farklı, özellikle hata yaptığın yerlerde.</string>
     <string name="lesson_profile_contact">Destekle iletişime geç</string>
     <string name="lesson_profile_goPro">Pro\'ya geç</string>
-    <string name="lesson_profile_goProBody">PDF\'lerinden, fotoğraflarından, ses kayıtlarından ve YouTube videolarından sınırsız ders.</string>
+    <string name="lesson_profile_goProBody">PDF\'lerinden, fotoğraflarından ve ses kayıtlarından sınırsız ders.</string>
     <string name="lesson_profile_language">Dil</string>
     <string name="lesson_profile_me">Profilim</string>
     <string name="lesson_profile_privacy">Gizlilik politikası</string>

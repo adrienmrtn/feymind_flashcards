@@ -264,7 +264,7 @@ export const appDe = {
       send: "Deine Gratis-Lektion ist geschrieben: die nächste gibt es in Pro.",
       mika: "Deine Gratis-Frage an Mika ist gestellt: die nächsten gibt es in Pro.",
       extra: "Dein Gratis-Extra ist verbraucht: Übungen und Probeprüfungen ohne Limit in Pro.",
-      upgrade: "Unbegrenzte Lektionen, plus deine PDFs, Fotos, Aufnahmen und YouTube-Videos.",
+      upgrade: "Unbegrenzte Lektionen, plus deine PDFs, Fotos und Aufnahmen.",
     },
     checkoutClosed: "Abos sind noch nicht freigeschaltet.",
     storeTitle: "Abonniere in der App",
@@ -278,7 +278,7 @@ export const appDe = {
     features: {
       cards: {
         title: "Unbegrenzte KI-Karten",
-        detail: "Importiere PDF, Fotos, Word und YouTube",
+        detail: "Importiere PDF, Fotos und Word",
       },
       sheet: {
         title: "Automatische Kursblätter",
@@ -402,7 +402,7 @@ export const appDe = {
       },
       supports: {
         title: "Oder lege eine Quelle ab",
-        body: "Ein PDF, ein Foto deiner Notizen, eine Aufnahme, ein YouTube-Video, eingefügter Text: bis zu fünf auf einmal.",
+        body: "Ein PDF, ein Foto deiner Notizen, eine Aufnahme, eingefügter Text: bis zu fünf auf einmal.",
       },
       numbers: {
         title: "Drei Zahlen, gemessen",

@@ -274,7 +274,7 @@ export const appEt = {
       send: "Sinu tasuta tund on tehtud: järgmine on Pro-s.",
       mika: "Sinu tasuta küsimus Mikale on esitatud: järgmised on Pro-s.",
       extra: "Sinu tasuta lisa on kasutatud: piiramatu harjutamine ja proovieksamid on Pro-s.",
-      upgrade: "Piiramatult tunde, lisaks sinu PDF-id, fotod, salvestised ja YouTube'i videod.",
+      upgrade: "Piiramatult tunde, lisaks sinu PDF-id, fotod ja salvestised.",
     },
     checkoutClosed: "Tellimused pole veel avatud.",
     storeTitle: "Telli rakenduses",
@@ -288,7 +288,7 @@ export const appEt = {
     features: {
       cards: {
         title: "Piiramatult AI-kaarte",
-        detail: "Impordi PDF-e, fotosid, Wordi faile ja YouTube'i",
+        detail: "Impordi PDF-e, fotosid ja Wordi faile",
       },
       sheet: {
         title: "Automaatsed kursusekonspektid",
@@ -409,7 +409,7 @@ export const appEt = {
       },
       supports: {
         title: "Või lohista sisse materjal",
-        body: "PDF, foto sinu märkmetest, salvestis, YouTube'i video, kleebitud tekst: kuni viis korraga.",
+        body: "PDF, foto sinu märkmetest, salvestis, kleebitud tekst: kuni viis korraga.",
       },
       numbers: {
         title: "Kolm numbrit, mõõdetud",

@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Citirea se face pe telefonul tău.</string>
     <string name="ios_core13_home_ready">Ți-am citit cursul.\nFac din el **lecția ta**?</string>
     <string name="ios_core13_lesson_mock">Examen de probă pe această lecție</string>
-    <string name="ios_core13_lessons_emptyBody">O temă, o poză, un PDF, un videoclip YouTube sau un audio: Mika scrie notițele, quizurile, cardurile și examenul de probă.</string>
+    <string name="ios_core13_lessons_emptyBody">O temă, o poză, un PDF sau un audio: Mika scrie notițele, quizurile, cardurile și examenul de probă.</string>
     <string name="ios_core13_lessons_emptyTitle">Prima ta lecție, ca parcurs</string>
     <string name="ios_core13_new_orSupport">Sau pornește de la cursul tău</string>
     <string name="ios_core13_new_promise">Dă-i cursul tău: Mika face din el un parcurs.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Am fost gândit să-i ajut pe elevi și studenți **la nivelul lor**.</string>
     <string name="ios_onb14_lesson_ask">Alege-o acum: o scriu imediat ce intri în aplicație.</string>
     <string name="ios_onb14_lesson_import">Îmi import notițele</string>
-    <string name="ios_onb14_lesson_importHint">PDF, poze, audio, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, poze, audio…</string>
     <string name="ios_onb14_lesson_later">Aleg mai târziu</string>
     <string name="ios_onb14_lesson_q">Care va fi **prima ta lecție**?</string>
     <string name="ios_onb14_lesson_reactImport">Perfect: o vei importa când intri în aplicație.</string>
-    <string name="ios_onb14_lesson_say">PDF, oră înregistrată, poze, YouTube sau text: adu ce ai.</string>
+    <string name="ios_onb14_lesson_say">PDF, oră înregistrată, poze sau text: adu ce ai.</string>
     <string name="ios_onb14_lesson_title">Notițele tale devin **lecții**.</string>
     <string name="ios_onb14_lesson_topic">Scriu un subiect</string>
     <string name="ios_onb14_open_goal">Acum, hai să stabilim **obiectivul tău**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Povestește-mi despre orele tale: vreau să știu **ce te blochează**.</string>
     <string name="ios_onb14_origin_play">Ordonează teancul</string>
     <string name="ios_onb14_origin_title">Am fost creat de elevi care aveau nevoie să **își ordoneze teancul de lecții** într-un singur loc.</string>
-    <string name="ios_onb14_story1">PDF, audio, poze, YouTube: totul devine o **lecție**.</string>
+    <string name="ios_onb14_story1">PDF, audio, poze: totul devine o **lecție**.</string>
     <string name="ios_onb14_story_ask_a">În iunie 1791, Ludovic al XVI-lea încearcă să ajungă în estul țării. Arestat la Varennes, pierde încrederea poporului.</string>
     <string name="ios_onb14_story_ask_q">De ce fuge regele la Varennes?</string>
     <string name="ios_onb14_story_ask_title">Și mergi mai departe, cât să **îți impresionezi profesorii**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Continuă</string>
     <string name="ios_pay10_cta_trial">Încearcă gratuit</string>
     <string name="ios_pay10_hook_exportSheet">Fișa ta **în PDF**? Ți-o pregătesc cu Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">PDF-urile, pozele și videoclipurile tale: fac din ele **lecții** cu Pro.</string>
+    <string name="ios_pay10_hook_generateCourse">PDF-urile, pozele și înregistrările tale: fac din ele **lecții** cu Pro.</string>
     <string name="ios_pay10_hook_lessonReady">**Lecția ta e gata** de scris. Deblocheaz-o cu Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Restul fișei tale** e gata. Ți-l deschid cu Pro.</string>
     <string name="ios_pay10_hook_mika">Răspund la **toate întrebările tale** cu Pro.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Abonează-te · %1$s pe săptămână</string>
     <string name="ios_pay11_cta_year">Abonează-te · %1$s pe an</string>
     <string name="ios_pay11_hook_exportSheet">**Fișa ta în PDF**, gata de printat: ți-o fac cu Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">PDF-ul, pozele, videoclipul tău: fac din ele **o lecție** cu Pro.</string>
+    <string name="ios_pay11_hook_generateCourse">PDF-ul, pozele, înregistrarea ta: fac din ele **o lecție** cu Pro.</string>
     <string name="ios_pay11_hook_lessonReady">Ți-am citit documentele. **Lecția ta** o scriu imediat ce treci la Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Restul acestei fișe** e scris. Ți-l deschid cu Pro.</string>
     <string name="ios_pay11_hook_mika">Întrebarea gratuită e pusă. **La următoarele** îți răspund cu Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">E recordul tău. Nu renunța.</string>
     <string name="ios_profile_streakStart">Revino mâine și începe seria.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">O poză, un PDF sau un video de pe YouTube: Mika îl transformă în câteva minute într-o lecție și carduri.</string>
+    <string name="ios_reminder_import1_body">O poză sau un PDF: Mika îl transformă în câteva minute într-o lecție și carduri.</string>
     <string name="ios_reminder_import1_title">Vino să înveți primul tău curs cu Mika!</string>
     <string name="ios_reminder_import2_body">Importă-ți cursul, iar Mika îți pregătește tot ce-ți trebuie ca să-l recapitulezi.</string>
     <string name="ios_reminder_import2_title">Se apropie un examen?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Diferite de cele văzute, axate pe unde greșești.</string>
     <string name="lesson_profile_contact">Contactează suportul</string>
     <string name="lesson_profile_goPro">Treci la Pro</string>
-    <string name="lesson_profile_goProBody">Lecții nelimitate, din PDF-uri, poze, înregistrări și videoclipuri YouTube.</string>
+    <string name="lesson_profile_goProBody">Lecții nelimitate, din PDF-uri, poze și înregistrări.</string>
     <string name="lesson_profile_language">Limbă</string>
     <string name="lesson_profile_me">Profilul meu</string>
     <string name="lesson_profile_privacy">Politica de confidențialitate</string>

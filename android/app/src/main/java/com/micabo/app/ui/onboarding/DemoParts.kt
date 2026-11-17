@@ -37,12 +37,11 @@ import com.micabo.app.ui.v3.wash
 import java.time.LocalDate
 import java.time.format.TextStyle
 
-/** **Les cinq façons d'apporter un cours** (`OnbSource`) : PDF, cours enregistré, photo, YouTube, texte. */
+/** **Les quatre façons d'apporter un cours** (`OnbSource`) : PDF, cours enregistré, photo, texte (YouTube retiré en novembre 2026). */
 enum class OnbSource(val titleKey: String) {
     PDF("ios.sup.source.pdf"),
     LECTURE("ios.sup.source.lecture"),
     PHOTO("ios.sup.source.photo"),
-    YOUTUBE("ios.sup.source.youtube"),
     TEXT("ios.sup.source.text");
 
     val icon: ImageVector
@@ -50,7 +49,6 @@ enum class OnbSource(val titleKey: String) {
             PDF -> MicaboIcons.pdf
             LECTURE -> MicaboIcons.audio
             PHOTO -> MicaboIcons.photo
-            YOUTUBE -> MicaboIcons.youtube
             TEXT -> MicaboIcons.text
         }
 
@@ -61,13 +59,12 @@ enum class OnbSource(val titleKey: String) {
             PDF -> colors.iconOrange
             LECTURE -> colors.iconPink
             PHOTO -> colors.iconBlue
-            YOUTUBE -> colors.iconYellow
             TEXT -> colors.iconGreen
         }
     }
 }
 
-/** **Le bandeau des sources** : cinq tuiles, leur nom dessous (deux lignes au plus). */
+/** **Le bandeau des sources** : quatre tuiles, leur nom dessous (deux lignes au plus). */
 @Composable
 fun SourceStrip(highlighted: OnbSource? = null, tile: Int = 46, modifier: Modifier = Modifier) {
     val colors = Micabo.colors

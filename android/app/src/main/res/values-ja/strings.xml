@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">読み取りはスマホの中で行われます。</string>
     <string name="ios_core13_home_ready">資料を読み終えたよ。\n**レッスン**にしようか？</string>
     <string name="ios_core13_lesson_mock">このレッスンの模擬試験</string>
-    <string name="ios_core13_lessons_emptyBody">テーマ、写真、PDF、YouTube動画、音声。Mikaがノート、クイズ、カード、模擬試験を作るよ。</string>
+    <string name="ios_core13_lessons_emptyBody">テーマ、写真、PDF、音声。Mikaがノート、クイズ、カード、模擬試験を作るよ。</string>
     <string name="ios_core13_lessons_emptyTitle">最初のレッスンを、コースで</string>
     <string name="ios_core13_new_orSupport">または授業の資料から</string>
     <string name="ios_core13_new_promise">授業の資料を渡せば、Mikaがコースにするよ。</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">一人ひとりの**レベルに合わせて**手伝うために作られたよ。</string>
     <string name="ios_onb14_lesson_ask">今選んで。アプリに入ったらすぐ書くよ。</string>
     <string name="ios_onb14_lesson_import">ノートを取り込む</string>
-    <string name="ios_onb14_lesson_importHint">PDF、写真、音声、YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF、写真、音声…</string>
     <string name="ios_onb14_lesson_later">あとで選ぶ</string>
     <string name="ios_onb14_lesson_q">**最初のレッスン**は何にする？</string>
     <string name="ios_onb14_lesson_reactImport">いいね。アプリに入ったら取り込もう。</string>
-    <string name="ios_onb14_lesson_say">PDF、録音した授業、写真、YouTube、テキスト。手元にあるものを持ってきて。</string>
+    <string name="ios_onb14_lesson_say">PDF、録音した授業、写真、テキスト。手元にあるものを持ってきて。</string>
     <string name="ios_onb14_lesson_title">ノートが**レッスン**になる。</string>
     <string name="ios_onb14_lesson_topic">テーマを入力する</string>
     <string name="ios_onb14_open_goal">次は**目標**を決めよう。</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">授業のことを教えて。**どこでつまずいているか**知りたいんだ。</string>
     <string name="ios_onb14_origin_play">山を片づける</string>
     <string name="ios_onb14_origin_title">ぼくは、**山ほどのノート**を一か所にまとめたかった学生たちが作ったんだ。</string>
-    <string name="ios_onb14_story1">PDF、音声、写真、YouTube。全部が**レッスン**になる。</string>
+    <string name="ios_onb14_story1">PDF、音声、写真。全部が**レッスン**になる。</string>
     <string name="ios_onb14_story_ask_a">1791年6月、ルイ16世は国の東部へ向かおうとした。ヴァレンヌで捕まり、民衆の信頼を失った。</string>
     <string name="ios_onb14_story_ask_q">なぜ国王はヴァレンヌへ逃げたの？</string>
     <string name="ios_onb14_story_ask_title">さらに深く学んで、**先生をびっくりさせよう**。</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">続ける</string>
     <string name="ios_pay10_cta_trial">無料で試す</string>
     <string name="ios_pay10_hook_exportSheet">**まとめノートをPDFで**？Proで用意するよ。</string>
-    <string name="ios_pay10_hook_generateCourse">PDFも写真も動画も、Proなら**レッスン**にするよ。</string>
+    <string name="ios_pay10_hook_generateCourse">PDFも写真も録音も、Proなら**レッスン**にするよ。</string>
     <string name="ios_pay10_hook_lessonReady">**レッスンを書く準備**はできてるよ。Proでロック解除しよう。</string>
     <string name="ios_pay10_hook_lockedSheet">**ノートの続き**は準備できてるよ。Proで開くね。</string>
     <string name="ios_pay10_hook_mika">Proなら**どんな質問にも**答えるよ。</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">登録する・週%1$s</string>
     <string name="ios_pay11_cta_year">登録する・年%1$s</string>
     <string name="ios_pay11_hook_exportSheet">**まとめノートをPDFで**、すぐ印刷できる形に。Proで作るよ。</string>
-    <string name="ios_pay11_hook_generateCourse">PDFも写真も動画も、Proなら**レッスン**にするよ。</string>
+    <string name="ios_pay11_hook_generateCourse">PDFも写真も録音も、Proなら**レッスン**にするよ。</string>
     <string name="ios_pay11_hook_lessonReady">資料は読んだよ。Proになったら、すぐに**レッスン**を書くね。</string>
     <string name="ios_pay11_hook_lockedSheet">**このノートの続き**はもう書けてるよ。Proで開くね。</string>
     <string name="ios_pay11_hook_mika">無料の質問は使ったね。**次からの質問**はProで答えるよ。</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">自己ベストだよ。このまま続けよう。</string>
     <string name="ios_profile_streakStart">明日また来れば、連続記録スタート。</string>
     <string name="ios_quiz_time_short">%1$s分</string>
-    <string name="ios_reminder_import1_body">写真、PDF、YouTube動画。Mikaが数分でレッスンとカードにするよ。</string>
+    <string name="ios_reminder_import1_body">写真、PDF。Mikaが数分でレッスンとカードにするよ。</string>
     <string name="ios_reminder_import1_title">Mikaと最初のコースを学ぼう！</string>
     <string name="ios_reminder_import2_body">授業の資料を取り込めば、Mikaが復習の準備をするよ。</string>
     <string name="ios_reminder_import2_title">試験が近づいてる？</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">これまでと違う問題を、まちがえやすいところ中心に。</string>
     <string name="lesson_profile_contact">サポートに問い合わせ</string>
     <string name="lesson_profile_goPro">Proにする</string>
-    <string name="lesson_profile_goProBody">レッスン無制限。PDF、写真、音声、YouTube動画から。</string>
+    <string name="lesson_profile_goProBody">レッスン無制限。PDF、写真、音声から。</string>
     <string name="lesson_profile_language">言語</string>
     <string name="lesson_profile_me">プロフィール</string>
     <string name="lesson_profile_privacy">プライバシーポリシー</string>

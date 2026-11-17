@@ -275,7 +275,7 @@ export const appRo = {
       send: "Lecția gratuită e făcută: următoarea e în Pro.",
       mika: "Întrebarea gratuită pentru Mika e pusă: următoarele sunt în Pro.",
       extra: "Extra-ul gratuit e folosit: exersare și simulări nelimitate în Pro.",
-      upgrade: "Lecții nelimitate, plus PDF-urile, pozele, înregistrările și videoclipurile tale YouTube.",
+      upgrade: "Lecții nelimitate, plus PDF-urile, pozele și înregistrările tale.",
     },
     checkoutClosed: "Abonamentele nu sunt încă deschise.",
     storeTitle: "Abonează-te în aplicație",
@@ -289,7 +289,7 @@ export const appRo = {
     features: {
       cards: {
         title: "Carduri AI nelimitate",
-        detail: "Importă PDF, poze, Word și YouTube",
+        detail: "Importă PDF, poze și Word",
       },
       sheet: {
         title: "Fișe de curs automate",
@@ -410,7 +410,7 @@ export const appRo = {
       },
       supports: {
         title: "Sau adaugă un material",
-        body: "Un PDF, o poză cu notițele, o înregistrare, un video YouTube, un text lipit: până la cinci odată.",
+        body: "Un PDF, o poză cu notițele, o înregistrare, un text lipit: până la cinci odată.",
       },
       numbers: {
         title: "Trei cifre, măsurate",

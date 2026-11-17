@@ -16,7 +16,6 @@ const FORMATS: { kind: SourceKind; key: string }[] = [
   { kind: "pdf", key: "landing.formatPdf" },
   { kind: "word", key: "landing.formatWord" },
   { kind: "photo", key: "landing.formatPhoto" },
-  { kind: "youtube", key: "landing.formatYoutube" },
   { kind: "audio", key: "landing.formatAudio" },
   { kind: "text", key: "landing.formatText" },
 ];

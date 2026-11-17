@@ -306,7 +306,7 @@ export const lessonNl = {
   profile: {
     me: "Mijn profiel",
     goPro: "Neem Pro",
-    goProBody: "Onbeperkt lessen, uit je PDF’s, foto’s, opnames en YouTube-video’s.",
+    goProBody: "Onbeperkt lessen, uit je PDF’s, foto’s en opnames.",
     settings: "Instellingen",
     language: "Taal",
     rate: "Beoordeel Micabo",

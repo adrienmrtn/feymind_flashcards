@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Az olvasás a telefonodon történik.</string>
     <string name="ios_core13_home_ready">Elolvastam az anyagodat.\nCsináljak belőle **leckét**?</string>
     <string name="ios_core13_lesson_mock">Próbavizsga ebből a leckéből</string>
-    <string name="ios_core13_lessons_emptyBody">Egy téma, egy fotó, egy PDF, egy YouTube-videó vagy egy hangfelvétel: Mika megírja a jegyzeteket, a kvízeket, a kártyákat és a próbavizsgát.</string>
+    <string name="ios_core13_lessons_emptyBody">Egy téma, egy fotó, egy PDF vagy egy hangfelvétel: Mika megírja a jegyzeteket, a kvízeket, a kártyákat és a próbavizsgát.</string>
     <string name="ios_core13_lessons_emptyTitle">Az első leckéd, útként</string>
     <string name="ios_core13_new_orSupport">Vagy indulj a saját anyagodból</string>
     <string name="ios_core13_new_promise">Add oda az anyagodat: Mika utat készít belőle.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Úgy terveztek, hogy a diákoknak **a saját szintjükön** segítsek.</string>
     <string name="ios_onb14_lesson_ask">Válaszd ki most: megírom, amint bent vagy az appban.</string>
     <string name="ios_onb14_lesson_import">Importálom a jegyzeteimet</string>
-    <string name="ios_onb14_lesson_importHint">PDF, fotók, hang, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, fotók, hang…</string>
     <string name="ios_onb14_lesson_later">Később választok</string>
     <string name="ios_onb14_lesson_q">Mi lesz az **első leckéd**?</string>
     <string name="ios_onb14_lesson_reactImport">Szuper: importálod, amint bent vagy az appban.</string>
-    <string name="ios_onb14_lesson_say">PDF, felvett óra, fotók, YouTube vagy szöveg: hozd, ami van.</string>
+    <string name="ios_onb14_lesson_say">PDF, felvett óra, fotók vagy szöveg: hozd, ami van.</string>
     <string name="ios_onb14_lesson_title">A jegyzeteidből **leckék** lesznek.</string>
     <string name="ios_onb14_lesson_topic">Beírok egy témát</string>
     <string name="ios_onb14_open_goal">Most tűzzük ki **a célodat**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Mesélj az óráidról: tudni akarom, **mi tart vissza**.</string>
     <string name="ios_onb14_origin_play">Rendrakás</string>
     <string name="ios_onb14_origin_title">Diákok alkottak meg, akiknek kellett egy hely, ahol **rendbe tehetik a jegyzethalmukat**.</string>
-    <string name="ios_onb14_story1">PDF, hang, fotók, YouTube: mindenből **lecke** lesz.</string>
+    <string name="ios_onb14_story1">PDF, hang, fotók: mindenből **lecke** lesz.</string>
     <string name="ios_onb14_story_ask_a">1791 júniusában XVI. Lajos megpróbál eljutni az ország keleti részébe. Varennes-ben elfogják, és elveszíti a nép bizalmát.</string>
     <string name="ios_onb14_story_ask_q">Miért menekül a király Varennes-be?</string>
     <string name="ios_onb14_story_ask_title">És tovább mész, épp annyira, hogy **lenyűgözd a tanáraidat**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Tovább</string>
     <string name="ios_pay10_cta_trial">Ingyenes kipróbálás</string>
     <string name="ios_pay10_hook_exportSheet">A **jegyzeted PDF-ben**? A Próval elkészítem.</string>
-    <string name="ios_pay10_hook_generateCourse">A PDF-jeidből, fotóidból és videóidból **leckéket** készítek a Próval.</string>
+    <string name="ios_pay10_hook_generateCourse">A PDF-jeidből, fotóidból és felvételeidből **leckéket** készítek a Próval.</string>
     <string name="ios_pay10_hook_lessonReady">**A leckéd készen áll** a megírásra. Oldd fel a Próval.</string>
     <string name="ios_pay10_hook_lockedSheet">**A jegyzeted folytatása** kész. A Próval megnyitom.</string>
     <string name="ios_pay10_hook_mika">A Próval **minden kérdésedre** válaszolok.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Előfizetés · heti %1$s</string>
     <string name="ios_pay11_cta_year">Előfizetés · évi %1$s</string>
     <string name="ios_pay11_hook_exportSheet">**A jegyzeted PDF-ben**, nyomtatásra készen: a Próval elkészítem.</string>
-    <string name="ios_pay11_hook_generateCourse">A PDF-edből, fotóidból, videódból **leckét** csinálok a Próval.</string>
+    <string name="ios_pay11_hook_generateCourse">A PDF-edből, fotóidból, felvételedből **leckét** csinálok a Próval.</string>
     <string name="ios_pay11_hook_lessonReady">Elolvastam a dokumentumaidat. **A leckédet** megírom, amint Pro leszel.</string>
     <string name="ios_pay11_hook_lockedSheet">**A jegyzet folytatása** megírva. A Próval megnyitom.</string>
     <string name="ios_pay11_hook_mika">Az ingyenes kérdésed elhangzott. **A következőkre** a Próval válaszolok.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Ez a rekordod. Ne engedd el!</string>
     <string name="ios_profile_streakStart">Gyere vissza holnap, és indul a széria.</string>
     <string name="ios_quiz_time_short">%1$s perc</string>
-    <string name="ios_reminder_import1_body">Egy fotó, egy PDF vagy egy YouTube-videó: Mika pár perc alatt leckét és kártyákat készít belőle.</string>
+    <string name="ios_reminder_import1_body">Egy fotó vagy egy PDF: Mika pár perc alatt leckét és kártyákat készít belőle.</string>
     <string name="ios_reminder_import1_title">Tanuld meg az első kurzusodat Mikával!</string>
     <string name="ios_reminder_import2_body">Importáld a kurzusodat, és Mika mindent előkészít az ismétléshez.</string>
     <string name="ios_reminder_import2_title">Közeleg egy vizsga?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Mások, mint amiket már láttál, főleg ott, ahol hibázni szoktál.</string>
     <string name="lesson_profile_contact">Kapcsolat a támogatással</string>
     <string name="lesson_profile_goPro">Válts Próra</string>
-    <string name="lesson_profile_goProBody">Korlátlan lecke a PDF-jeidből, fotóidból, felvételeidből és YouTube-videókból.</string>
+    <string name="lesson_profile_goProBody">Korlátlan lecke a PDF-jeidből, fotóidból és felvételeidből.</string>
     <string name="lesson_profile_language">Nyelv</string>
     <string name="lesson_profile_me">Profilom</string>
     <string name="lesson_profile_privacy">Adatvédelmi szabályzat</string>

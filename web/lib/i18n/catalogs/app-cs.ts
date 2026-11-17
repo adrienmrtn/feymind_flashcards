@@ -275,7 +275,7 @@ export const appCs = {
       send: "Tvoje lekce zdarma je hotová: další je v Pro.",
       mika: "Tvoje otázka zdarma pro Miku je položená: další jsou v Pro.",
       extra: "Tvůj bonus zdarma je vyčerpaný: neomezené procvičování a zkoušky nanečisto v Pro.",
-      upgrade: "Neomezené lekce a k tomu tvoje PDF, fotky, nahrávky a videa z YouTube.",
+      upgrade: "Neomezené lekce a k tomu tvoje PDF, fotky a nahrávky.",
     },
     checkoutClosed: "Předplatné zatím není otevřené.",
     storeTitle: "Předplať si v aplikaci",
@@ -289,7 +289,7 @@ export const appCs = {
     features: {
       cards: {
         title: "Neomezené AI kartičky",
-        detail: "Import PDF, fotek, Wordu a YouTube",
+        detail: "Import PDF, fotek a Wordu",
       },
       sheet: {
         title: "Automatická shrnutí kurzu",
@@ -410,7 +410,7 @@ export const appCs = {
       },
       supports: {
         title: "Nebo nahraj materiál",
-        body: "PDF, fotka poznámek, nahrávka, video z YouTube, vložený text: až pět najednou.",
+        body: "PDF, fotka poznámek, nahrávka, vložený text: až pět najednou.",
       },
       numbers: {
         title: "Tři čísla, změřená",

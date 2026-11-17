@@ -22,7 +22,7 @@ extension HomeShortcut {
         case .writing: .quill
         case .mock: .diploma
         case .pdf: .pdf
-        case .focus, .importSource, .youtube, .chats, .newLesson: nil
+        case .focus, .importSource, .chats, .newLesson: nil
         }
     }
 
@@ -31,7 +31,6 @@ extension HomeShortcut {
         switch self {
         case .focus: "timer"
         case .importSource: "square.and.arrow.down.fill"
-        case .youtube: "play.rectangle.fill"
         case .chats: "bubble.left.and.text.bubble.right.fill"
         case .newLesson: "plus"
         default: icon?.symbol ?? "square.grid.2x2.fill"
@@ -44,7 +43,6 @@ extension HomeShortcut {
         switch self {
         case .focus: V3Color.iconOrange
         case .importSource: V3Color.iconLilac
-        case .youtube: V3Color.iconRed
         case .chats: V3Color.iconBlue
         case .newLesson: V3Color.onAccent
         default: nil

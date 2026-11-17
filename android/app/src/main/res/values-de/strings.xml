@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Das Lesen passiert auf deinem Handy.</string>
     <string name="ios_core13_home_ready">Dein Kurs ist gelesen.\nWird das **deine Lektion**?</string>
     <string name="ios_core13_lesson_mock">Probeprüfung zu dieser Lektion</string>
-    <string name="ios_core13_lessons_emptyBody">Ein Thema, ein Foto, ein PDF, ein YouTube-Video oder eine Aufnahme: Mika schreibt Notizen, Quiz, Karten und Probeprüfung.</string>
+    <string name="ios_core13_lessons_emptyBody">Ein Thema, ein Foto, ein PDF oder eine Aufnahme: Mika schreibt Notizen, Quiz, Karten und Probeprüfung.</string>
     <string name="ios_core13_lessons_emptyTitle">Deine erste Lektion als Lernpfad</string>
     <string name="ios_core13_new_orSupport">Oder starte mit deinem Kurs</string>
     <string name="ios_core13_new_promise">Gib Mika deinen Kurs: Er macht einen Lernpfad daraus.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Ich wurde entwickelt, um Schülern und Studierenden **auf ihrem Niveau** zu helfen.</string>
     <string name="ios_onb14_lesson_ask">Wähl sie jetzt: Ich schreibe sie, sobald du in der App bist.</string>
     <string name="ios_onb14_lesson_import">Ich lade Unterlagen hoch</string>
-    <string name="ios_onb14_lesson_importHint">PDF, Fotos, Audio, YouTube …</string>
+    <string name="ios_onb14_lesson_importHint">PDF, Fotos, Audio …</string>
     <string name="ios_onb14_lesson_later">Ich wähle später</string>
     <string name="ios_onb14_lesson_q">Was wird deine **erste Lektion**?</string>
     <string name="ios_onb14_lesson_reactImport">Perfekt: Du importierst sie, sobald du in der App bist.</string>
-    <string name="ios_onb14_lesson_say">PDF, aufgenommene Stunde, Fotos, YouTube oder Text: Bring einfach mit, was du hast.</string>
+    <string name="ios_onb14_lesson_say">PDF, aufgenommene Stunde, Fotos oder Text: Bring einfach mit, was du hast.</string>
     <string name="ios_onb14_lesson_title">Deine Unterlagen werden zu **Lektionen**.</string>
     <string name="ios_onb14_lesson_topic">Ich tippe ein Thema ein</string>
     <string name="ios_onb14_open_goal">Jetzt legen wir **dein Ziel** fest.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Erzähl mir von deinem Unterricht: Ich will wissen, **was dich bremst**.</string>
     <string name="ios_onb14_origin_play">Stapel ordnen</string>
     <string name="ios_onb14_origin_title">Ich wurde von Schülern entwickelt, die **ihren Stapel Unterlagen** an einem Ort ordnen wollten.</string>
-    <string name="ios_onb14_story1">PDF, Audio, Fotos, YouTube: Alles wird zur **Lektion**.</string>
+    <string name="ios_onb14_story1">PDF, Audio, Fotos: Alles wird zur **Lektion**.</string>
     <string name="ios_onb14_story_ask_a">Im Juni 1791 versucht Ludwig XVI., in den Osten des Landes zu gelangen. In Varennes festgenommen, verliert er das Vertrauen des Volkes.</string>
     <string name="ios_onb14_story_ask_q">Warum flieht der König nach Varennes?</string>
     <string name="ios_onb14_story_ask_title">Und du gehst weiter, genug, um **deine Lehrer zu beeindrucken**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Weiter</string>
     <string name="ios_pay10_cta_trial">Gratis testen</string>
     <string name="ios_pay10_hook_exportSheet">Deine Zusammenfassung **als PDF**? Mit Pro erstelle ich sie dir.</string>
-    <string name="ios_pay10_hook_generateCourse">Deine PDFs, Fotos und Videos: Mit Pro mache ich **Lektionen** daraus.</string>
+    <string name="ios_pay10_hook_generateCourse">Deine PDFs, Fotos und Aufnahmen: Mit Pro mache ich **Lektionen** daraus.</string>
     <string name="ios_pay10_hook_lessonReady">**Deine Lektion ist bereit** zum Schreiben. Schalte sie mit Pro frei.</string>
     <string name="ios_pay10_hook_lockedSheet">**Der Rest deiner Zusammenfassung** ist fertig. Mit Pro zeige ich ihn dir.</string>
     <string name="ios_pay10_hook_mika">Mit Pro beantworte ich **all deine Fragen**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Abonnieren · %1$s pro Woche</string>
     <string name="ios_pay11_cta_year">Abonnieren · %1$s pro Jahr</string>
     <string name="ios_pay11_hook_exportSheet">**Deine Zusammenfassung als PDF**, druckfertig: gibt\'s mit Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">Dein PDF, deine Fotos, dein Video: Mit Pro wird **eine Lektion** daraus.</string>
+    <string name="ios_pay11_hook_generateCourse">Dein PDF, deine Fotos, deine Aufnahme: Mit Pro wird **eine Lektion** daraus.</string>
     <string name="ios_pay11_hook_lessonReady">Ich habe deine Unterlagen gelesen. **Deine Lektion** schreibe ich mit Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">Der **Rest dieser Zusammenfassung** steht. Mit Pro öffne ich ihn dir.</string>
     <string name="ios_pay11_hook_mika">Deine Gratis-Frage ist gestellt. **Die nächsten** beantworte ich mit Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Das ist dein Rekord. Bleib dran.</string>
     <string name="ios_profile_streakStart">Komm morgen wieder, und die Serie beginnt.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">Ein Foto, ein PDF oder ein YouTube-Video: Mika macht daraus in wenigen Minuten eine Lektion und Karten.</string>
+    <string name="ios_reminder_import1_body">Ein Foto oder ein PDF: Mika macht daraus in wenigen Minuten eine Lektion und Karten.</string>
     <string name="ios_reminder_import1_title">Lerne deinen ersten Kurs mit Mika!</string>
     <string name="ios_reminder_import2_body">Importiere deinen Kurs, Mika bereitet dir alles zum Wiederholen vor.</string>
     <string name="ios_reminder_import2_title">Steht eine Prüfung an?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Anders als die bisherigen, vor allem dort, wo du Fehler machst.</string>
     <string name="lesson_profile_contact">Support kontaktieren</string>
     <string name="lesson_profile_goPro">Pro holen</string>
-    <string name="lesson_profile_goProBody">Unbegrenzte Lektionen, aus deinen PDFs, Fotos, Aufnahmen und YouTube-Videos.</string>
+    <string name="lesson_profile_goProBody">Unbegrenzte Lektionen, aus deinen PDFs, Fotos und Aufnahmen.</string>
     <string name="lesson_profile_language">Sprache</string>
     <string name="lesson_profile_me">Mein Profil</string>
     <string name="lesson_profile_privacy">Datenschutzerklärung</string>

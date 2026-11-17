@@ -275,7 +275,7 @@ export const appPt = {
       send: "A tua lição grátis está feita: a próxima é com o Pro.",
       mika: "Já fizeste a tua pergunta grátis ao Mika: as próximas são com o Pro.",
       extra: "Já usaste o teu extra grátis: treinos e exames simulados sem limites com o Pro.",
-      upgrade: "Lições ilimitadas, e ainda os teus PDF, fotos, gravações e vídeos do YouTube.",
+      upgrade: "Lições ilimitadas, e ainda os teus PDF, fotos e gravações.",
     },
     checkoutClosed: "As subscrições ainda não estão abertas.",
     storeTitle: "Subscreve na app",
@@ -289,7 +289,7 @@ export const appPt = {
     features: {
       cards: {
         title: "Cartões com IA ilimitados",
-        detail: "Importa PDF, fotos, Word e YouTube",
+        detail: "Importa PDF, fotos e Word",
       },
       sheet: {
         title: "Fichas de curso automáticas",
@@ -410,7 +410,7 @@ export const appPt = {
       },
       supports: {
         title: "Ou carrega um material",
-        body: "Um PDF, uma foto dos teus apontamentos, uma gravação, um vídeo do YouTube, um texto colado: até cinco de uma vez.",
+        body: "Um PDF, uma foto dos teus apontamentos, uma gravação, um texto colado: até cinco de uma vez.",
       },
       numbers: {
         title: "Três números, medidos",

@@ -1,14 +1,12 @@
 "use client";
 
-import { youtubeTranscript } from "@/lib/actions/youtube";
 import { readDocument, type ReadDocument } from "@/lib/import/read-document";
-import { preferredLanguages, readYouTubeInBrowser } from "@/lib/import/youtube";
 import { createClient } from "@/lib/supabase/client";
 
 /**
  * **Lire un support dans l'onglet**, avant d'envoyer : un PDF, un Word ou un texte par
  * `readDocument` (pdf.js, les pages en image pour un scan), des photos recadrées en JPEG, un
- * enregistrement transcrit par `transcribe-audio`, une vidéo YouTube par ses sous-titres. Ce
+ * enregistrement transcrit par `transcribe-audio` (l'import de vidéo YouTube est retiré). Ce
  * qui en sort est ce que la barre de Home assemble (`composeCreation`).
  */
 
@@ -103,10 +101,3 @@ export async function transcribeAudio(blob: Blob, language: string): Promise<Sup
   return { text, images: [] };
 }
 
-export async function readYouTube(url: string, fallbackTitle?: string): Promise<SupportContent & { title: string }> {
-  const local = await readYouTubeInBrowser(url, fallbackTitle);
-  if (local.status === "ok") return { text: local.text, images: [], title: local.title };
-  const remote = await youtubeTranscript(url, preferredLanguages());
-  if (remote.status === "ok") return { text: remote.text, images: [], title: remote.title };
-  throw new SupportError(remote.message ?? "unreadable", "unreadable");
-}

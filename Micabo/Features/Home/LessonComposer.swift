@@ -25,7 +25,6 @@ final class LessonComposer {
         case pdf
         case photo
         case audio
-        case youtube
         case text
         /// Une page web, récupérée et nettoyée sur l'appareil (`WebPageImportService`).
         case web
@@ -45,7 +44,6 @@ final class LessonComposer {
             case .pdf: .pdf
             case .photo: .photo
             case .audio: .audio
-            case .youtube: .link
             case .text: .text
             case .web: .globe
             case .slides: .palette
@@ -60,7 +58,6 @@ final class LessonComposer {
             case .pdf: "ios.sup.source.pdf"
             case .photo: "ios.sup.source.photo"
             case .audio: "ios.sup.source.audio"
-            case .youtube: "ios.sup.source.youtube"
             case .text: "ios.sup.source.text"
             case .web: "ios.sup.source.web"
             case .slides: "ios.sup.source.slides"
@@ -75,7 +72,6 @@ final class LessonComposer {
             case .pdf: "ios.sup.source.pdfSub"
             case .photo: "ios.sup.source.photoSub"
             case .audio: "ios.sup.source.audioSub"
-            case .youtube: "ios.sup.source.youtubeSub"
             case .text: "ios.sup.source.textSub"
             case .web: "ios.sup.source.webSub"
             case .slides: "ios.sup.source.slidesSub"
@@ -228,7 +224,6 @@ final class LessonComposer {
         case .pdf: support.document?.source == .docx ? .docx : .pdf
         case .photo, .handwriting: .photo
         case .audio, .lecture: .audio
-        case .youtube: .youtube
         // Une page web se lit comme un texte collé : le serveur ne connaît que ces sources
         // (`normalizeSource`, `supabase/functions/generate-lesson/gate.ts`).
         case .text, .web: .text

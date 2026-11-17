@@ -5,10 +5,10 @@ import SwiftUI
 /// **La feuille du « + » : tout ce qu'on peut donner à Mika** (`docs/supports.md`).
 ///
 /// En tête, Mika posé au bas de sa carte et ce qu'il attend ; la leçon offerte rappelée tant
-/// qu'elle reste. Puis la grille des neuf supports qui écrivent une leçon, trois par rangée,
+/// qu'elle reste. Puis la grille des huit supports qui écrivent une leçon, trois par rangée,
 /// chacun avec son icône sur sa pastille de couleur : les documents (PDF ou Word, diapos,
-/// photos, notes manuscrites), le web (une page, une vidéo YouTube), le son (un cours
-/// enregistré en direct, un fichier audio) et le texte collé. À part, sous la grille, les
+/// photos, notes manuscrites), une page web, le son (un cours enregistré en direct, un
+/// fichier audio) et le texte collé. L'import de vidéo YouTube est retiré (novembre 2026). À part, sous la grille, les
 /// flashcards déjà faites (Anki, Quizlet), qui deviennent un deck sans génération.
 ///
 /// Aucune tuile ne porte de couronne : lire un support se fait sur l'appareil, et la porte du
@@ -18,7 +18,7 @@ import SwiftUI
 /// **Lot 13 — c'est la feuille « Nouvelle leçon »**, l'entrée de la fonction principale : un
 /// sujet qu'on tape (« Écrire ma leçon », le bouton de la feuille), ou un cours qu'on donne
 /// (les tuiles). En tête, ce que la leçon devient : un parcours (thèmes, notes, quiz, cartes,
-/// examen blanc). Les supports les plus courants d'abord : photo, PDF, YouTube, audio.
+/// examen blanc). Les supports les plus courants d'abord : photo, PDF, texte, audio.
 struct HomeSourcesSheet: View {
     let isPro: Bool
     var freeLessonLeft = false
@@ -34,12 +34,16 @@ struct HomeSourcesSheet: View {
     @State private var typed: String?
     @FocusState private var topicFocused: Bool
 
-    /// Les neuf supports d'une leçon, trois par rangée : les plus courants d'abord.
+    /// Les huit supports d'une leçon, trois par rangée : les plus courants d'abord. La
+    /// dernière rangée en a deux, à leur place dans les colonnes.
     static let grid: [[LessonComposer.Kind]] = [
-        [.photo, .pdf, .youtube],
-        [.audio, .handwriting, .text],
-        [.slides, .web, .lecture],
+        [.photo, .pdf, .text],
+        [.audio, .handwriting, .slides],
+        [.web, .lecture],
     ]
+
+    /// Les tuiles d'une rangée pleine.
+    static let columns = 3
 
     /// Un sujet d'au moins deux lettres, comme dans la barre (`LessonComposer.canSend`).
     static func canWrite(_ topic: String) -> Bool {
@@ -83,6 +87,10 @@ struct HomeSourcesSheet: View {
                     HStack(spacing: 10) {
                         ForEach(row) { kind in
                             SourceTile(kind: kind, enabled: enabled) { onPick(kind) }
+                        }
+                        // Une rangée incomplète garde la largeur des colonnes du dessus.
+                        ForEach(row.count..<Self.columns, id: \.self) { _ in
+                            Color.clear.frame(maxWidth: .infinity)
                         }
                     }
                     .fixedSize(horizontal: false, vertical: true)
@@ -349,7 +357,7 @@ struct SourceIcon: View {
     static func tone(_ kind: LessonComposer.Kind) -> LessonTone {
         switch kind {
         case .pdf, .audio: .blue
-        case .slides, .youtube: .yellow
+        case .slides: .yellow
         case .photo, .lecture: .pink
         case .handwriting, .text: .lilac
         case .web, .flashcards: .mint

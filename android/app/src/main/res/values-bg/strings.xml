@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Четенето става на телефона ти.</string>
     <string name="ios_core13_home_ready">Прочетох материала ти.\nДа направя ли **урока ти**?</string>
     <string name="ios_core13_lesson_mock">Пробен изпит по този урок</string>
-    <string name="ios_core13_lessons_emptyBody">Тема, снимка, PDF, видео в YouTube или запис: Mika пише бележките, тестовете, картите и пробния изпит.</string>
+    <string name="ios_core13_lessons_emptyBody">Тема, снимка, PDF или запис: Mika пише бележките, тестовете, картите и пробния изпит.</string>
     <string name="ios_core13_lessons_emptyTitle">Първият ти урок, като път</string>
     <string name="ios_core13_new_orSupport">Или започни от материала си</string>
     <string name="ios_core13_new_promise">Дай материала си: Mika го превръща в път.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Създаден съм да помагам на ученици и студенти **на тяхното ниво**.</string>
     <string name="ios_onb14_lesson_ask">Избери го сега: ще го напиша веднага щом влезеш в приложението.</string>
     <string name="ios_onb14_lesson_import">Внасям записките си</string>
-    <string name="ios_onb14_lesson_importHint">PDF, снимки, аудио, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, снимки, аудио…</string>
     <string name="ios_onb14_lesson_later">Ще избера по-късно</string>
     <string name="ios_onb14_lesson_q">Какъв ще е **първият ти урок**?</string>
     <string name="ios_onb14_lesson_reactImport">Чудесно: ще го внесеш, щом влезеш в приложението.</string>
-    <string name="ios_onb14_lesson_say">PDF, записан час, снимки, YouTube или текст: донеси каквото имаш.</string>
+    <string name="ios_onb14_lesson_say">PDF, записан час, снимки или текст: донеси каквото имаш.</string>
     <string name="ios_onb14_lesson_title">Записките ти стават **уроци**.</string>
     <string name="ios_onb14_lesson_topic">Пиша тема</string>
     <string name="ios_onb14_open_goal">Сега да поставим **твоята цел**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Разкажи ми за часовете си: искам да знам **какво те спира**.</string>
     <string name="ios_onb14_origin_play">Подреди купчината</string>
     <string name="ios_onb14_origin_title">Създадоха ме ученици, които искаха да **подредят купчината си записки** на едно място.</string>
-    <string name="ios_onb14_story1">PDF, аудио, снимки, YouTube: всичко става **урок**.</string>
+    <string name="ios_onb14_story1">PDF, аудио, снимки: всичко става **урок**.</string>
     <string name="ios_onb14_story_ask_a">През юни 1791 г. Луи XVI се опитва да стигне до изтока на страната. Задържан във Варен, той губи доверието на народа.</string>
     <string name="ios_onb14_story_ask_q">Защо кралят бяга към Варен?</string>
     <string name="ios_onb14_story_ask_title">И отиваш по-далеч, колкото да **впечатлиш учителите си**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Продължи</string>
     <string name="ios_pay10_cta_trial">Пробвай безплатно</string>
     <string name="ios_pay10_hook_exportSheet">Конспектът ти **в PDF**? Ще ти го направя с Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Твоите PDF файлове, снимки и видеа: правя от тях **уроци** с Pro.</string>
+    <string name="ios_pay10_hook_generateCourse">Твоите PDF файлове, снимки и записи: правя от тях **уроци** с Pro.</string>
     <string name="ios_pay10_hook_lessonReady">**Урокът ти е готов** за писане. Отключи го с Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Останалата част от конспекта ти** е готова. Отварям ти я с Pro.</string>
     <string name="ios_pay10_hook_mika">Отговарям на **всичките ти въпроси** с Pro.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Абонирай се · %1$s на седмица</string>
     <string name="ios_pay11_cta_year">Абонирай се · %1$s на година</string>
     <string name="ios_pay11_hook_exportSheet">**Конспектът ти в PDF**, готов за печат: правя ти го с Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">Твоят PDF, снимките, видеото: правя от тях **урок** с Pro.</string>
+    <string name="ios_pay11_hook_generateCourse">Твоят PDF, снимките, записът: правя от тях **урок** с Pro.</string>
     <string name="ios_pay11_hook_lessonReady">Прочетох документите ти. **Урока ти** ще напиша, щом минеш на Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Останалата част от конспекта** е написана. Отварям ти я с Pro.</string>
     <string name="ios_pay11_hook_mika">Безплатният ти въпрос е зададен. На **следващите** отговарям с Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Това е рекордът ти. Не го изпускай.</string>
     <string name="ios_profile_streakStart">Върни се утре и серията започва.</string>
     <string name="ios_quiz_time_short">%1$s мин</string>
-    <string name="ios_reminder_import1_body">Снимка, PDF или видео от YouTube: Mika го превръща в урок и карти за няколко минути.</string>
+    <string name="ios_reminder_import1_body">Снимка или PDF: Mika го превръща в урок и карти за няколко минути.</string>
     <string name="ios_reminder_import1_title">Ела да научиш първия си урок с Mika!</string>
     <string name="ios_reminder_import2_body">Импортирай курса си и Mika ще ти подготви всичко за преговор.</string>
     <string name="ios_reminder_import2_title">Наближава изпит?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Различни от видените, насочени към местата, където грешиш.</string>
     <string name="lesson_profile_contact">Свържи се с поддръжката</string>
     <string name="lesson_profile_goPro">Мини на Pro</string>
-    <string name="lesson_profile_goProBody">Неограничени уроци от твоите PDF, снимки, записи и видеа в YouTube.</string>
+    <string name="lesson_profile_goProBody">Неограничени уроци от твоите PDF, снимки и записи.</string>
     <string name="lesson_profile_language">Език</string>
     <string name="lesson_profile_me">Моят профил</string>
     <string name="lesson_profile_privacy">Политика за поверителност</string>

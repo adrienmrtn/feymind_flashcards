@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Čítanie prebieha v tvojom telefóne.</string>
     <string name="ios_core13_home_ready">Učivo je prečítané.\nUrobím z neho **tvoju lekciu**?</string>
     <string name="ios_core13_lesson_mock">Skúška nanečisto z tejto lekcie</string>
-    <string name="ios_core13_lessons_emptyBody">Téma, fotka, PDF, video z YouTube alebo nahrávka: Mika napíše poznámky, kvízy, kartičky aj skúšku nanečisto.</string>
+    <string name="ios_core13_lessons_emptyBody">Téma, fotka, PDF alebo nahrávka: Mika napíše poznámky, kvízy, kartičky aj skúšku nanečisto.</string>
     <string name="ios_core13_lessons_emptyTitle">Tvoja prvá lekcia ako cesta</string>
     <string name="ios_core13_new_orSupport">Alebo začni zo svojho učiva</string>
     <string name="ios_core13_new_promise">Daj Mikovi svoje učivo: urobí z neho cestu.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Som navrhnutý tak, aby som pomáhal žiakom a študentom **na ich úrovni**.</string>
     <string name="ios_onb14_lesson_ask">Vyber ju teraz: napíšem ju, hneď ako budeš v aplikácii.</string>
     <string name="ios_onb14_lesson_import">Naimportujem poznámky</string>
-    <string name="ios_onb14_lesson_importHint">PDF, fotky, audio, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, fotky, audio…</string>
     <string name="ios_onb14_lesson_later">Vyberiem neskôr</string>
     <string name="ios_onb14_lesson_q">Aká bude tvoja **prvá lekcia**?</string>
     <string name="ios_onb14_lesson_reactImport">Super: naimportuješ ju, keď budeš v aplikácii.</string>
-    <string name="ios_onb14_lesson_say">PDF, nahraná hodina, fotky, YouTube alebo text: prines, čo máš.</string>
+    <string name="ios_onb14_lesson_say">PDF, nahraná hodina, fotky alebo text: prines, čo máš.</string>
     <string name="ios_onb14_lesson_title">Z tvojich poznámok sú **lekcie**.</string>
     <string name="ios_onb14_lesson_topic">Napíšem tému</string>
     <string name="ios_onb14_open_goal">Teraz si stanovme **tvoj cieľ**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Povedz mi o svojich hodinách: chcem vedieť, **čo ťa brzdí**.</string>
     <string name="ios_onb14_origin_play">Upratať kopu</string>
     <string name="ios_onb14_origin_title">Vytvorili ma študenti, ktorí potrebovali **upratať kopu poznámok** na jedno miesto.</string>
-    <string name="ios_onb14_story1">PDF, audio, fotky, YouTube: zo všetkého je **lekcia**.</string>
+    <string name="ios_onb14_story1">PDF, audio, fotky: zo všetkého je **lekcia**.</string>
     <string name="ios_onb14_story_ask_a">V júni 1791 sa Ľudovít XVI. snaží dostať na východ krajiny. Zadržaný vo Varennes stráca dôveru ľudu.</string>
     <string name="ios_onb14_story_ask_q">Prečo kráľ uteká do Varennes?</string>
     <string name="ios_onb14_story_ask_title">A ideš ďalej, tak aby si **ohromil svojich učiteľov**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Pokračovať</string>
     <string name="ios_pay10_cta_trial">Vyskúšať zadarmo</string>
     <string name="ios_pay10_hook_exportSheet">Tvoje výpisky **v PDF**? Pripravím ti ich s Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Tvoje PDF, fotky a videá: s Pro z nich urobím **lekcie**.</string>
+    <string name="ios_pay10_hook_generateCourse">Tvoje PDF, fotky a nahrávky: s Pro z nich urobím **lekcie**.</string>
     <string name="ios_pay10_hook_lessonReady">**Tvoja lekcia je pripravená** na napísanie. Odomkni ju s Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Zvyšok tvojich výpiskov** je pripravený. Otvorím ti ho s Pro.</string>
     <string name="ios_pay10_hook_mika">S Pro odpoviem na **všetky tvoje otázky**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Predplatiť · %1$s týždenne</string>
     <string name="ios_pay11_cta_year">Predplatiť · %1$s ročne</string>
     <string name="ios_pay11_hook_exportSheet">**Tvoje výpisky v PDF**, pripravené na tlač: s Pro ti ich urobím.</string>
-    <string name="ios_pay11_hook_generateCourse">Tvoje PDF, fotky, video: s Pro z nich urobím **lekciu**.</string>
+    <string name="ios_pay11_hook_generateCourse">Tvoje PDF, fotky, nahrávka: s Pro z nich urobím **lekciu**.</string>
     <string name="ios_pay11_hook_lessonReady">Prečítal som tvoje dokumenty. **Tvoju lekciu** napíšem, len čo prejdeš na Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Zvyšok týchto výpiskov** je napísaný. Otvorím ti ho s Pro.</string>
     <string name="ios_pay11_hook_mika">Bezplatná otázka je položená. **Na ďalšie** odpoviem s Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Toto je tvoj rekord. Nepúšťaj ho.</string>
     <string name="ios_profile_streakStart">Vráť sa zajtra a séria začne.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">Fotka, PDF alebo video z YouTube: Mika z toho za pár minút urobí lekciu a kartičky.</string>
+    <string name="ios_reminder_import1_body">Fotka alebo PDF: Mika z toho za pár minút urobí lekciu a kartičky.</string>
     <string name="ios_reminder_import1_title">Poď sa naučiť svoj prvý kurz s Mikom!</string>
     <string name="ios_reminder_import2_body">Naimportuj svoj kurz a Mika ti pripraví všetko na opakovanie.</string>
     <string name="ios_reminder_import2_title">Blíži sa skúška?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Iné než tie, čo už poznáš, zamerané na miesta, kde chybuješ.</string>
     <string name="lesson_profile_contact">Kontaktovať podporu</string>
     <string name="lesson_profile_goPro">Prejsť na Pro</string>
-    <string name="lesson_profile_goProBody">Neobmedzené lekcie z tvojich PDF, fotiek, nahrávok a videí z YouTube.</string>
+    <string name="lesson_profile_goProBody">Neobmedzené lekcie z tvojich PDF, fotiek a nahrávok.</string>
     <string name="lesson_profile_language">Jazyk</string>
     <string name="lesson_profile_me">Môj profil</string>
     <string name="lesson_profile_privacy">Zásady ochrany súkromia</string>

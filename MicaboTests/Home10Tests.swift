@@ -250,7 +250,7 @@ final class Home10Tests: XCTestCase {
         )
         XCTAssertEqual(
             HomeShortcut.available(isNewcomer: true, hasLesson: false, dueCount: 0),
-            [.photo, .pdf, .youtube, .focus, .scan]
+            [.photo, .pdf, .focus, .scan]
         )
         XCTAssertEqual(HomeShortcut.cards.title(dueCount: 8, locale: .fr), "Cartes · 8")
         XCTAssertEqual(HomeShortcut.focus.title(locale: .fr), "Focus")
@@ -258,7 +258,6 @@ final class Home10Tests: XCTestCase {
         XCTAssertEqual(HomeShortcut.scan.spokenTitle(locale: .fr), "Scanner un exo")
         XCTAssertEqual(HomeShortcut.photo.source, .photo)
         XCTAssertEqual(HomeShortcut.pdf.source, .pdf)
-        XCTAssertEqual(HomeShortcut.youtube.source, .youtube)
         XCTAssertNil(HomeShortcut.focus.source)
     }
 
@@ -266,7 +265,7 @@ final class Home10Tests: XCTestCase {
     func testShortcutAnalyticsNamesAreFixed() {
         XCTAssertEqual(
             HomeShortcut.allCases.map(\.analyticsName),
-            ["focus", "scan", "quiz", "cards", "import", "writing", "mock", "photo", "pdf", "youtube", "chats", "new_lesson"]
+            ["focus", "scan", "quiz", "cards", "import", "writing", "mock", "photo", "pdf", "chats", "new_lesson"]
         )
         XCTAssertEqual(Set(HomeAction.Kind.allCases.map { HomeAction(kind: $0, title: "", symbol: "").analyticsStep }).count, HomeAction.Kind.allCases.count - 1,
                        "« créer » et « première leçon » partagent le nom historique `create`")

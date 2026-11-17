@@ -309,7 +309,7 @@ export const lessonTr = {
   profile: {
     me: "Profilim",
     goPro: "Pro'ya geç",
-    goProBody: "PDF'lerinden, fotoğraflarından, ses kayıtlarından ve YouTube videolarından sınırsız ders.",
+    goProBody: "PDF'lerinden, fotoğraflarından ve ses kayıtlarından sınırsız ders.",
     settings: "Ayarlar",
     language: "Dil",
     rate: "Micabo'yu değerlendir",

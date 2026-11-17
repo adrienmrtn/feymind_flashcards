@@ -275,7 +275,7 @@ export const appEs419 = {
       send: "Ya hiciste tu lección gratis: la siguiente está en Pro.",
       mika: "Ya le hiciste a Mika tu pregunta gratis: las siguientes están en Pro.",
       extra: "Ya usaste tu extra gratis: práctica y simulacros ilimitados en Pro.",
-      upgrade: "Lecciones ilimitadas, además de tus PDF, fotos, grabaciones y videos de YouTube.",
+      upgrade: "Lecciones ilimitadas, además de tus PDF, fotos y grabaciones.",
     },
     checkoutClosed: "Las suscripciones todavía no están abiertas.",
     storeTitle: "Suscríbete en la app",
@@ -289,7 +289,7 @@ export const appEs419 = {
     features: {
       cards: {
         title: "Tarjetas con IA ilimitadas",
-        detail: "Importa PDF, fotos, Word y YouTube",
+        detail: "Importa PDF, fotos y Word",
       },
       sheet: {
         title: "Fichas de curso automáticas",
@@ -410,7 +410,7 @@ export const appEs419 = {
       },
       supports: {
         title: "O sube un material",
-        body: "Un PDF, una foto de tus apuntes, una grabación, un video de YouTube, un texto pegado: hasta cinco a la vez.",
+        body: "Un PDF, una foto de tus apuntes, una grabación, un texto pegado: hasta cinco a la vez.",
       },
       numbers: {
         title: "Tres números, medidos",

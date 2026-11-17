@@ -308,7 +308,7 @@ export const lessonSr = {
   profile: {
     me: "Moj profil",
     goPro: "Pređi na Pro",
-    goProBody: "Neograničeno lekcija iz tvojih PDF-ova, fotografija, snimaka i YouTube videa.",
+    goProBody: "Neograničeno lekcija iz tvojih PDF-ova, fotografija i snimaka.",
     settings: "Podešavanja",
     language: "Jezik",
     rate: "Oceni Micabo",

@@ -308,7 +308,7 @@ export const lessonSv = {
   profile: {
     me: "Min profil",
     goPro: "Skaffa Pro",
-    goProBody: "Obegränsat med lektioner från dina PDF:er, foton, inspelningar och YouTube-videor.",
+    goProBody: "Obegränsat med lektioner från dina PDF:er, foton och inspelningar.",
     settings: "Inställningar",
     language: "Språk",
     rate: "Betygsätt Micabo",

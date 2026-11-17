@@ -276,7 +276,7 @@ final class SupportsTests: XCTestCase {
                 XCTAssertNotEqual(L10n.t(kind.subtitleKey, locale: locale), kind.subtitleKey, "\(locale) \(kind)")
             }
         }
-        XCTAssertEqual(Set(HomeSourcesSheet.grid.flatMap { $0 }).count, 9)
+        XCTAssertEqual(Set(HomeSourcesSheet.grid.flatMap { $0 }).count, 8)
         XCTAssertFalse(HomeSourcesSheet.grid.flatMap { $0 }.contains(.flashcards), "les flashcards sont à part")
     }
 

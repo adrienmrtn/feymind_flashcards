@@ -305,7 +305,7 @@ export const lessonHu = {
   profile: {
     me: "Profilom",
     goPro: "Válts Próra",
-    goProBody: "Korlátlan lecke a PDF-jeidből, fotóidból, felvételeidből és YouTube-videókból.",
+    goProBody: "Korlátlan lecke a PDF-jeidből, fotóidból és felvételeidből.",
     settings: "Beállítások",
     language: "Nyelv",
     rate: "Értékeld a Micabót",

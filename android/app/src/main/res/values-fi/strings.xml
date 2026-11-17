@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Lukeminen tapahtuu puhelimessasi.</string>
     <string name="ios_core13_home_ready">Kurssisi on luettu.\nTeenkö siitä **oppituntisi**?</string>
     <string name="ios_core13_lesson_mock">Harjoituskoe tästä oppitunnista</string>
-    <string name="ios_core13_lessons_emptyBody">Aihe, kuva, PDF, YouTube-video tai äänite: Mika kirjoittaa muistiinpanot, visat, kortit ja harjoituskokeen.</string>
+    <string name="ios_core13_lessons_emptyBody">Aihe, kuva, PDF tai äänite: Mika kirjoittaa muistiinpanot, visat, kortit ja harjoituskokeen.</string>
     <string name="ios_core13_lessons_emptyTitle">Ensimmäinen oppituntisi polkuna</string>
     <string name="ios_core13_new_orSupport">Tai aloita kurssistasi</string>
     <string name="ios_core13_new_promise">Anna kurssisi Mikalle: hän tekee siitä polun.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Minut on suunniteltu auttamaan opiskelijoita **heidän omalla tasollaan**.</string>
     <string name="ios_onb14_lesson_ask">Valitse se nyt: kirjoitan sen heti, kun olet sovelluksessa.</string>
     <string name="ios_onb14_lesson_import">Tuon muistiinpanoni</string>
-    <string name="ios_onb14_lesson_importHint">PDF, kuvat, ääni, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, kuvat, ääni…</string>
     <string name="ios_onb14_lesson_later">Valitsen myöhemmin</string>
     <string name="ios_onb14_lesson_q">Mikä on **ensimmäinen oppituntisi**?</string>
     <string name="ios_onb14_lesson_reactImport">Täydellistä: tuot sen, kun olet sovelluksessa.</string>
-    <string name="ios_onb14_lesson_say">PDF, äänitetty tunti, kuvat, YouTube tai teksti: tuo mitä sinulla on.</string>
+    <string name="ios_onb14_lesson_say">PDF, äänitetty tunti, kuvat tai teksti: tuo mitä sinulla on.</string>
     <string name="ios_onb14_lesson_title">Muistiinpanoistasi tulee **oppitunteja**.</string>
     <string name="ios_onb14_lesson_topic">Kirjoitan aiheen</string>
     <string name="ios_onb14_open_goal">Asetetaan nyt **tavoitteesi**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Kerro tunneistasi: haluan tietää, **mikä sinua jarruttaa**.</string>
     <string name="ios_onb14_origin_play">Järjestä pino</string>
     <string name="ios_onb14_origin_title">Minut loivat opiskelijat, jotka halusivat **koota muistiinpanopinonsa** yhteen paikkaan.</string>
-    <string name="ios_onb14_story1">PDF, ääni, kuvat, YouTube: kaikesta tulee **oppitunti**.</string>
+    <string name="ios_onb14_story1">PDF, ääni, kuvat: kaikesta tulee **oppitunti**.</string>
     <string name="ios_onb14_story_ask_a">Kesäkuussa 1791 Ludvig XVI yrittää päästä maan itäosaan. Varennesissa pidätettynä hän menettää kansan luottamuksen.</string>
     <string name="ios_onb14_story_ask_q">Miksi kuningas pakenee Varennesiin?</string>
     <string name="ios_onb14_story_ask_title">Ja menet pidemmälle, tarpeeksi **tehdäksesi vaikutuksen opettajiin**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Jatka</string>
     <string name="ios_pay10_cta_trial">Kokeile ilmaiseksi</string>
     <string name="ios_pay10_hook_exportSheet">**Tiivistelmäsi PDF:nä**? Teen sen sinulle Prolla.</string>
-    <string name="ios_pay10_hook_generateCourse">PDF:si, kuvasi ja videosi: teen niistä **oppitunteja** Prolla.</string>
+    <string name="ios_pay10_hook_generateCourse">PDF:si, kuvasi ja tallenteesi: teen niistä **oppitunteja** Prolla.</string>
     <string name="ios_pay10_hook_lessonReady">**Oppituntisi on valmis** kirjoitettavaksi. Avaa se Prolla.</string>
     <string name="ios_pay10_hook_lockedSheet">**Loput tiivistelmästäsi** on valmiina. Avaan sen sinulle Prolla.</string>
     <string name="ios_pay10_hook_mika">Vastaan **kaikkiin kysymyksiisi** Prolla.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Tilaa · %1$s viikossa</string>
     <string name="ios_pay11_cta_year">Tilaa · %1$s vuodessa</string>
     <string name="ios_pay11_hook_exportSheet">**Tiivistelmäsi PDF:nä**, valmiina tulostettavaksi: teen sen Prolla.</string>
-    <string name="ios_pay11_hook_generateCourse">PDF:si, kuvasi, videosi: teen niistä **oppitunnin** Prolla.</string>
+    <string name="ios_pay11_hook_generateCourse">PDF:si, kuvasi, tallenteesi: teen niistä **oppitunnin** Prolla.</string>
     <string name="ios_pay11_hook_lessonReady">Luin dokumenttisi. **Oppituntisi** kirjoitan heti, kun siirryt Prohon.</string>
     <string name="ios_pay11_hook_lockedSheet">**Loput tästä tiivistelmästä** on kirjoitettu. Avaan sen sinulle Prolla.</string>
     <string name="ios_pay11_hook_mika">Ilmainen kysymyksesi on kysytty. **Seuraaviin** vastaan Prolla.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Se on ennätyksesi. Älä päästä irti.</string>
     <string name="ios_profile_streakStart">Palaa huomenna, niin putki alkaa.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">Kuva, PDF tai YouTube-video: Mika tekee siitä oppitunnin ja kortit muutamassa minuutissa.</string>
+    <string name="ios_reminder_import1_body">Kuva tai PDF: Mika tekee siitä oppitunnin ja kortit muutamassa minuutissa.</string>
     <string name="ios_reminder_import1_title">Tule oppimaan ensimmäinen kurssisi Mikan kanssa!</string>
     <string name="ios_reminder_import2_body">Tuo kurssisi, niin Mika valmistelee kaiken kertausta varten.</string>
     <string name="ios_reminder_import2_title">Onko koe tulossa?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Erilaisia kuin aiemmat, keskittyen kohtiin, joissa kompastelet.</string>
     <string name="lesson_profile_contact">Ota yhteyttä tukeen</string>
     <string name="lesson_profile_goPro">Hanki Pro</string>
-    <string name="lesson_profile_goProBody">Rajattomasti oppitunteja PDF:istäsi, kuvistasi, tallenteistasi ja YouTube-videoista.</string>
+    <string name="lesson_profile_goProBody">Rajattomasti oppitunteja PDF:istäsi, kuvistasi ja tallenteistasi.</string>
     <string name="lesson_profile_language">Kieli</string>
     <string name="lesson_profile_me">Profiilini</string>
     <string name="lesson_profile_privacy">Tietosuojakäytäntö</string>

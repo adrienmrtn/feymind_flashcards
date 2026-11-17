@@ -9,13 +9,12 @@ import { LessonPrimaryButton, LessonSecondaryButton } from "@/components/lesson/
 import { MicaboIcon } from "@/components/lesson/MicaboIcon";
 import { SUPPORT_ICONS } from "@micabo/core";
 import { useI18n } from "@/lib/i18n/client";
-import { isYouTubeUrl } from "@/lib/import/youtube";
-import { SupportError, readFileSupport, readPhotos, readYouTube, transcribeAudio } from "@/lib/lesson/read-support";
+import { SupportError, readFileSupport, readPhotos, transcribeAudio } from "@/lib/lesson/read-support";
 
 /**
  * **Déposer un support** : une feuille par icône. PDF (et Word, et texte) par fichier ; Photo
  * par l'appareil ou la photothèque ; Audio par un fichier ou un enregistrement en direct ;
- * YouTube par un lien ; Texte par un collage. La pastille apparaît tout de suite « en lecture »
+ * Texte par un collage (l'import de vidéo YouTube est retiré : un lien collé reste du texte). La pastille apparaît tout de suite « en lecture »
  * dans la barre, et se remplit (ou échoue) quand la lecture est finie. Jumeau de
  * `LessonImportPickers.swift`.
  */
@@ -75,16 +74,6 @@ export function ImportSheet({
         {kind === "pdf" ? <FileBody onPick={(file) => begin(file.name, () => readFileSupport(file))} /> : null}
         {kind === "photo" ? <PhotoBody onPick={(files) => begin(files.length === 1 ? files[0]!.name : `${t("lesson.import.photo")} · ${files.length}`, () => readPhotos(files))} /> : null}
         {kind === "audio" ? <AudioBody onPick={(blob, name) => begin(name, () => transcribeAudio(blob, locale))} /> : null}
-        {kind === "youtube" ? (
-          <LinkBody
-            onPick={(url) =>
-              begin(url, async () => {
-                const video = await readYouTube(url, t("app.course.source.youtubeVideo"));
-                return { text: video.text, images: [], title: video.title };
-              })
-            }
-          />
-        ) : null}
         {kind === "text" ? <TextBody onPick={(text) => begin(t("lesson.import.pastedName"), async () => ({ text, images: [], docKind: "text" as const }))} /> : null}
       </div>
     </div>
@@ -225,37 +214,6 @@ function AudioBody({ onPick }: { onPick: (blob: Blob, name: string) => void }) {
       </div>
       <DropZone accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm" icon={Upload} label={t("lesson.import.audioFile")} onFiles={(files) => onPick(files[0]!, files[0]!.name)} />
     </div>
-  );
-}
-
-function LinkBody({ onPick }: { onPick: (url: string) => void }) {
-  const { t } = useI18n();
-  const [url, setUrl] = useState("");
-  const valid = isYouTubeUrl(url.trim());
-  return (
-    <form
-      className="flex flex-col gap-3"
-      onSubmit={(event) => {
-        event.preventDefault();
-        if (valid) onPick(url.trim());
-      }}
-    >
-      <label className="flex flex-col gap-2">
-        <span className="text-[15px] font-bold text-ink">{t("lesson.import.youtubeTitle")}</span>
-        <input
-          type="url"
-          inputMode="url"
-          autoFocus
-          value={url}
-          onChange={(event) => setUrl(event.target.value)}
-          placeholder={t("lesson.import.youtubePlaceholder")}
-          className="rounded-[16px] bg-surface px-4 py-3 text-[16px] font-medium text-ink shadow-[inset_0_0_0_1px_var(--color-stroke)] outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-accent)]"
-        />
-      </label>
-      <LessonPrimaryButton type="submit" disabled={!valid}>
-        {t("lesson.import.add")}
-      </LessonPrimaryButton>
-    </form>
   );
 }
 

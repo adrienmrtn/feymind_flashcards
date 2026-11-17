@@ -275,7 +275,7 @@ export const appNl = {
       send: "Je gratis les is klaar: de volgende zit in Pro.",
       mika: "Je gratis vraag aan Mika is gesteld: de volgende zitten in Pro.",
       extra: "Je gratis extra is gebruikt: onbeperkt oefenen en proefexamens in Pro.",
-      upgrade: "Onbeperkt lessen, plus je PDF’s, foto’s, opnames en YouTube-video’s.",
+      upgrade: "Onbeperkt lessen, plus je PDF’s, foto’s en opnames.",
     },
     checkoutClosed: "Abonnementen zijn nog niet open.",
     storeTitle: "Abonneer je in de app",
@@ -289,7 +289,7 @@ export const appNl = {
     features: {
       cards: {
         title: "Onbeperkt AI-kaarten",
-        detail: "Importeer PDF, foto’s, Word en YouTube",
+        detail: "Importeer PDF, foto’s en Word",
       },
       sheet: {
         title: "Automatische samenvattingen",
@@ -410,7 +410,7 @@ export const appNl = {
       },
       supports: {
         title: "Of voeg materiaal toe",
-        body: "Een PDF, een foto van je aantekeningen, een opname, een YouTube-video, geplakte tekst: tot vijf tegelijk.",
+        body: "Een PDF, een foto van je aantekeningen, een opname, geplakte tekst: tot vijf tegelijk.",
       },
       numbers: {
         title: "Drie cijfers, gemeten",

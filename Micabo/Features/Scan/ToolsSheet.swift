@@ -13,7 +13,6 @@ enum ToolItem: String, CaseIterable, Identifiable {
     case camera
     case photos
     case files
-    case youtube
     case audio
     case allSources = "all_sources"
     // S'entraîner
@@ -54,7 +53,6 @@ enum ToolItem: String, CaseIterable, Identifiable {
         case .camera: "camera.fill"
         case .photos: "photo.on.rectangle.angled"
         case .files: "doc.fill"
-        case .youtube: "play.rectangle.fill"
         case .audio: "waveform"
         case .allSources: "square.grid.2x2.fill"
         case .focus: "timer"
@@ -70,7 +68,6 @@ enum ToolItem: String, CaseIterable, Identifiable {
         case .camera: V3Color.iconPink
         case .photos: V3Color.iconBlue
         case .files: V3Color.iconLilac
-        case .youtube: V3Color.iconRed
         case .audio: V3Color.iconGreen
         case .allSources: V3Color.iconYellow
         case .focus: V3Color.iconOrange
@@ -123,7 +120,7 @@ struct ToolGroup: Equatable, Identifiable {
         switch context {
         case .home:
             sources = [.camera]
-            if availability.canImport { sources += [.photos, .files, .youtube, .audio, .allSources] }
+            if availability.canImport { sources += [.photos, .files, .audio, .allSources] }
             if availability.hasLesson { practice.append(.quiz) }
             if availability.hasLessons { practice.append(.mock) }
             practice.append(.plan)

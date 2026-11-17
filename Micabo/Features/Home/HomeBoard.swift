@@ -445,10 +445,9 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
     case writing
     /// L'examen blanc.
     case mock
-    /// Les trois sources du nouvel élève.
+    /// Les sources du nouvel élève.
     case photo
     case pdf
-    case youtube
     /// Les conversations avec Mika (lot 11) : l'historique, en un geste.
     case chats
     /// Lot 13 — « Nouvelle leçon » : la feuille qui écrit une leçon (un sujet ou un support),
@@ -469,7 +468,7 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
         if isNewcomer {
             // Le nouvel élève a déjà « Écrire ma première leçon » en bouton principal : la
             // rangée lui donne les supports en direct.
-            return [.photo, .pdf, .youtube, .focus, .scan]
+            return [.photo, .pdf, .focus, .scan]
         }
         var shortcuts: [HomeShortcut] = [.newLesson, .focus, .scan]
         if hasLesson { shortcuts.append(.quiz) }
@@ -492,7 +491,6 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
         case .mock: MicaboName.mock.text(locale: locale)
         case .photo: L10n.t("ios.home10.tool.photo", locale: locale)
         case .pdf: L10n.t("ios.home10.tool.pdf", locale: locale)
-        case .youtube: "YouTube"
         case .chats: L10n.t("ios.chat11.home.chip", locale: locale)
         case .newLesson: L10n.t("lesson.lessons.new", locale: locale)
         }
@@ -508,12 +506,11 @@ enum HomeShortcut: String, Equatable, CaseIterable, Identifiable {
         }
     }
 
-    /// Le support que la puce ouvre, pour les trois sources du nouvel élève.
+    /// Le support que la puce ouvre, pour les sources du nouvel élève.
     var source: LessonComposer.Kind? {
         switch self {
         case .photo: .photo
         case .pdf: .pdf
-        case .youtube: .youtube
         default: nil
         }
     }

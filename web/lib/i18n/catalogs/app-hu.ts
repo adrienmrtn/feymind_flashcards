@@ -274,7 +274,7 @@ export const appHu = {
       send: "Az ingyenes leckéd elkészült: a következő a Próban van.",
       mika: "Az ingyenes kérdésedet már feltetted Mikának: a következők a Próban vannak.",
       extra: "Az ingyenes extrádat felhasználtad: korlátlan gyakorlás és próbavizsgák a Próban.",
-      upgrade: "Korlátlan lecke, plusz a PDF-jeid, fotóid, felvételeid és YouTube-videóid.",
+      upgrade: "Korlátlan lecke, plusz a PDF-jeid, fotóid és felvételeid.",
     },
     checkoutClosed: "Az előfizetés még nem indult el.",
     storeTitle: "Fizess elő az appban",
@@ -288,7 +288,7 @@ export const appHu = {
     features: {
       cards: {
         title: "Korlátlan MI-kártya",
-        detail: "PDF, fotók, Word és YouTube importálása",
+        detail: "PDF, fotók és Word importálása",
       },
       sheet: {
         title: "Automatikus kurzusjegyzetek",
@@ -409,7 +409,7 @@ export const appHu = {
       },
       supports: {
         title: "Vagy húzz be egy anyagot",
-        body: "Egy PDF, egy fotó a jegyzeteidről, egy felvétel, egy YouTube-videó, beillesztett szöveg: egyszerre legfeljebb öt.",
+        body: "Egy PDF, egy fotó a jegyzeteidről, egy felvétel, beillesztett szöveg: egyszerre legfeljebb öt.",
       },
       numbers: {
         title: "Három szám, megmérve",

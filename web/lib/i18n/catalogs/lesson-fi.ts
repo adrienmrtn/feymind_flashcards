@@ -308,7 +308,7 @@ export const lessonFi = {
   profile: {
     me: "Profiilini",
     goPro: "Hanki Pro",
-    goProBody: "Rajattomasti oppitunteja PDF:istäsi, kuvistasi, tallenteistasi ja YouTube-videoista.",
+    goProBody: "Rajattomasti oppitunteja PDF:istäsi, kuvistasi ja tallenteistasi.",
     settings: "Asetukset",
     language: "Kieli",
     rate: "Arvioi Micabo",

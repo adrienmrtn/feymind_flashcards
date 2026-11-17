@@ -308,7 +308,7 @@ export const lessonDa = {
   profile: {
     me: "Min profil",
     goPro: "Få Pro",
-    goProBody: "Ubegrænsede lektioner fra dine PDF'er, fotos, optagelser og YouTube-videoer.",
+    goProBody: "Ubegrænsede lektioner fra dine PDF'er, fotos og optagelser.",
     settings: "Indstillinger",
     language: "Sprog",
     rate: "Bedøm Micabo",

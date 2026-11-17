@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">تتم القراءة على هاتفك.</string>
     <string name="ios_core13_home_ready">قرأتُ ملفّك.\nهل أصنع منه **درسك**؟</string>
     <string name="ios_core13_lesson_mock">امتحان تجريبي على هذا الدرس</string>
-    <string name="ios_core13_lessons_emptyBody">موضوع أو صورة أو ملف PDF أو فيديو يوتيوب أو تسجيل صوتي: يكتب ميكا الملاحظات والاختبارات والبطاقات والامتحان التجريبي.</string>
+    <string name="ios_core13_lessons_emptyBody">موضوع أو صورة أو ملف PDF أو تسجيل صوتي: يكتب ميكا الملاحظات والاختبارات والبطاقات والامتحان التجريبي.</string>
     <string name="ios_core13_lessons_emptyTitle">درسك الأول، في مسار</string>
     <string name="ios_core13_new_orSupport">أو ابدأ من درسك</string>
     <string name="ios_core13_new_promise">أعطِ ميكا درسك، فيحوّله إلى مسار.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">صُمّمت لمساعدة الطلاب **على قدر مستواهم**.</string>
     <string name="ios_onb14_lesson_ask">اختره الآن: سأكتبه فور دخولك إلى التطبيق.</string>
     <string name="ios_onb14_lesson_import">أستورد ملاحظاتي</string>
-    <string name="ios_onb14_lesson_importHint">PDF، صور، صوت، يوتيوب…</string>
+    <string name="ios_onb14_lesson_importHint">PDF، صور، صوت…</string>
     <string name="ios_onb14_lesson_later">سأختار لاحقًا</string>
     <string name="ios_onb14_lesson_q">ما هو **درسك الأول**؟</string>
     <string name="ios_onb14_lesson_reactImport">ممتاز: ستستورده عند دخولك إلى التطبيق.</string>
-    <string name="ios_onb14_lesson_say">PDF، حصة مسجّلة، صور، يوتيوب أو نص: أحضر ما لديك.</string>
+    <string name="ios_onb14_lesson_say">PDF، حصة مسجّلة، صور أو نص: أحضر ما لديك.</string>
     <string name="ios_onb14_lesson_title">تتحوّل ملاحظاتك إلى **دروس**.</string>
     <string name="ios_onb14_lesson_topic">أكتب موضوعًا</string>
     <string name="ios_onb14_open_goal">الآن، لنحدّد **هدفك**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">حدّثني عن دروسك: أريد أن أعرف **ما يعيقك**.</string>
     <string name="ios_onb14_origin_play">رتّب الكومة</string>
     <string name="ios_onb14_origin_title">صنعني طلاب كانوا يحتاجون إلى **ترتيب كومة دروسهم** في مكان واحد.</string>
-    <string name="ios_onb14_story1">PDF، صوت، صور، يوتيوب: كل شيء يصبح **درسًا**.</string>
+    <string name="ios_onb14_story1">PDF، صوت، صور: كل شيء يصبح **درسًا**.</string>
     <string name="ios_onb14_story_ask_a">في يونيو 1791، حاول لويس السادس عشر الوصول إلى شرق البلاد. اعتُقل في فارين ففقد ثقة الشعب.</string>
     <string name="ios_onb14_story_ask_q">لماذا فرّ الملك إلى فارين؟</string>
     <string name="ios_onb14_story_ask_title">وتذهب أبعد، بما يكفي **لإبهار أساتذتك**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">متابعة</string>
     <string name="ios_pay10_cta_trial">جرّب مجانًا</string>
     <string name="ios_pay10_hook_exportSheet">ملخصك **بصيغة PDF**؟ أجهّزه لك مع Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">ملفات PDF وصورك وفيديوهاتك: أحوّلها إلى **دروس** مع Pro.</string>
+    <string name="ios_pay10_hook_generateCourse">ملفات PDF وصورك وتسجيلاتك: أحوّلها إلى **دروس** مع Pro.</string>
     <string name="ios_pay10_hook_lessonReady">**درسك جاهز** للكتابة. افتحه مع Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**بقية ملخصك** جاهزة. أفتحها لك مع Pro.</string>
     <string name="ios_pay10_hook_mika">مع Pro، أجيب عن **كل أسئلتك**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">اشترك · %1$s أسبوعيًا</string>
     <string name="ios_pay11_cta_year">اشترك · %1$s سنويًا</string>
     <string name="ios_pay11_hook_exportSheet">**ملخصك بصيغة PDF**، جاهز للطباعة: أجهّزه لك مع Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">ملف PDF وصورك وفيديوك: أحوّلها إلى **درس** مع Pro.</string>
+    <string name="ios_pay11_hook_generateCourse">ملف PDF وصورك وتسجيلك: أحوّلها إلى **درس** مع Pro.</string>
     <string name="ios_pay11_hook_lessonReady">قرأتُ مستنداتك. **درسك** أكتبه فور انتقالك إلى Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**بقية هذا الملخص** جاهزة. أفتحها لك مع Pro.</string>
     <string name="ios_pay11_hook_mika">طرحتَ سؤالك المجاني. **الأسئلة التالية** أجيب عنها مع Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">هذا رقمك القياسي. لا تتخلَّ عنه.</string>
     <string name="ios_profile_streakStart">عُد غدًا لتبدأ السلسلة.</string>
     <string name="ios_quiz_time_short">%1$s د</string>
-    <string name="ios_reminder_import1_body">صورة أو ملف PDF أو فيديو على YouTube: يحوّله Mika إلى درس وبطاقات في دقائق.</string>
+    <string name="ios_reminder_import1_body">صورة أو ملف PDF: يحوّله Mika إلى درس وبطاقات في دقائق.</string>
     <string name="ios_reminder_import1_title">تعال وتعلّم أول درس لك مع Mika!</string>
     <string name="ios_reminder_import2_body">استورد درسك وسيجهّز لك Mika كل ما تحتاجه للمراجعة.</string>
     <string name="ios_reminder_import2_title">هل يقترب امتحان؟</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">مختلفة عمّا رأيته، مع التركيز على ما تخطئ فيه.</string>
     <string name="lesson_profile_contact">تواصل مع الدعم</string>
     <string name="lesson_profile_goPro">اشترك في Pro</string>
-    <string name="lesson_profile_goProBody">دروس غير محدودة من ملفات PDF وصورك وتسجيلاتك وفيديوهات YouTube.</string>
+    <string name="lesson_profile_goProBody">دروس غير محدودة من ملفات PDF وصورك وتسجيلاتك.</string>
     <string name="lesson_profile_language">اللغة</string>
     <string name="lesson_profile_me">ملفي الشخصي</string>
     <string name="lesson_profile_privacy">سياسة الخصوصية</string>

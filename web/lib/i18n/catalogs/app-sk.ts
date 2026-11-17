@@ -275,7 +275,7 @@ export const appSk = {
       send: "Tvoja lekcia zadarmo je hotová: ďalšia je v Pro.",
       mika: "Tvoja otázka zadarmo pre Miku je položená: ďalšie sú v Pro.",
       extra: "Tvoj bonus zadarmo je vyčerpaný: neobmedzené precvičovanie a skúšky nanečisto v Pro.",
-      upgrade: "Neobmedzené lekcie a k tomu tvoje PDF, fotky, nahrávky a videá z YouTube.",
+      upgrade: "Neobmedzené lekcie a k tomu tvoje PDF, fotky a nahrávky.",
     },
     checkoutClosed: "Predplatné zatiaľ nie je otvorené.",
     storeTitle: "Predplať si v aplikácii",
@@ -289,7 +289,7 @@ export const appSk = {
     features: {
       cards: {
         title: "Neobmedzené AI kartičky",
-        detail: "Import PDF, fotiek, Wordu a YouTube",
+        detail: "Import PDF, fotiek a Wordu",
       },
       sheet: {
         title: "Automatické zhrnutia kurzu",
@@ -410,7 +410,7 @@ export const appSk = {
       },
       supports: {
         title: "Alebo nahraj materiál",
-        body: "PDF, fotka poznámok, nahrávka, video z YouTube, vložený text: až päť naraz.",
+        body: "PDF, fotka poznámok, nahrávka, vložený text: až päť naraz.",
       },
       numbers: {
         title: "Tri čísla, zmerané",

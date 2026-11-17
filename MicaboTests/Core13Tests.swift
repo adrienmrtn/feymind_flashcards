@@ -126,9 +126,10 @@ final class Core13Tests: XCTestCase {
     // MARK: - La feuille « Nouvelle leçon »
 
     func testTheNewLessonSheetPutsCommonSupportsFirst() {
-        XCTAssertEqual(HomeSourcesSheet.grid.first, [.photo, .pdf, .youtube])
+        XCTAssertEqual(HomeSourcesSheet.grid.first, [.photo, .pdf, .text])
         XCTAssertEqual(HomeSourcesSheet.grid[1].first, .audio)
-        XCTAssertEqual(Set(HomeSourcesSheet.grid.flatMap { $0 }).count, 9)
+        XCTAssertEqual(Set(HomeSourcesSheet.grid.flatMap { $0 }).count, 8)
+        XCTAssertTrue(HomeSourcesSheet.grid.allSatisfy { $0.count <= HomeSourcesSheet.columns })
         XCTAssertFalse(HomeSourcesSheet.canWrite(" a "))
         XCTAssertTrue(HomeSourcesSheet.canWrite("Les volcans"))
         XCTAssertEqual(LessonPathSteps.titles(locale: .fr), ["Thèmes", "Notes", "Quiz", "Cartes", "Examen blanc"])

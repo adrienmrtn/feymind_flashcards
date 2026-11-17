@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Čtení probíhá v tvém telefonu.</string>
     <string name="ios_core13_home_ready">Látku mám přečtenou.\nUdělám z ní **tvoji lekci**?</string>
     <string name="ios_core13_lesson_mock">Zkouška nanečisto z této lekce</string>
-    <string name="ios_core13_lessons_emptyBody">Téma, fotka, PDF, video z YouTube nebo nahrávka: Mika napíše poznámky, kvízy, kartičky i zkoušku nanečisto.</string>
+    <string name="ios_core13_lessons_emptyBody">Téma, fotka, PDF nebo nahrávka: Mika napíše poznámky, kvízy, kartičky i zkoušku nanečisto.</string>
     <string name="ios_core13_lessons_emptyTitle">Tvoje první lekce jako cesta</string>
     <string name="ios_core13_new_orSupport">Nebo začni ze svých materiálů</string>
     <string name="ios_core13_new_promise">Dej Mikovi svoji látku: udělá z ní cestu.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Jsem navržený tak, abych pomáhal žákům a studentům **na jejich úrovni**.</string>
     <string name="ios_onb14_lesson_ask">Vyber ji teď: napíšu ji, jakmile budeš v aplikaci.</string>
     <string name="ios_onb14_lesson_import">Naimportuju poznámky</string>
-    <string name="ios_onb14_lesson_importHint">PDF, fotky, audio, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, fotky, audio…</string>
     <string name="ios_onb14_lesson_later">Vyberu později</string>
     <string name="ios_onb14_lesson_q">Jaká bude tvoje **první lekce**?</string>
     <string name="ios_onb14_lesson_reactImport">Super: naimportuješ ji, až budeš v aplikaci.</string>
-    <string name="ios_onb14_lesson_say">PDF, nahraná hodina, fotky, YouTube nebo text: přines, co máš.</string>
+    <string name="ios_onb14_lesson_say">PDF, nahraná hodina, fotky nebo text: přines, co máš.</string>
     <string name="ios_onb14_lesson_title">Z tvých poznámek jsou **lekce**.</string>
     <string name="ios_onb14_lesson_topic">Napíšu téma</string>
     <string name="ios_onb14_open_goal">Teď si stanovíme **tvůj cíl**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Řekni mi o svých hodinách: chci vědět, **co tě brzdí**.</string>
     <string name="ios_onb14_origin_play">Uklidit hromadu</string>
     <string name="ios_onb14_origin_title">Vytvořili mě studenti, kteří potřebovali **uklidit hromadu poznámek** na jedno místo.</string>
-    <string name="ios_onb14_story1">PDF, audio, fotky, YouTube: ze všeho je **lekce**.</string>
+    <string name="ios_onb14_story1">PDF, audio, fotky: ze všeho je **lekce**.</string>
     <string name="ios_onb14_story_ask_a">V červnu 1791 se Ludvík XVI. snaží dostat na východ země. Zadržen ve Varennes ztrácí důvěru lidu.</string>
     <string name="ios_onb14_story_ask_q">Proč král prchá do Varennes?</string>
     <string name="ios_onb14_story_ask_title">A jdeš dál, tak abys **ohromil své učitele**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Pokračovat</string>
     <string name="ios_pay10_cta_trial">Vyzkoušet zdarma</string>
     <string name="ios_pay10_hook_exportSheet">Tvoje shrnutí **v PDF**? Připravím ti ho s Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Tvoje PDF, fotky a videa: udělám z nich **lekce** s Pro.</string>
+    <string name="ios_pay10_hook_generateCourse">Tvoje PDF, fotky a nahrávky: udělám z nich **lekce** s Pro.</string>
     <string name="ios_pay10_hook_lessonReady">**Tvoje lekce je připravená** k napsání. Odemkni ji s Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Zbytek tvého shrnutí** je hotový. Otevřu ti ho s Pro.</string>
     <string name="ios_pay10_hook_mika">S Pro odpovím na **všechny tvoje otázky**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Předplatit · %1$s týdně</string>
     <string name="ios_pay11_cta_year">Předplatit · %1$s ročně</string>
     <string name="ios_pay11_hook_exportSheet">**Tvoje shrnutí v PDF**, připravené k tisku: udělám ti ho s Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">Tvoje PDF, fotky, video: udělám z nich **lekci** s Pro.</string>
+    <string name="ios_pay11_hook_generateCourse">Tvoje PDF, fotky, nahrávka: udělám z nich **lekci** s Pro.</string>
     <string name="ios_pay11_hook_lessonReady">Přečetl jsem tvoje dokumenty. **Tvoji lekci** napíšu, jakmile přejdeš na Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Zbytek tohoto shrnutí** je napsaný. Otevřu ti ho s Pro.</string>
     <string name="ios_pay11_hook_mika">Otázku zdarma už máš za sebou. Na **další** odpovím s Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Tohle je tvůj rekord. Nepouštěj ho.</string>
     <string name="ios_profile_streakStart">Vrať se zítra a série začne.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">Fotka, PDF nebo video z YouTube: Mika z toho za pár minut udělá lekci a kartičky.</string>
+    <string name="ios_reminder_import1_body">Fotka nebo PDF: Mika z toho za pár minut udělá lekci a kartičky.</string>
     <string name="ios_reminder_import1_title">Pojď se naučit svůj první kurz s Mikou!</string>
     <string name="ios_reminder_import2_body">Naimportuj svůj kurz a Mika ti připraví vše k opakování.</string>
     <string name="ios_reminder_import2_title">Blíží se zkouška?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Jiné než ty, co už znáš, zaměřené na místa, kde chybuješ.</string>
     <string name="lesson_profile_contact">Kontaktovat podporu</string>
     <string name="lesson_profile_goPro">Přejít na Pro</string>
-    <string name="lesson_profile_goProBody">Neomezené lekce z tvých PDF, fotek, nahrávek a videí z YouTube.</string>
+    <string name="lesson_profile_goProBody">Neomezené lekce z tvých PDF, fotek a nahrávek.</string>
     <string name="lesson_profile_language">Jazyk</string>
     <string name="lesson_profile_me">Můj profil</string>
     <string name="lesson_profile_privacy">Zásady ochrany soukromí</string>

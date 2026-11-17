@@ -275,7 +275,7 @@ export const appDa = {
       send: "Din gratis lektion er færdig: den næste er med Pro.",
       mika: "Du har stillet dit gratis spørgsmål til Mika: de næste er med Pro.",
       extra: "Din gratis ekstra er brugt: ubegrænset øvelse og prøveeksamener med Pro.",
-      upgrade: "Ubegrænsede lektioner, plus dine PDF'er, fotos, optagelser og YouTube-videoer.",
+      upgrade: "Ubegrænsede lektioner, plus dine PDF'er, fotos og optagelser.",
     },
     checkoutClosed: "Abonnementerne er ikke åbnet endnu.",
     storeTitle: "Abonnér i appen",
@@ -289,7 +289,7 @@ export const appDa = {
     features: {
       cards: {
         title: "Ubegrænsede AI-kort",
-        detail: "Importér PDF, fotos, Word og YouTube",
+        detail: "Importér PDF, fotos og Word",
       },
       sheet: {
         title: "Automatiske kursusresuméer",
@@ -410,7 +410,7 @@ export const appDa = {
       },
       supports: {
         title: "Eller tilføj en kilde",
-        body: "En PDF, et foto af dine noter, en optagelse, en YouTube-video, indsat tekst: op til fem ad gangen.",
+        body: "En PDF, et foto af dine noter, en optagelse, indsat tekst: op til fem ad gangen.",
       },
       numbers: {
         title: "Tre tal, målt",
