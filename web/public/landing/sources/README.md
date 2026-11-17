@@ -8,13 +8,12 @@ par format. Le nom du fichier est l’`id` de la source, sans autre dossier.
 | `polycopie-pdf.webp` | Polycopié PDF |
 | `photo-notes.webp` | Photo de tes notes |
 | `document-word.webp` | Document Word |
-| `video-youtube.webp` | Vidéo YouTube |
 | `diapositives.webp` | Diapositives de cours |
 | `manuel-scanne.webp` | Manuel scanné |
 | `notes-manuscrites.webp` | Notes manuscrites |
 
 L’extension attendue est **`.webp`**, **16 / 9**, autour de **1640 × 960**.
-Les sept extraits sont des natures mortes inventées (une matière par case),
+Les six extraits sont des natures mortes inventées (une matière par case),
 pas des icônes et pas des captures de documents réels.
 
 Tant que le fichier n’est pas dans ce dossier, la vitrine ne doit **pas**

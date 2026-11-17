@@ -153,7 +153,7 @@ fun HomeScreen() {
     // de photos sans abonnement : le serveur l'accorde une fois (`begin_lesson`, `p_onboarding`).
     val onboardingLesson = app.prefs.onboardingLessonPending && lessons.values.none { it.usesFreeLesson }
     // **La leçon offerte peut venir d'un import** (`docs/refonte-knowunity.md` § 7) : tant qu'elle
-    // n'a pas servi, un élève sans Pro la crée depuis un PDF, des photos ou YouTube, et la
+    // n'a pas servi, un élève sans Pro la crée depuis un PDF ou des photos, et la
     // génération part avec `onboarding: true`. Ensuite, les imports rouvrent le paywall.
     val freeLessonLeft = !isPro && lessons.values.none { it.usesFreeLesson }
 

@@ -275,7 +275,7 @@ export const appSl = {
       send: "Tvoja brezplačna lekcija je končana: naslednja je v paketu Pro.",
       mika: "Tvoje brezplačno vprašanje za Miko je zastavljeno: naslednja so v paketu Pro.",
       extra: "Tvoj brezplačni dodatek je porabljen: neomejena vaja in poskusni izpiti v paketu Pro.",
-      upgrade: "Neomejeno lekcij, poleg tega tvoji PDF-ji, fotografije, posnetki in videi z YouTuba.",
+      upgrade: "Neomejeno lekcij, poleg tega tvoji PDF-ji, fotografije in posnetki.",
     },
     checkoutClosed: "Naročnine še niso na voljo.",
     storeTitle: "Naroči se v aplikaciji",
@@ -289,7 +289,7 @@ export const appSl = {
     features: {
       cards: {
         title: "Neomejeno kartic z UI",
-        detail: "Uvoz PDF-jev, fotografij, Worda in YouTuba",
+        detail: "Uvoz PDF-jev, fotografij in Worda",
       },
       sheet: {
         title: "Samodejni povzetki tečaja",
@@ -410,7 +410,7 @@ export const appSl = {
       },
       supports: {
         title: "Ali dodaj gradivo",
-        body: "PDF, fotografijo zapiskov, posnetek, video na YouTubu, prilepljeno besedilo: do pet naenkrat.",
+        body: "PDF, fotografijo zapiskov, posnetek, prilepljeno besedilo: do pet naenkrat.",
       },
       numbers: {
         title: "Tri številke, izmerjene",

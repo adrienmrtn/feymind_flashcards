@@ -87,7 +87,6 @@ import com.micabo.app.data.LessonComposer
 import com.micabo.app.data.PhotoImport
 import com.micabo.app.data.Support
 import com.micabo.app.data.SupportKind
-import com.micabo.app.data.YouTubeLink
 import com.micabo.app.ui.components.Icon3D
 import com.micabo.app.ui.components.MicaboButton
 import com.micabo.app.ui.components.MicaboSecondaryButton
@@ -102,7 +101,6 @@ private fun SupportKind.icon(): String = when (this) {
     SupportKind.PDF -> "pdf"
     SupportKind.PHOTO -> "fiche"
     SupportKind.AUDIO -> "reveil"
-    SupportKind.YOUTUBE -> "fusee"
     SupportKind.TEXT -> "texte"
 }
 
@@ -222,7 +220,7 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
 }
 
 /**
- * **Les imports sous la barre** : PDF ou Word, photos ou scan, YouTube, texte collé. Ils
+ * **Les imports sous la barre** : PDF ou Word, photos ou scan, texte collé. Ils
  * s'ajoutent à la barre. Sans Pro, toucher un import verrouillé ouvre le paywall tout de suite,
  * comme sur iPhone (`HomeView.tapImport`) : pas de PDF lu pour rien avant le refus à l'envoi.
  */
@@ -265,7 +263,6 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
     val chips = listOf(
         SourceChip(SupportKind.PDF, R.string.lesson_import_pdf, R.string.lesson_import_pdfSub),
         SourceChip(SupportKind.PHOTO, R.string.lesson_import_photo, R.string.lesson_import_photoSub),
-        SourceChip(SupportKind.YOUTUBE, R.string.lesson_import_youtube, R.string.lesson_import_youtubeSub),
         SourceChip(SupportKind.TEXT, R.string.lesson_import_text, R.string.lesson_import_textSub),
     )
     LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -278,7 +275,6 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
                     SupportKind.PDF -> files.launch(arrayOf("application/pdf", WORD_TYPE))
                     SupportKind.PHOTO -> dialog = "photo"
                     SupportKind.AUDIO -> Unit // pas d'import audio sur Android
-                    SupportKind.YOUTUBE -> dialog = "youtube"
                     SupportKind.TEXT -> dialog = "text"
                 }
             }) {
@@ -317,10 +313,6 @@ fun SourceRow(composer: LessonComposer, isPro: Boolean, onFull: () -> Unit, onLo
             onDismiss = { dialog = null },
             onScan = { dialog = null; scan() },
             onLibrary = { dialog = null; pickPhotos() },
-        )
-        "youtube" -> YouTubeDialog(
-            onDismiss = { dialog = null },
-            onSubmit = { link -> dialog = null; composer.addYouTube(link) },
         )
         "text" -> PasteDialog(
             onDismiss = { dialog = null },
@@ -375,63 +367,6 @@ private fun PhotoChoice(onDismiss: () -> Unit, onScan: () -> Unit, onLibrary: ()
         MicaboButton(stringResource(R.string.lesson_import_scan), onClick = onScan)
         Spacer(Modifier.height(10.dp))
         MicaboSecondaryButton(stringResource(R.string.lesson_import_library), onClick = onLibrary)
-        TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text(stringResource(R.string.lesson_menu_cancel), style = nunito(16.sp, FontWeight.Bold), color = colors.inkSecondary)
-        }
-    }
-}
-
-private fun clipboardText(context: Context): String =
-    (context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager)
-        ?.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(context)?.toString().orEmpty()
-
-@Composable
-private fun YouTubeDialog(onDismiss: () -> Unit, onSubmit: (String) -> Unit) {
-    val colors = Micabo.colors
-    val context = LocalContext.current
-    var link by rememberSaveable { mutableStateOf("") }
-    val valid = YouTubeLink.videoId(link) != null
-    Sheet(onDismiss) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon3D("fusee", 40.dp)
-            Spacer(Modifier.width(10.dp))
-            Text(stringResource(R.string.lesson_import_youtubeTitle), style = nunito(21.sp, FontWeight.Black), color = colors.ink)
-        }
-        Spacer(Modifier.height(14.dp))
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(18.dp))
-                .background(colors.surface)
-                .border(1.5.dp, if (valid) colors.accent.copy(alpha = 0.5f) else colors.stroke, RoundedCornerShape(18.dp))
-                .padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(Modifier.weight(1f).padding(vertical = 10.dp)) {
-                if (link.isEmpty()) {
-                    Text(stringResource(R.string.lesson_import_youtubePlaceholder), style = nunito(16.sp, FontWeight.Medium), color = colors.inkTertiary)
-                }
-                BasicTextField(
-                    value = link,
-                    onValueChange = { link = it.take(300) },
-                    singleLine = true,
-                    textStyle = nunito(16.sp, FontWeight.SemiBold).copy(color = colors.ink),
-                    cursorBrush = SolidColor(colors.accent),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { if (valid) onSubmit(link) }),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            TextButton(onClick = { link = clipboardText(context).trim().take(300) }) {
-                Text(stringResource(R.string.lesson_import_paste), style = nunito(15.sp, FontWeight.ExtraBold), color = colors.accent)
-            }
-        }
-        if (link.isNotBlank() && !valid) {
-            Spacer(Modifier.height(8.dp))
-            Text(stringResource(R.string.ios_yt_invalidLink), style = nunito(13.sp, FontWeight.SemiBold), color = colors.wrongInk)
-        }
-        Spacer(Modifier.height(14.dp))
-        MicaboButton(stringResource(R.string.lesson_import_add), onClick = { onSubmit(link) }, enabled = valid)
         TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterHorizontally)) {
             Text(stringResource(R.string.lesson_menu_cancel), style = nunito(16.sp, FontWeight.Bold), color = colors.inkSecondary)
         }

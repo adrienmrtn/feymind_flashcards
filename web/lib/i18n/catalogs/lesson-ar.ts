@@ -308,7 +308,7 @@ export const lessonAr = {
   profile: {
     me: "ملفي الشخصي",
     goPro: "اشترك في Pro",
-    goProBody: "دروس غير محدودة من ملفات PDF وصورك وتسجيلاتك وفيديوهات YouTube.",
+    goProBody: "دروس غير محدودة من ملفات PDF وصورك وتسجيلاتك.",
     settings: "الإعدادات",
     language: "اللغة",
     rate: "قيّم Micabo",

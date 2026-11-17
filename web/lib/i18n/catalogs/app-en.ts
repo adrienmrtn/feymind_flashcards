@@ -264,7 +264,7 @@ export const appEn = {
       send: "Your free lesson is done: the next one is in Pro.",
       mika: "Your free question to Mika is asked: the next ones are in Pro.",
       extra: "Your free extra is used: unlimited practice and mock exams in Pro.",
-      upgrade: "Unlimited lessons, plus your PDFs, photos, recordings and YouTube videos.",
+      upgrade: "Unlimited lessons, plus your PDFs, photos and recordings.",
     },
     checkoutClosed: "Subscriptions aren't open yet.",
     storeTitle: "Subscribe in the app",
@@ -278,7 +278,7 @@ export const appEn = {
     features: {
       cards: {
         title: "Unlimited AI cards",
-        detail: "Import PDF, photos, Word, and YouTube",
+        detail: "Import PDF, photos and Word",
       },
       sheet: {
         title: "Automatic course sheets",
@@ -402,7 +402,7 @@ export const appEn = {
       },
       supports: {
         title: "Or drop a source",
-        body: "A PDF, a photo of your notes, a recording, a YouTube video, pasted text: up to five at once.",
+        body: "A PDF, a photo of your notes, a recording, pasted text: up to five at once.",
       },
       numbers: {
         title: "Three numbers, measured",

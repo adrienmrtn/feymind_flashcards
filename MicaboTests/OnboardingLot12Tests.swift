@@ -296,6 +296,16 @@ final class OnboardingLot12Tests: XCTestCase {
         XCTAssertFalse(PaywallFlowView.isDismissSwipe(translation: CGSize(width: 0, height: 200), startY: 600), "un défilement plus bas")
     }
 
+    /// **La croix du paywall de fin de parcours n'arrive qu'au bout de cinq secondes**
+    /// (demande du fondateur) ; derrière une porte de l'app, elle est là d'emblée.
+    func testEndOfOnboardingCloseWaitsFiveSeconds() {
+        XCTAssertEqual(PaywallStyle.closeDelay, 5)
+        XCTAssertEqual(PaywallFlowView.closeDelay(for: nil), 5)
+        for trigger in PaywallTrigger.allCases {
+            XCTAssertEqual(PaywallFlowView.closeDelay(for: trigger), 0, "\(trigger) : la croix est là d'emblée")
+        }
+    }
+
     /// **Après les refus, la Home propose la première leçon en grand**, avec le sujet choisi,
     /// et dit simplement qu'elle est offerte tant qu'elle l'est.
     func testTheHomeProposesTheFirstLesson() {

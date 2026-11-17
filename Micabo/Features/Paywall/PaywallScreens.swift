@@ -286,7 +286,8 @@ enum PaywallTimeline {
 ///    l'annuelle cochée avec sa remise ; « Rien à payer aujourd'hui » collé au bouton ; le
 ///    bouton ; une mention — ce qui sera prélevé, et quand ; les liens en petit.
 ///
-/// **Rien ne se cache, rien ne ment** : la croix est là dès l'ouverture, et l'essai ne
+/// **Rien ne se cache, rien ne ment** : la croix est là dès l'ouverture derrière une porte
+/// (à la fin du parcours, au bout de `PaywallStyle.closeDelay`), et l'essai ne
 /// s'annonce — promesse, ligne verte, bouton, mention — que si Apple l'accordera à ce compte
 /// (`PaywallPlan.hasTrial`). Le prix et l'essai viennent de la boutique du pays, l'écriture du
 /// prix du test `PriceDisplay`.
@@ -301,6 +302,9 @@ struct PaywallScreen: View {
     /// de son examen).
     var name: String?
     var isPurchasing: Bool
+    /// **La croix se voit.** Faux pendant les premières secondes du paywall de fin de parcours
+    /// (`PaywallFlowView`) ; vrai partout ailleurs, et dans les rendus.
+    var showsClose: Bool = true
     /// La dernière réponse de la boutique (`PaywallStorePrices.revision`). Elle ne sert qu'à
     /// redessiner l'écran quand le prix du pays ou l'essai arrivent après son ouverture.
     var storeRevision: Int
@@ -335,6 +339,7 @@ struct PaywallScreen: View {
         trigger: PaywallTrigger? = nil,
         name: String?,
         isPurchasing: Bool,
+        showsClose: Bool = true,
         storeRevision: Int = 0,
         onClose: @escaping () -> Void,
         onSubscribe: @escaping (PaywallPlan) -> Void,
@@ -349,6 +354,7 @@ struct PaywallScreen: View {
         self.trigger = trigger
         self.name = name
         self.isPurchasing = isPurchasing
+        self.showsClose = showsClose
         self.storeRevision = storeRevision
         self.onClose = onClose
         self.onSubscribe = onSubscribe
@@ -369,7 +375,7 @@ struct PaywallScreen: View {
         PaywallSafeFrame { area in
             VStack(spacing: 0) {
                 // Lot 17 : « Micabo PRO, pour Lina » — sans prénom, la marque seule.
-                PaywallTopBar(name: name ?? context.profile.firstName, isBusy: isPurchasing, onClose: onClose)
+                PaywallTopBar(name: name ?? context.profile.firstName, isBusy: isPurchasing, showsClose: showsClose, onClose: onClose)
 
                 ViewThatFits(in: .vertical) {
                     content(.regular)

@@ -274,7 +274,7 @@ export const appHr = {
       send: "Tvoja besplatna lekcija je gotova: sljedeća je u Pro.",
       mika: "Tvoje besplatno pitanje Miki je postavljeno: sljedeća su u Pro.",
       extra: "Tvoj besplatni dodatak je iskorišten: neograničena vježba i probni ispiti su u Pro.",
-      upgrade: "Neograničene lekcije, plus tvoji PDF-ovi, fotografije, snimke i YouTube videozapisi.",
+      upgrade: "Neograničene lekcije, plus tvoji PDF-ovi, fotografije i snimke.",
     },
     checkoutClosed: "Pretplate još nisu otvorene.",
     storeTitle: "Pretplati se u aplikaciji",
@@ -288,7 +288,7 @@ export const appHr = {
     features: {
       cards: {
         title: "Neograničene AI kartice",
-        detail: "Uvezi PDF, fotografije, Word i YouTube",
+        detail: "Uvezi PDF, fotografije i Word",
       },
       sheet: {
         title: "Automatske skripte tečaja",
@@ -409,7 +409,7 @@ export const appHr = {
       },
       supports: {
         title: "Ili ubaci materijal",
-        body: "PDF, fotografija tvojih bilješki, snimka, YouTube videozapis, zalijepljeni tekst: do pet odjednom.",
+        body: "PDF, fotografija tvojih bilješki, snimka, zalijepljeni tekst: do pet odjednom.",
       },
       numbers: {
         title: "Tri broja, izmjerena",

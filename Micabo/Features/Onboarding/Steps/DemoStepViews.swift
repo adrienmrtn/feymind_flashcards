@@ -66,8 +66,8 @@ private func onbPlay(_ change: () -> Void) {
 // MARK: - La leçon
 
 /// **« Tes cours deviennent des leçons. »** (lot 15, demande du fondateur : « tout ce que tu as
-/// → une leçon ».) En haut, les cinq façons d'apporter un cours (PDF, cours enregistré, photo,
-/// YouTube, texte) ; « Transformer en leçon » : des traits partent de chacune et convergent
+/// → une leçon ».) En haut, les quatre façons d'apporter un cours (PDF, cours enregistré,
+/// photo, texte) ; « Transformer en leçon » : des traits partent de chacune et convergent
 /// vers **une seule leçon**, sur le sujet du fil (sa matière la plus dure, à son niveau), avec
 /// ce qu'elle contient. Ni question ni chemin : c'est le récit final qui les montre.
 struct LessonDemoStepView: View {
@@ -114,7 +114,7 @@ struct LessonDemoStepView: View {
         onbPlay { played = true }
     }
 
-    /// Les cinq sources, une tuile et son nom.
+    /// Les quatre sources, une tuile et son nom.
     private var sources: some View {
         let tile: CGFloat = compact ? 50 : 58
         return HStack(alignment: .top, spacing: 6) {

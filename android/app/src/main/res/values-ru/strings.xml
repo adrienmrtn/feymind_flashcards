@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Чтение идёт на твоём телефоне.</string>
     <string name="ios_core13_home_ready">Конспект прочитан.\nСделать из него **твой урок**?</string>
     <string name="ios_core13_lesson_mock">Пробный экзамен по этому уроку</string>
-    <string name="ios_core13_lessons_emptyBody">Тема, фото, PDF, видео с YouTube или аудио: Mika напишет заметки, квизы, карточки и пробный экзамен.</string>
+    <string name="ios_core13_lessons_emptyBody">Тема, фото, PDF или аудио: Mika напишет заметки, квизы, карточки и пробный экзамен.</string>
     <string name="ios_core13_lessons_emptyTitle">Твой первый урок — в виде пути</string>
     <string name="ios_core13_new_orSupport">Или начни со своего конспекта</string>
     <string name="ios_core13_new_promise">Дай Mika свой конспект — он превратит его в путь.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Меня создали, чтобы помогать ученикам и студентам **на их уровне**.</string>
     <string name="ios_onb14_lesson_ask">Выбери его сейчас: я напишу его, как только ты войдёшь в приложение.</string>
     <string name="ios_onb14_lesson_import">Импортирую конспекты</string>
-    <string name="ios_onb14_lesson_importHint">PDF, фото, аудио, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, фото, аудио…</string>
     <string name="ios_onb14_lesson_later">Выберу позже</string>
     <string name="ios_onb14_lesson_q">Каким будет твой **первый урок**?</string>
     <string name="ios_onb14_lesson_reactImport">Отлично: импортируешь его, как только войдёшь в приложение.</string>
-    <string name="ios_onb14_lesson_say">PDF, запись урока, фото, YouTube или текст: неси всё, что есть.</string>
+    <string name="ios_onb14_lesson_say">PDF, запись урока, фото или текст: неси всё, что есть.</string>
     <string name="ios_onb14_lesson_title">Твои конспекты становятся **уроками**.</string>
     <string name="ios_onb14_lesson_topic">Ввожу тему</string>
     <string name="ios_onb14_open_goal">Теперь давай поставим **твою цель**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Расскажи мне о своих уроках: я хочу знать, **что тебе мешает**.</string>
     <string name="ios_onb14_origin_play">Разобрать стопку</string>
     <string name="ios_onb14_origin_title">Меня создали ученики, которым нужно было **разобрать свою гору конспектов** в одном месте.</string>
-    <string name="ios_onb14_story1">PDF, аудио, фото, YouTube: всё становится **уроком**.</string>
+    <string name="ios_onb14_story1">PDF, аудио, фото: всё становится **уроком**.</string>
     <string name="ios_onb14_story_ask_a">В июне 1791 года Людовик XVI пытается добраться до востока страны. Задержанный в Варенне, он теряет доверие народа.</string>
     <string name="ios_onb14_story_ask_q">Почему король бежит в Варенн?</string>
     <string name="ios_onb14_story_ask_title">И ты идёшь дальше — настолько, чтобы **впечатлить учителей**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Продолжить</string>
     <string name="ios_pay10_cta_trial">Попробовать бесплатно</string>
     <string name="ios_pay10_hook_exportSheet">Твой конспект **в PDF**? Подготовлю с Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Твои PDF, фото и видео: с Pro я превращу их **в уроки**.</string>
+    <string name="ios_pay10_hook_generateCourse">Твои PDF, фото и записи: с Pro я превращу их **в уроки**.</string>
     <string name="ios_pay10_hook_lessonReady">**Твой урок готов** к написанию. Открой его с Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Продолжение конспекта** готово. Открою его с Pro.</string>
     <string name="ios_pay10_hook_mika">С Pro я отвечаю на **все твои вопросы**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Подписаться · %1$s в неделю</string>
     <string name="ios_pay11_cta_year">Подписаться · %1$s в год</string>
     <string name="ios_pay11_hook_exportSheet">**Конспект в PDF**, готовый к печати: сделаю его с Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">Твой PDF, фото, видео: с Pro я сделаю из них **урок**.</string>
+    <string name="ios_pay11_hook_generateCourse">Твой PDF, фото, запись: с Pro я сделаю из них **урок**.</string>
     <string name="ios_pay11_hook_lessonReady">Я прочитал твои документы. **Твой урок** напишу, как только перейдёшь на Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Продолжение конспекта** уже написано. Открою его с Pro.</string>
     <string name="ios_pay11_hook_mika">Бесплатный вопрос задан. **На следующие** отвечу с Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Это твой рекорд. Не сдавайся.</string>
     <string name="ios_profile_streakStart">Возвращайся завтра — и серия начнётся.</string>
     <string name="ios_quiz_time_short">%1$s мин</string>
-    <string name="ios_reminder_import1_body">Фото, PDF или видео с YouTube: Mika за пару минут превратит его в урок и карточки.</string>
+    <string name="ios_reminder_import1_body">Фото или PDF: Mika за пару минут превратит его в урок и карточки.</string>
     <string name="ios_reminder_import1_title">Приходи изучить свой первый курс с Mika!</string>
     <string name="ios_reminder_import2_body">Импортируй свой курс, и Mika подготовит всё для повторения.</string>
     <string name="ios_reminder_import2_title">Скоро экзамен?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Не такие, как раньше, — с упором на твои слабые места.</string>
     <string name="lesson_profile_contact">Написать в поддержку</string>
     <string name="lesson_profile_goPro">Перейти на Pro</string>
-    <string name="lesson_profile_goProBody">Безлимитные уроки из твоих PDF, фото, записей и видео YouTube.</string>
+    <string name="lesson_profile_goProBody">Безлимитные уроки из твоих PDF, фото и записей.</string>
     <string name="lesson_profile_language">Язык</string>
     <string name="lesson_profile_me">Мой профиль</string>
     <string name="lesson_profile_privacy">Политика конфиденциальности</string>

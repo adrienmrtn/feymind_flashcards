@@ -347,7 +347,7 @@ final class RenderGalleryTests: XCTestCase {
                 extractionNote: nil
             ))
         }
-        composer.begin(.youtube, title: "YouTube")
+        composer.begin(.web, title: "fr.wikipedia.org")
         try RenderGallery.render("home-composer", height: 852, night: true, busyHome(composer: composer))
 
         try RenderGallery.render(

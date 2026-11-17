@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Η ανάγνωση γίνεται στο κινητό σου.</string>
     <string name="ios_core13_home_ready">Διάβασα το υλικό σου.\nΝα φτιάξω **το μάθημά σου**;</string>
     <string name="ios_core13_lesson_mock">Δοκιμαστική εξέταση σε αυτό το μάθημα</string>
-    <string name="ios_core13_lessons_emptyBody">Ένα θέμα, μια φωτογραφία, ένα PDF, ένα βίντεο YouTube ή μια ηχογράφηση: ο Mika γράφει τις σημειώσεις, τα κουίζ, τις κάρτες και τη δοκιμαστική εξέταση.</string>
+    <string name="ios_core13_lessons_emptyBody">Ένα θέμα, μια φωτογραφία, ένα PDF ή μια ηχογράφηση: ο Mika γράφει τις σημειώσεις, τα κουίζ, τις κάρτες και τη δοκιμαστική εξέταση.</string>
     <string name="ios_core13_lessons_emptyTitle">Το πρώτο σου μάθημα, σε διαδρομή</string>
     <string name="ios_core13_new_orSupport">Ή ξεκίνα από το υλικό σου</string>
     <string name="ios_core13_new_promise">Δώσε το υλικό σου: ο Mika το κάνει διαδρομή.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Σχεδιάστηκα για να βοηθάω μαθητές και φοιτητές **στο επίπεδό τους**.</string>
     <string name="ios_onb14_lesson_ask">Διάλεξέ το τώρα: θα το γράψω μόλις μπεις στην εφαρμογή.</string>
     <string name="ios_onb14_lesson_import">Εισάγω τις σημειώσεις μου</string>
-    <string name="ios_onb14_lesson_importHint">PDF, φωτογραφίες, ήχος, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, φωτογραφίες, ήχος…</string>
     <string name="ios_onb14_lesson_later">Θα διαλέξω αργότερα</string>
     <string name="ios_onb14_lesson_q">Ποιο θα είναι το **πρώτο σου μάθημα**;</string>
     <string name="ios_onb14_lesson_reactImport">Τέλεια: θα το εισαγάγεις μόλις μπεις στην εφαρμογή.</string>
-    <string name="ios_onb14_lesson_say">PDF, ηχογραφημένο μάθημα, φωτογραφίες, YouTube ή κείμενο: φέρε ό,τι έχεις.</string>
+    <string name="ios_onb14_lesson_say">PDF, ηχογραφημένο μάθημα, φωτογραφίες ή κείμενο: φέρε ό,τι έχεις.</string>
     <string name="ios_onb14_lesson_title">Οι σημειώσεις σου γίνονται **μαθήματα**.</string>
     <string name="ios_onb14_lesson_topic">Γράφω ένα θέμα</string>
     <string name="ios_onb14_open_goal">Τώρα ας ορίσουμε **τον στόχο σου**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Πες μου για τα μαθήματά σου: θέλω να ξέρω **τι σε φρενάρει**.</string>
     <string name="ios_onb14_origin_play">Τακτοποίησε τη στοίβα</string>
     <string name="ios_onb14_origin_title">Με δημιούργησαν μαθητές που ήθελαν να **τακτοποιήσουν τη στοίβα με τις σημειώσεις τους** σε ένα σημείο.</string>
-    <string name="ios_onb14_story1">PDF, ήχος, φωτογραφίες, YouTube: όλα γίνονται **μάθημα**.</string>
+    <string name="ios_onb14_story1">PDF, ήχος, φωτογραφίες: όλα γίνονται **μάθημα**.</string>
     <string name="ios_onb14_story_ask_a">Τον Ιούνιο του 1791, ο Λουδοβίκος ΙΣΤ΄ προσπαθεί να φτάσει στα ανατολικά της χώρας. Συλλαμβάνεται στη Βαρέν και χάνει την εμπιστοσύνη του λαού.</string>
     <string name="ios_onb14_story_ask_q">Γιατί ο βασιλιάς φεύγει για τη Βαρέν;</string>
     <string name="ios_onb14_story_ask_title">Και πας πιο μακριά, αρκετά για να **εντυπωσιάσεις τους καθηγητές σου**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Συνέχεια</string>
     <string name="ios_pay10_cta_trial">Δοκίμασε δωρεάν</string>
     <string name="ios_pay10_hook_exportSheet">Τη σύνοψή σου **σε PDF**; Σου τη φτιάχνω με το Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Τα PDF, οι φωτογραφίες και τα βίντεό σου: τα κάνω **μαθήματα** με το Pro.</string>
+    <string name="ios_pay10_hook_generateCourse">Τα PDF, οι φωτογραφίες και οι ηχογραφήσεις σου: τα κάνω **μαθήματα** με το Pro.</string>
     <string name="ios_pay10_hook_lessonReady">**Το μάθημά σου είναι έτοιμο** να γραφτεί. Ξεκλείδωσέ το με το Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Η συνέχεια της σύνοψής σου** είναι έτοιμη. Σου την ανοίγω με το Pro.</string>
     <string name="ios_pay10_hook_mika">Απαντώ σε **όλες σου τις ερωτήσεις** με το Pro.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Συνδρομή · %1$s την εβδομάδα</string>
     <string name="ios_pay11_cta_year">Συνδρομή · %1$s τον χρόνο</string>
     <string name="ios_pay11_hook_exportSheet">**Η σύνοψή σου σε PDF**, έτοιμη για εκτύπωση: σου τη φτιάχνω με το Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">Το PDF, οι φωτογραφίες, το βίντεό σου: τα κάνω **μάθημα** με το Pro.</string>
+    <string name="ios_pay11_hook_generateCourse">Το PDF, οι φωτογραφίες, η ηχογράφησή σου: τα κάνω **μάθημα** με το Pro.</string>
     <string name="ios_pay11_hook_lessonReady">Διάβασα τα έγγραφά σου. **Το μάθημά σου** το γράφω μόλις περάσεις σε Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Η συνέχεια αυτής της σύνοψης** είναι γραμμένη. Σου την ανοίγω με το Pro.</string>
     <string name="ios_pay11_hook_mika">Η δωρεάν ερώτησή σου έγινε. **Στις επόμενες** απαντώ με το Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Αυτό είναι το ρεκόρ σου. Μην το αφήσεις.</string>
     <string name="ios_profile_streakStart">Γύρνα αύριο και το σερί ξεκινά.</string>
     <string name="ios_quiz_time_short">%1$s λεπ.</string>
-    <string name="ios_reminder_import1_body">Μια φωτογραφία, ένα PDF ή ένα βίντεο στο YouTube: ο Mika το κάνει μάθημα και κάρτες σε λίγα λεπτά.</string>
+    <string name="ios_reminder_import1_body">Μια φωτογραφία ή ένα PDF: ο Mika το κάνει μάθημα και κάρτες σε λίγα λεπτά.</string>
     <string name="ios_reminder_import1_title">Έλα να μάθεις το πρώτο σου μάθημα με τον Mika!</string>
     <string name="ios_reminder_import2_body">Εισήγαγε το μάθημά σου και ο Mika σού ετοιμάζει ό,τι χρειάζεσαι για επανάληψη.</string>
     <string name="ios_reminder_import2_title">Πλησιάζει εξέταση;</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Διαφορετικές από όσες είδες, εστιασμένες εκεί που σκοντάφτεις.</string>
     <string name="lesson_profile_contact">Επικοινωνία με την υποστήριξη</string>
     <string name="lesson_profile_goPro">Πάρε το Pro</string>
-    <string name="lesson_profile_goProBody">Απεριόριστα μαθήματα από τα PDF, τις φωτογραφίες, τις ηχογραφήσεις και τα βίντεο YouTube σου.</string>
+    <string name="lesson_profile_goProBody">Απεριόριστα μαθήματα από τα PDF, τις φωτογραφίες και τις ηχογραφήσεις σου.</string>
     <string name="lesson_profile_language">Γλώσσα</string>
     <string name="lesson_profile_me">Το προφίλ μου</string>
     <string name="lesson_profile_privacy">Πολιτική απορρήτου</string>

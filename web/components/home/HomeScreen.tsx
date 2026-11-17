@@ -39,7 +39,7 @@ import { requestPaywall } from "@/lib/paywall";
  * pastille, pas trente secondes plus tard sur l'écran de génération. Envoyer assemble le tout
  * en une seule demande. La porte du gratuit se tient avant d'envoyer : la leçon offerte peut
  * venir d'un sujet, d'un texte collé ou d'un import (elle part alors avec `onboarding: true`) ;
- * une fois offerte, PDF, Photo, Audio et YouTube sont Pro (`composerGate`).
+ * une fois offerte, PDF, Photo et Audio sont Pro (`composerGate`).
  *
  * Le lot « Knowunity » (`docs/refonte-knowunity.md` § 1) ajoute la rangée du haut (Pro, XP,
  * série), la carte « Aujourd'hui » — où « Reprendre » est fondue — et les quatre « Outils »,
@@ -87,7 +87,7 @@ export function HomeScreen(props: HomeScreenProps) {
   }, []);
   const removeSupport = (id: string) => setSupports((current) => current.filter((support) => support.id !== id));
 
-  /** PDF, Photo, Audio et YouTube sont Pro, sauf pour la leçon offerte ; un texte collé l'est toujours. */
+  /** PDF, Photo et Audio sont Pro, sauf pour la leçon offerte ; un texte collé l'est toujours. */
   const importsLocked = importLocked({ isPro: props.isPro, hasUsedFreeLesson: props.hasUsedFreeLesson });
   function tapImport(kind: SupportKind) {
     if (kind !== "text" && importsLocked) {

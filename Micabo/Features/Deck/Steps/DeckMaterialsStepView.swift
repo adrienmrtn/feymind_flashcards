@@ -37,12 +37,6 @@ struct DeckMaterialsStepView: View {
     @State private var photoItems: [PhotosPickerItem] = []
     @State private var pastedText = ""
     @State private var showTextSheet = false
-    @State private var showLinkSheet = false
-    @State private var link = ""
-
-    /// La vidéo est la seule source dont le texte s'obtient **en ligne** : elle a donc une
-    /// étape de plus que les autres, et elle la fait dans la case, pas dans un écran à part.
-    private let youtube = YouTubeImportService()
 
     /// Quatre cases au départ, et une de plus dès que la dernière est prise. La grille ne
     /// montre donc jamais un mur de vides, et ne se ferme jamais non plus.
@@ -101,11 +95,10 @@ struct DeckMaterialsStepView: View {
                 showChoice = false
                 choose(source)
             }
-            // Trois cent quatre-vingt-douze points coupaient la dernière rangée et
-            // serraient le titre contre la poignée : le titre, cinq rangées de soixante-quatre
-            // et les marges font quatre cent soixante-dix, plus ce que le téléphone prend en
-            // bas. Le détent est mesuré, pas estimé.
-            .presentationDetents([.height(504)])
+            // Le titre, quatre rangées de soixante-quatre et les marges, plus ce que le
+            // téléphone prend en bas : cinq cent quatre points pour cinq rangées, moins la
+            // rangée de la vidéo (retirée en novembre 2026). Le détent est mesuré, pas estimé.
+            .presentationDetents([.height(440)])
             .presentationDragIndicator(.visible)
             .presentationCornerRadius(MicaboRadius.sheet)
         }
@@ -135,15 +128,6 @@ struct DeckMaterialsStepView: View {
                 target = nil
             }
             .ignoresSafeArea()
-        }
-        .sheet(isPresented: $showLinkSheet) {
-            DeckLinkSheet(link: $link) { value in
-                showLinkSheet = false
-                Task { await ingestVideo(value) }
-            }
-            .presentationDetents([.height(260)])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(MicaboRadius.sheet)
         }
         .sheet(isPresented: $showTextSheet) {
             DeckPastedTextSheet(text: $pastedText) { text in
@@ -192,7 +176,7 @@ struct DeckMaterialsStepView: View {
     /// Vrai entre la fermeture de la languette et l'ouverture du sélecteur choisi : sans ça,
     /// la fermeture effacerait la case visée juste avant qu'on y dépose le document.
     private var isPicking: Bool {
-        showFileImporter || showPhotoPicker || showScanner || showLinkSheet || showTextSheet
+        showFileImporter || showPhotoPicker || showScanner || showTextSheet
     }
 
     private func choose(_ source: DeckSourcePickerSheet.Source) {
@@ -200,7 +184,6 @@ struct DeckMaterialsStepView: View {
         case .document: showFileImporter = true
         case .photos: showPhotoPicker = true
         case .scan: showScanner = true
-        case .video: showLinkSheet = true
         case .text: showTextSheet = true
         }
     }
@@ -299,33 +282,6 @@ struct DeckMaterialsStepView: View {
         } catch {
             material.state = .failed(error.localizedDescription)
         }
-    }
-
-    /// La vidéo : aperçu, puis transcription, puis vignette. L'aperçu d'abord permet de
-    /// refuser un lien mort sans avoir rien téléchargé.
-    @MainActor
-    private func ingestVideo(_ raw: String) async {
-        guard let material = target else { return }
-        target = nil
-
-        guard YouTubeLink.isValid(raw) else {
-            material.state = .failed(i18n.t("ios.yt.invalidLink"))
-            return
-        }
-
-        material.state = .reading
-        do {
-            let video = try await youtube.preview(link: raw)
-            let transcript = try await youtube.transcript(link: raw)
-            let cover = await youtube.cover(for: video)
-            apply(
-                YouTubeImportService.document(video: video, transcript: transcript, cover: cover),
-                to: material
-            )
-        } catch {
-            material.state = .failed(error.localizedDescription)
-        }
-        link = ""
     }
 
     private func applyPastedText(_ text: String) {
@@ -484,40 +440,6 @@ private struct DeckMaterialSlot: View {
     }
 }
 
-/// Coller un lien de vidéo. Court exprès : c'est un champ et un bouton, pas un écran.
-private struct DeckLinkSheet: View {
-    @Binding var link: String
-    var onDone: (String) -> Void
-
-    @Environment(UiLocaleStore.self) private var i18n: UiLocaleStore?
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        VStack(spacing: MicaboSpacing.md) {
-            Text(i18n.t("ios.import.youtube"))
-                .font(MicaboFont.ui(19, weight: .bold))
-                .foregroundStyle(MicaboColor.ink)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            DeckSearchField(
-                text: $link,
-                placeholder: "https://youtube.com/watch?v=…",
-                icon: "link",
-                isFocused: $isFocused
-            )
-
-            Button(i18n.t("common.continue")) { onDone(link) }
-                .buttonStyle(MicaboPrimaryButtonStyle())
-                .disabled(!YouTubeLink.isValid(link))
-
-            Spacer(minLength: 0)
-        }
-        .padding(MicaboSpacing.screen)
-        .background(MicaboColor.canvas.ignoresSafeArea())
-        .onAppear { isFocused = true }
-    }
-}
-
 /// Coller du texte : des notes prises sur le téléphone, un extrait de manuel recopié.
 private struct DeckPastedTextSheet: View {
     @Binding var text: String
@@ -550,8 +472,8 @@ private struct DeckPastedTextSheet: View {
 
 /// **La languette qui demande d'où vient le support.**
 ///
-/// Cinq sources, cinq tuiles, une phrase chacune. Elle remplace une feuille d'action système
-/// dont les cinq lignes se ressemblaient toutes : « Une photo » et « Scanner des pages » sont
+/// Quatre sources, quatre tuiles, une phrase chacune. Elle remplace une feuille d'action système
+/// dont les lignes se ressemblaient toutes : « Une photo » et « Scanner des pages » sont
 /// deux gestes différents — l'un prend une image qu'on a déjà, l'autre ouvre l'appareil photo
 /// et redresse les pages — et rien dans un empilement de texte bleu ne le disait.
 ///
@@ -562,7 +484,6 @@ struct DeckSourcePickerSheet: View {
         case document
         case photos
         case scan
-        case video
         case text
     }
 
@@ -582,7 +503,6 @@ struct DeckSourcePickerSheet: View {
                 row(.document, symbol: "doc.fill", title: "ios.import.pdf", tint: MicaboColor.accent),
                 row(.photos, symbol: "photo.on.rectangle.angled", title: "ios.import.photo", tint: MicaboColor.info),
                 row(.scan, symbol: "doc.viewfinder", title: "ios.scanPages", tint: MicaboColor.positive),
-                row(.video, symbol: "play.rectangle.fill", title: "ios.import.youtube", tint: MicaboColor.flame),
                 row(.text, symbol: "text.alignleft", title: "ios.import.text", tint: MicaboColor.caution),
             ])
         }

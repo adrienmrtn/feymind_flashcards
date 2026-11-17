@@ -18,7 +18,6 @@ import com.micabo.app.data.Streak
 import com.micabo.app.data.SupabaseAuth
 import com.micabo.app.data.SupabaseFunctions
 import com.micabo.app.data.Xp
-import com.micabo.app.data.YouTubeImport
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -244,7 +243,7 @@ class MicaboApplication : Application() {
         // Une session de compte perdue : ce qui attendait de monter pour lui est mis de côté.
         auth.onAccountLost = { account -> sync.park(account) }
         social = Social(auth)
-        composer = LessonComposer(this, YouTubeImport(functions)) { name, props -> analytics.track(name, props) }
+        composer = LessonComposer(this) { name, props -> analytics.track(name, props) }
         // **Sous les tests de rendu** (Robolectric) : ni réseau, ni achats, ni statistiques.
         if (underTest) return
         analytics.start()

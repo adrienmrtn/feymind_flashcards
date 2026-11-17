@@ -182,9 +182,10 @@ enum DiscountPresentation: String, Identifiable {
 ///   tarif réduit et son décompte ;
 /// - `welcome` : l'achat a abouti, Mika fête ça, puis l'élève retourne d'où il vient.
 ///
-/// La règle : **une croix ne ment jamais.** Elle est là d'emblée, elle réagit au premier
-/// appui, et elle sort — celle du paywall comme celle de l'offre. Refusée, l'offre ne revient
-/// pas de la session.
+/// La règle : **une croix ne ment jamais.** Elle réagit au premier appui, et elle sort — celle
+/// du paywall comme celle de l'offre. Refusée, l'offre ne revient pas de la session. Elle est
+/// là d'emblée, **sauf sur le paywall de fin de parcours** (sans `trigger`) : elle y arrive en
+/// fondu au bout de `PaywallStyle.closeDelay`, et le glissement vers le bas attend avec elle.
 ///
 /// `onDismiss` est rappelé quand l'élève sort sans acheter ; `onSubscribed` quand il quitte
 /// l'écran de bienvenue, Pro ouvert. Aucun des deux ne l'est avant.
@@ -217,8 +218,13 @@ struct PaywallFlowView: View {
     /// la chaîne d'injection soit montée.
     @Environment(ProAccess.self) private var pro: ProAccess?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// Un rendu : l'écran est posé dans son état final, la croix comprise.
+    @Environment(\.onboardingStill) private var still
 
     @State private var stage: Stage
+    /// **La croix du paywall est arrivée** : d'emblée derrière une porte, au bout de
+    /// `PaywallStyle.closeDelay` à la fin du parcours (`closeDelay(for:)`).
+    @State private var closeReady: Bool
     @State private var offerSource: OfferSource
     /// L'élève a coché une autre offre que celle recommandée : la comparaison a eu lieu.
     /// C'est ce que `paywall_plans_seen` compte, et le `stage` de `paywall_dismissed`
@@ -273,6 +279,7 @@ struct PaywallFlowView: View {
         self.onSubscribed = onSubscribed
         _stage = State(initialValue: .paywall)
         _offerSource = State(initialValue: .paywall)
+        _closeReady = State(initialValue: Self.closeDelay(for: trigger) <= 0)
     }
 
     /// **L'offre de réduction seule**, ouverte à la demande : la pastille de la Home, la
@@ -288,11 +295,14 @@ struct PaywallFlowView: View {
         let source: OfferSource = offer == .gift ? .test : .direct
         _stage = State(initialValue: .offer)
         _offerSource = State(initialValue: source)
+        _closeReady = State(initialValue: true)
         // Une fenêtre qui court déjà : son décompte est juste dès la première image.
         _startedAt = State(initialValue: DiscountOffer.start().flatMap { DiscountOffer.isLive(startedAt: $0) ? $0 : nil })
     }
 
     private var isPro: Bool { pro?.isPro ?? false }
+    /// La croix du paywall se voit, se touche, et le glissement vers le bas ferme.
+    private var paywallClosable: Bool { closeReady || still }
     private var firstName: String? { PaywallProfile.firstName(OnboardingPreferences.displayName) }
 
     /// Les produits dont chaque écran affiche le prix.
@@ -334,6 +344,7 @@ struct PaywallFlowView: View {
             }
         )
         .task { await loadPrices() }
+        .task { await revealClose() }
         .onAppear(perform: opened)
         // **Un achat confirmé après coup mène à la bienvenue.** Un achat en attente (une
         // validation parentale, un droit que RevenueCat n'a pas encore vu) s'ouvre plus tard,
@@ -352,6 +363,7 @@ struct PaywallFlowView: View {
             trigger: trigger,
             name: firstName,
             isPurchasing: isPurchasing,
+            showsClose: paywallClosable,
             storeRevision: storeRevision,
             onClose: closePaywall,
             onSubscribe: { plan in Task { await buy(plan, door: trigger?.rawValue ?? "inconnu") } },
@@ -430,6 +442,23 @@ struct PaywallFlowView: View {
         ])
     }
 
+    /// **Le délai de la croix du paywall**, en secondes : `PaywallStyle.closeDelay` à la fin du
+    /// parcours d'accueil (sans porte), rien derrière une porte de l'app — l'élève y est venu
+    /// lui-même. L'offre de réduction n'attend jamais : on n'y arrive qu'en refermant un
+    /// paywall, ou en la demandant.
+    static func closeDelay(for trigger: PaywallTrigger?) -> Double {
+        trigger == nil ? PaywallStyle.closeDelay : 0
+    }
+
+    /// La croix du paywall de fin de parcours arrive, en fondu, à sa place.
+    @MainActor
+    private func revealClose() async {
+        guard !closeReady else { return }
+        try? await Task.sleep(for: .seconds(Self.closeDelay(for: trigger)))
+        guard !Task.isCancelled else { return }
+        withAnimation(motion(MicaboMotion.gentle)) { closeReady = true }
+    }
+
     /// La première fois qu'une autre offre est cochée.
     private func plansCompared() {
         guard !comparedPlans else { return }
@@ -482,7 +511,8 @@ struct PaywallFlowView: View {
     /// **La croix du paywall.** Refermé sans achat, il laisse la place à l'offre de réduction
     /// quand elle est due — dans le même écran, sans se refermer d'abord. Sinon il sort.
     private func closePaywall() {
-        guard !isPurchasing else { return }
+        // Avant l'arrivée de la croix (fin de parcours), le glissement ne ferme rien non plus.
+        guard !isPurchasing, paywallClosable else { return }
         // Un achat qui attend une validation n'est pas un refus : pas d'offre derrière lui,
         // et pas de fermeture à compter.
         guard lastOutcome?.countsAsDismissal != false else {

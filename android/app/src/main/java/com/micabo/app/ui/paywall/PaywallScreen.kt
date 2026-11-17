@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -51,10 +53,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -86,6 +90,7 @@ import com.micabo.app.ui.theme.Type
 import com.micabo.app.ui.theme.display
 import com.micabo.app.ui.theme.nunito
 import com.micabo.app.ui.theme.text
+import com.micabo.app.ui.v3.LocalStill
 import com.micabo.app.ui.v3.MicaboIcons
 import com.micabo.app.ui.v3.marked
 import com.micabo.app.ui.v3.popIn
@@ -97,6 +102,23 @@ import kotlinx.coroutines.launch
 
 /** Les demandes d'offres à Google Play avant de parler d'erreur. */
 private const val PLAN_ATTEMPTS = 3
+
+/**
+ * **Le paywall de fin de parcours ne montre sa croix qu'au bout de cinq secondes** (demande du
+ * fondateur, comme `PaywallStyle.closeDelay` sur l'iPhone) : elle arrive en fondu, à sa place, et
+ * le bouton retour attend avec elle. Derrière une porte de l'app, et sur l'offre de réduction, elle
+ * est là d'emblée : l'élève y est venu lui-même.
+ */
+object PaywallClose {
+    /** Le délai, en millisecondes. */
+    const val DELAY_MILLIS = 5_000L
+
+    /** Le fondu de son arrivée. */
+    const val FADE_MILLIS = 600
+
+    /** Le délai d'un paywall : `onboarding` (la fin du parcours) attend, une porte de l'app non. */
+    fun delayMillis(onboarding: Boolean): Long = if (onboarding) DELAY_MILLIS else 0L
+}
 
 /**
  * **La porte du paywall dans les événements**, dans le vocabulaire de l'iPhone (`PaywallTrigger`) :
@@ -146,6 +168,14 @@ fun PaywallScreen(reason: String, trigger: String = "") {
     var showsPending by remember { mutableStateOf(false) }
     val failText = t("ios.paywallBuyFail")
     val noRestoreText = stringResource(R.string.ios_paywallNoRestore)
+    val onboarding = reason == "onboarding"
+    // La croix de la fin du parcours arrive au bout de cinq secondes (`PaywallClose`).
+    var closeReady by remember { mutableStateOf(PaywallClose.delayMillis(onboarding) <= 0L) }
+    LaunchedEffect(onboarding) {
+        if (closeReady) return@LaunchedEffect
+        delay(PaywallClose.delayMillis(onboarding))
+        closeReady = true
+    }
 
     LaunchedEffect(Unit) { app.analytics.track("paywall_opened", mapOf("trigger" to door, "reason" to reason)) }
     LaunchedEffect(attempt) {
@@ -181,14 +211,17 @@ fun PaywallScreen(reason: String, trigger: String = "") {
                     mapOf("trigger" to door, "stage" to "paywall", "seconds" to (System.currentTimeMillis() - openedAt) / 100 / 10.0),
                 )
             }
-            if (app.billing.enabled && !awaitingApproval) app.gift.paywallClosed(pro)
+            // Un achat abouti n'est pas une fermeture, même si le droit Pro arrive en retard : pas
+            // d'offre −40 % derrière lui (comme `didSubscribe` sur l'iPhone).
+            if (app.billing.enabled && !awaitingApproval && !subscribed) app.gift.paywallClosed(pro)
         }
     }
 
     fun close() {
         if (navigator.current is Screen.Paywall) navigator.back()
     }
-    BackHandler(enabled = navigator.current is Screen.Paywall) { close() }
+    // Le retour fait comme la croix : avant qu'elle arrive, il ne ferme rien (et ne quitte pas l'app).
+    BackHandler(enabled = navigator.current is Screen.Paywall) { if (closeReady) close() }
 
     val plans = load?.plans
     val state = when {
@@ -213,8 +246,9 @@ fun PaywallScreen(reason: String, trigger: String = "") {
         name = profile.name.trim().split(' ').firstOrNull()?.takeIf { it.isNotEmpty() },
         examName = examName,
         examId = examId,
-        trigger = if (reason == "onboarding" || reason.isEmpty()) null else door,
-        onboarding = reason == "onboarding",
+        trigger = if (onboarding || reason.isEmpty()) null else door,
+        onboarding = onboarding,
+        showsClose = closeReady,
         busy = busy,
         message = message,
         failure = failure,
@@ -331,6 +365,7 @@ fun PaywallContent(
     onSubscribe: (StorePlan) -> Unit,
     now: Long = System.currentTimeMillis(),
     onboarding: Boolean = false,
+    showsClose: Boolean = true,
 ) {
     val colors = Micabo.colors
     val locale = currentLocale
@@ -375,7 +410,8 @@ fun PaywallContent(
                     }
                     if (name != null) Text(t("ios.pay10.brand.for", "name" to name), style = text(13.sp, FontWeight.SemiBold), color = colors.inkSecondary, maxLines = 1)
                 }
-                IconButtonClose(enabled = !busy, onClick = onClose)
+                // Un rendu pose l'écran fini : la croix y est.
+                IconButtonClose(enabled = !busy, visible = showsClose || LocalStill.current || LocalInspectionMode.current, onClick = onClose)
             }
             Column(
                 Modifier.weight(1f).widthIn(max = 560.dp).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp),
@@ -447,14 +483,26 @@ fun PaywallContent(
     }
 }
 
+/**
+ * **La croix**, 48 dp touchables. `visible` faux (les cinq premières secondes de la fin du
+ * parcours) : sa place est gardée, mais rien ne s'y voit, ne s'y touche, ni ne s'y lit avec
+ * TalkBack ; elle arrive ensuite en fondu.
+ */
 @Composable
-private fun IconButtonClose(enabled: Boolean, onClick: () -> Unit) {
+private fun IconButtonClose(enabled: Boolean, visible: Boolean, onClick: () -> Unit) {
     val colors = Micabo.colors
+    val alpha by animateFloatAsState(if (visible) 1f else 0f, tween(PaywallClose.FADE_MILLIS), label = "closeFade")
+    val touch = if (visible) Modifier.clip(CircleShape).clickable(enabled = enabled, onClick = onClick) else Modifier
     Box(
-        Modifier.size(48.dp).clip(CircleShape).clickable(enabled = enabled, onClick = onClick).testTag("close"),
+        Modifier.size(48.dp).then(touch).alpha(alpha).testTag("close"),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(Icons.Rounded.Close, contentDescription = t("app.a11y.close"), tint = colors.inkSecondary.copy(alpha = if (enabled) 1f else 0.35f), modifier = Modifier.size(22.dp))
+        Icon(
+            Icons.Rounded.Close,
+            contentDescription = if (visible) t("app.a11y.close") else null,
+            tint = colors.inkSecondary.copy(alpha = if (enabled) 1f else 0.35f),
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 

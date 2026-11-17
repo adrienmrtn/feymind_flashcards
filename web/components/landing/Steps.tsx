@@ -48,7 +48,7 @@ export function Steps() {
 function ImportFigure() {
   return (
     <div aria-hidden className="relative h-[96px] w-[220px]">
-      {(["pdf", "word", "youtube", "audio"] as const).map((kind, index) => (
+      {(["pdf", "word", "photo", "audio"] as const).map((kind, index) => (
         <span
           key={kind}
           className="absolute top-1/2 rounded-[18px] bg-surface p-2 shadow-paper"

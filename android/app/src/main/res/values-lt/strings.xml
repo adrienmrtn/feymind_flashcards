@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Skaitoma tavo telefone.</string>
     <string name="ios_core13_home_ready">Tavo kursas perskaitytas.\nPadaryti iš jo **tavo pamoką**?</string>
     <string name="ios_core13_lesson_mock">Bandomasis egzaminas iš šios pamokos</string>
-    <string name="ios_core13_lessons_emptyBody">Tema, nuotrauka, PDF, YouTube vaizdo įrašas ar garso įrašas: Mika parašys užrašus, testus, korteles ir bandomąjį egzaminą.</string>
+    <string name="ios_core13_lessons_emptyBody">Tema, nuotrauka, PDF ar garso įrašas: Mika parašys užrašus, testus, korteles ir bandomąjį egzaminą.</string>
     <string name="ios_core13_lessons_emptyTitle">Tavo pirmoji pamoka – kelio pavidalu</string>
     <string name="ios_core13_new_orSupport">Arba pradėk nuo savo kurso</string>
     <string name="ios_core13_new_promise">Duok savo kursą: Mika padarys iš jo kelią.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Esu sukurtas padėti mokiniams ir studentams **pagal jų lygį**.</string>
     <string name="ios_onb14_lesson_ask">Išsirink ją dabar: parašysiu, vos tik būsi programėlėje.</string>
     <string name="ios_onb14_lesson_import">Importuoju konspektus</string>
-    <string name="ios_onb14_lesson_importHint">PDF, nuotraukos, garsas, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, nuotraukos, garsas…</string>
     <string name="ios_onb14_lesson_later">Pasirinksiu vėliau</string>
     <string name="ios_onb14_lesson_q">Kokia bus tavo **pirmoji pamoka**?</string>
     <string name="ios_onb14_lesson_reactImport">Puiku: importuosi, kai būsi programėlėje.</string>
-    <string name="ios_onb14_lesson_say">PDF, įrašyta pamoka, nuotraukos, YouTube ar tekstas: atsinešk, ką turi.</string>
+    <string name="ios_onb14_lesson_say">PDF, įrašyta pamoka, nuotraukos ar tekstas: atsinešk, ką turi.</string>
     <string name="ios_onb14_lesson_title">Tavo konspektai tampa **pamokomis**.</string>
     <string name="ios_onb14_lesson_topic">Įrašau temą</string>
     <string name="ios_onb14_open_goal">Dabar nusistatykime **tavo tikslą**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Papasakok apie savo pamokas: noriu žinoti, **kas tave stabdo**.</string>
     <string name="ios_onb14_origin_play">Sutvarkyti krūvą</string>
     <string name="ios_onb14_origin_title">Mane sukūrė mokiniai, kuriems reikėjo **sutvarkyti savo konspektų krūvą** vienoje vietoje.</string>
-    <string name="ios_onb14_story1">PDF, garsas, nuotraukos, YouTube: viskas tampa **pamoka**.</string>
+    <string name="ios_onb14_story1">PDF, garsas, nuotraukos: viskas tampa **pamoka**.</string>
     <string name="ios_onb14_story_ask_a">1791 m. birželį Liudvikas XVI bando pasiekti šalies rytus. Sulaikytas Varene, jis praranda tautos pasitikėjimą.</string>
     <string name="ios_onb14_story_ask_q">Kodėl karalius bėga į Vareną?</string>
     <string name="ios_onb14_story_ask_title">Ir eini toliau, tiek, kad **nustebintum mokytojus**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Tęsti</string>
     <string name="ios_pay10_cta_trial">Išbandyti nemokamai</string>
     <string name="ios_pay10_hook_exportSheet">Tavo **konspektas PDF**? Paruošiu jį su Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Tavo PDF, nuotraukos ir vaizdo įrašai: su Pro paverčiu juos **pamokomis**.</string>
+    <string name="ios_pay10_hook_generateCourse">Tavo PDF, nuotraukos ir garso įrašai: su Pro paverčiu juos **pamokomis**.</string>
     <string name="ios_pay10_hook_lessonReady">**Tavo pamoka paruošta** rašyti. Atrakink ją su Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Konspekto tęsinys** paruoštas. Atidarysiu jį su Pro.</string>
     <string name="ios_pay10_hook_mika">Su Pro atsakau į **visus tavo klausimus**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Prenumeruoti · %1$s per savaitę</string>
     <string name="ios_pay11_cta_year">Prenumeruoti · %1$s per metus</string>
     <string name="ios_pay11_hook_exportSheet">**Tavo konspektas PDF**, paruoštas spausdinti: padarysiu jį su Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">Tavo PDF, nuotraukos, vaizdo įrašas: su Pro padarysiu iš jų **pamoką**.</string>
+    <string name="ios_pay11_hook_generateCourse">Tavo PDF, nuotraukos, garso įrašas: su Pro padarysiu iš jų **pamoką**.</string>
     <string name="ios_pay11_hook_lessonReady">Perskaičiau tavo dokumentus. **Tavo pamoką** parašysiu, kai tik pereisi prie Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Šio konspekto tęsinys** parašytas. Atidarysiu jį tau su Pro.</string>
     <string name="ios_pay11_hook_mika">Tavo nemokamas klausimas užduotas. **Į kitus** atsakysiu su Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Tai tavo rekordas. Neišleisk jo.</string>
     <string name="ios_profile_streakStart">Grįžk rytoj, ir serija prasidės.</string>
     <string name="ios_quiz_time_short">%1$s min.</string>
-    <string name="ios_reminder_import1_body">Nuotrauka, PDF ar YouTube vaizdo įrašas: Mika per kelias minutes padarys iš jo pamoką ir korteles.</string>
+    <string name="ios_reminder_import1_body">Nuotrauka ar PDF: Mika per kelias minutes padarys iš jo pamoką ir korteles.</string>
     <string name="ios_reminder_import1_title">Ateik išmokti savo pirmojo kurso su Mika!</string>
     <string name="ios_reminder_import2_body">Įkelk savo kursą, o Mika paruoš viską, ko reikia jam pakartoti.</string>
     <string name="ios_reminder_import2_title">Artėja egzaminas?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Kitokie nei jau matyti, ypač ten, kur klysti.</string>
     <string name="lesson_profile_contact">Susisiekti su pagalba</string>
     <string name="lesson_profile_goPro">Pereiti prie Pro</string>
-    <string name="lesson_profile_goProBody">Neribotos pamokos iš tavo PDF, nuotraukų, garso įrašų ir YouTube vaizdo įrašų.</string>
+    <string name="lesson_profile_goProBody">Neribotos pamokos iš tavo PDF, nuotraukų ir garso įrašų.</string>
     <string name="lesson_profile_language">Kalba</string>
     <string name="lesson_profile_me">Mano profilis</string>
     <string name="lesson_profile_privacy">Privatumo politika</string>

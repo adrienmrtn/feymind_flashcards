@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// **Coller le lien d'une page web** (`docs/supports.md`). La page est récupérée et nettoyée
-/// sur l'appareil (`WebPageImportService`) ; un lien YouTube collé ici part par le support
-/// YouTube, qui lit les sous-titres.
+/// sur l'appareil (`WebPageImportService`) ; un lien YouTube collé ici n'est pas lu (l'import de
+/// vidéo est retiré).
 struct WebLinkSheet: View {
     let onDone: (String) -> Void
 

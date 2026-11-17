@@ -6,15 +6,14 @@ import { MicaboIcon } from "@/components/lesson/MicaboIcon";
 import { useI18n } from "@/lib/i18n/client";
 
 /**
- * **Les cinq supports de la barre de Home**, qui flottent : un PDF, une photo, un
- * enregistrement, une vidéo YouTube, un texte collé. Les mêmes icônes 3D que dans l'app.
+ * **Les quatre supports de la barre de Home**, qui flottent : un PDF, une photo, un
+ * enregistrement, un texte collé. Les mêmes icônes 3D que dans l'app.
  */
 const PLACES = [
-  { left: "4%", top: "10%", delay: "0s", size: 84 },
-  { left: "56%", top: "0%", delay: "1.1s", size: 76 },
-  { left: "28%", top: "40%", delay: "0.5s", size: 92 },
-  { left: "68%", top: "46%", delay: "1.7s", size: 80 },
-  { left: "2%", top: "66%", delay: "2.2s", size: 72 },
+  { left: "6%", top: "6%", delay: "0s", size: 88 },
+  { left: "58%", top: "2%", delay: "1.1s", size: 80 },
+  { left: "30%", top: "38%", delay: "0.5s", size: 92 },
+  { left: "4%", top: "66%", delay: "1.7s", size: 76 },
 ] as const;
 
 export function SupportsStory() {

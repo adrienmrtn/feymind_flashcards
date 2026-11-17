@@ -308,7 +308,7 @@ export const lessonCs = {
   profile: {
     me: "Můj profil",
     goPro: "Přejít na Pro",
-    goProBody: "Neomezené lekce z tvých PDF, fotek, nahrávek a videí z YouTube.",
+    goProBody: "Neomezené lekce z tvých PDF, fotek a nahrávek.",
     settings: "Nastavení",
     language: "Jazyk",
     rate: "Ohodnotit Micabo",

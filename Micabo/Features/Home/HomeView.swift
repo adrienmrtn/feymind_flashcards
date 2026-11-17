@@ -585,7 +585,7 @@ struct HomeView: View {
             showsWriting = true
         case .mock:
             mock = MockExamStart(exam: exams.first { $0.id == snapshot.examID })
-        case .photo, .pdf, .youtube:
+        case .photo, .pdf:
             if let kind = shortcut.source { tapImport(kind) }
         case .chats:
             drawerOpen = true
@@ -614,7 +614,6 @@ struct HomeView: View {
         case .camera: scanner = HomeScannerLaunch(mode: nil)
         case .photos: tapImport(.photo)
         case .files: tapImport(.pdf)
-        case .youtube: tapImport(.youtube)
         case .audio: tapImport(.audio)
         case .allSources: showsSources = true
         case .focus: open(.focus)

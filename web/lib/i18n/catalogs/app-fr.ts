@@ -264,7 +264,7 @@ export const appFr = {
       send: "Ta leçon offerte est faite : la suivante est dans Pro.",
       mika: "Ta question offerte à Mika est posée : les suivantes sont dans Pro.",
       extra: "Ton supplément offert est pris : entraînements et examens blancs à volonté dans Pro.",
-      upgrade: "Leçons illimitées, et tes PDF, photos, audios et vidéos YouTube.",
+      upgrade: "Leçons illimitées, et tes PDF, photos et audios.",
     },
     checkoutClosed: "L'abonnement n'est pas encore ouvert.",
     storeTitle: "Abonne-toi dans l'app",
@@ -278,7 +278,7 @@ export const appFr = {
     features: {
       cards: {
         title: "Cartes IA illimitées",
-        detail: "Importe PDF, photos, Word et YouTube",
+        detail: "Importe PDF, photos et Word",
       },
       sheet: {
         title: "Fiches de cours automatiques",
@@ -405,7 +405,7 @@ export const appFr = {
       },
       supports: {
         title: "Ou dépose un support",
-        body: "Un PDF, une photo de cours, un enregistrement, une vidéo YouTube, un texte collé : jusqu'à cinq à la fois.",
+        body: "Un PDF, une photo de cours, un enregistrement, un texte collé : jusqu'à cinq à la fois.",
       },
       numbers: {
         title: "Trois chiffres, mesurés",

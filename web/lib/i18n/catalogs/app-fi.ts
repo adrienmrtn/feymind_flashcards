@@ -275,7 +275,7 @@ export const appFi = {
       send: "Ilmainen oppituntisi on tehty: seuraava kuuluu Prohon.",
       mika: "Ilmainen kysymyksesi Mikalle on käytetty: seuraavat kuuluvat Prohon.",
       extra: "Ilmainen lisäsi on käytetty: rajaton harjoittelu ja harjoituskokeet Prossa.",
-      upgrade: "Rajattomasti oppitunteja, sekä PDF:si, kuvasi, tallenteesi ja YouTube-videosi.",
+      upgrade: "Rajattomasti oppitunteja, sekä PDF:si, kuvasi ja tallenteesi.",
     },
     checkoutClosed: "Tilaukset eivät ole vielä auki.",
     storeTitle: "Tilaa sovelluksessa",
@@ -289,7 +289,7 @@ export const appFi = {
     features: {
       cards: {
         title: "Rajattomasti tekoälykortteja",
-        detail: "Tuo PDF, kuvia, Word ja YouTube",
+        detail: "Tuo PDF, kuvia ja Word",
       },
       sheet: {
         title: "Automaattiset kurssitiivistelmät",
@@ -410,7 +410,7 @@ export const appFi = {
       },
       supports: {
         title: "Tai lisää lähde",
-        body: "PDF, kuva muistiinpanoistasi, tallenne, YouTube-video, liitetty teksti: jopa viisi kerralla.",
+        body: "PDF, kuva muistiinpanoistasi, tallenne, liitetty teksti: jopa viisi kerralla.",
       },
       numbers: {
         title: "Kolme lukua, mitattuna",

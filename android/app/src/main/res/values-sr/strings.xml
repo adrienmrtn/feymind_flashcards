@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Čitanje se odvija na tvom telefonu.</string>
     <string name="ios_core13_home_ready">Gradivo je pročitano.\nDa napravim **tvoju lekciju**?</string>
     <string name="ios_core13_lesson_mock">Probni ispit iz ove lekcije</string>
-    <string name="ios_core13_lessons_emptyBody">Tema, slika, PDF, YouTube video ili snimak: Mika piše beleške, kvizove, kartice i probni ispit.</string>
+    <string name="ios_core13_lessons_emptyBody">Tema, slika, PDF ili snimak: Mika piše beleške, kvizove, kartice i probni ispit.</string>
     <string name="ios_core13_lessons_emptyTitle">Tvoja prva lekcija, kao put</string>
     <string name="ios_core13_new_orSupport">Ili kreni od svog gradiva</string>
     <string name="ios_core13_new_promise">Daj Miki svoje gradivo: on od njega pravi put.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Osmišljen sam da pomažem učenicima i studentima **na njihovom nivou**.</string>
     <string name="ios_onb14_lesson_ask">Izaberi je sad: napisaću je čim uđeš u aplikaciju.</string>
     <string name="ios_onb14_lesson_import">Uvozim svoje beleške</string>
-    <string name="ios_onb14_lesson_importHint">PDF, slike, audio, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, slike, audio…</string>
     <string name="ios_onb14_lesson_later">Izabraću kasnije</string>
     <string name="ios_onb14_lesson_q">Koja će biti tvoja **prva lekcija**?</string>
     <string name="ios_onb14_lesson_reactImport">Savršeno: uvešćeš je kad uđeš u aplikaciju.</string>
-    <string name="ios_onb14_lesson_say">PDF, snimljen čas, slike, YouTube ili tekst: donesi šta imaš.</string>
+    <string name="ios_onb14_lesson_say">PDF, snimljen čas, slike ili tekst: donesi šta imaš.</string>
     <string name="ios_onb14_lesson_title">Tvoje beleške postaju **lekcije**.</string>
     <string name="ios_onb14_lesson_topic">Upisujem temu</string>
     <string name="ios_onb14_open_goal">Sad da postavimo **tvoj cilj**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Pričaj mi o svojim časovima: želim da znam **šta te koči**.</string>
     <string name="ios_onb14_origin_play">Složi gomilu</string>
     <string name="ios_onb14_origin_title">Napravili su me učenici kojima je trebalo da **slože gomilu beleški** na jednom mestu.</string>
-    <string name="ios_onb14_story1">PDF, audio, slike, YouTube: sve postaje **lekcija**.</string>
+    <string name="ios_onb14_story1">PDF, audio, slike: sve postaje **lekcija**.</string>
     <string name="ios_onb14_story_ask_a">U junu 1791. Luj XVI pokušava da stigne na istok zemlje. Uhapšen u Varenu, gubi poverenje naroda.</string>
     <string name="ios_onb14_story_ask_q">Zašto kralj beži u Varen?</string>
     <string name="ios_onb14_story_ask_title">I ideš dalje, dovoljno da **impresioniraš profesore**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Nastavi</string>
     <string name="ios_pay10_cta_trial">Probaj besplatno</string>
     <string name="ios_pay10_hook_exportSheet">Tvoj rezime **u PDF-u**? Pripremiću ti ga uz Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Tvoji PDF-ovi, slike i video snimci: uz Pro od njih pravim **lekcije**.</string>
+    <string name="ios_pay10_hook_generateCourse">Tvoji PDF-ovi, slike i snimci: uz Pro od njih pravim **lekcije**.</string>
     <string name="ios_pay10_hook_lessonReady">**Tvoja lekcija je spremna** za pisanje. Otključaj je uz Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Nastavak tvog rezimea** je spreman. Otvoriću ti ga uz Pro.</string>
     <string name="ios_pay10_hook_mika">Uz Pro odgovaram na **sva tvoja pitanja**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Pretplati se · %1$s nedeljno</string>
     <string name="ios_pay11_cta_year">Pretplati se · %1$s godišnje</string>
     <string name="ios_pay11_hook_exportSheet">**Tvoj rezime u PDF-u**, spreman za štampu: uz Pro ti ga pravim.</string>
-    <string name="ios_pay11_hook_generateCourse">Tvoj PDF, slike, video: uz Pro od njih pravim **lekciju**.</string>
+    <string name="ios_pay11_hook_generateCourse">Tvoj PDF, slike, snimak: uz Pro od njih pravim **lekciju**.</string>
     <string name="ios_pay11_hook_lessonReady">Pročitao sam tvoje dokumente. **Tvoju lekciju** pišem čim pređeš na Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Nastavak ovog rezimea** je napisan. Otvoriću ti ga uz Pro.</string>
     <string name="ios_pay11_hook_mika">Besplatno pitanje je postavljeno. **Na sledeća** odgovaram uz Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">To ti je rekord. Ne odustaj.</string>
     <string name="ios_profile_streakStart">Vrati se sutra i niz počinje.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">Fotografija, PDF ili YouTube video: Mika od toga za nekoliko minuta napravi lekciju i kartice.</string>
+    <string name="ios_reminder_import1_body">Fotografija ili PDF: Mika od toga za nekoliko minuta napravi lekciju i kartice.</string>
     <string name="ios_reminder_import1_title">Dođi da naučiš svoj prvi kurs sa Mikom!</string>
     <string name="ios_reminder_import2_body">Uvezi svoj kurs i Mika će ti pripremiti sve za ponavljanje.</string>
     <string name="ios_reminder_import2_title">Bliži se ispit?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Drugačija od onih koja već znaš, usmerena na ono gde grešiš.</string>
     <string name="lesson_profile_contact">Kontaktiraj podršku</string>
     <string name="lesson_profile_goPro">Pređi na Pro</string>
-    <string name="lesson_profile_goProBody">Neograničeno lekcija iz tvojih PDF-ova, fotografija, snimaka i YouTube videa.</string>
+    <string name="lesson_profile_goProBody">Neograničeno lekcija iz tvojih PDF-ova, fotografija i snimaka.</string>
     <string name="lesson_profile_language">Jezik</string>
     <string name="lesson_profile_me">Moj profil</string>
     <string name="lesson_profile_privacy">Politika privatnosti</string>

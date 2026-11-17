@@ -31,7 +31,6 @@ import androidx.compose.material.icons.rounded.Quiz
 import androidx.compose.material.icons.rounded.RocketLaunch
 import androidx.compose.material.icons.rounded.School
 import androidx.compose.material.icons.rounded.Science
-import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.Style
 import androidx.compose.material.icons.rounded.TextFields
@@ -72,7 +71,6 @@ object MicaboIcons {
     val photo = Icons.Rounded.PhotoCamera
     val pdf = Icons.Rounded.PictureAsPdf
     val audio = Icons.Rounded.Mic
-    val youtube = Icons.Rounded.SmartDisplay
     val text = Icons.Rounded.TextFields
     val alarm = Icons.Rounded.Alarm
     val flag = Icons.Rounded.Flag

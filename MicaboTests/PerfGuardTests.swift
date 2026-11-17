@@ -67,7 +67,7 @@ final class PerfGuardTests: XCTestCase {
         Allowance(path: "Features/Onboarding/Steps/ChapterStepViews.swift", max: 2, why: "voulu : la bulle de Mika se lit mot à mot, et le bouton arrive à la fin"),
         Allowance(path: "Features/Onboarding/Steps/PlanStepViews.swift", max: 3, why: "voulu : le plan se dévoile bloc par bloc, et Mika change de geste au repos"),
         Allowance(path: "Features/Onboarding/Steps/StoryStepViews.swift", max: 6, why: "voulu : la question s'écrit, le chemin se pose étape par étape avec sa vibration"),
-        Allowance(path: "Features/Paywall/PaywallFlowView.swift", max: 1, why: "réseau : nouvel essai des prix"),
+        Allowance(path: "Features/Paywall/PaywallFlowView.swift", max: 2, why: "réseau : nouvel essai des prix ; voulu : la croix du paywall de fin de parcours n'arrive qu'au bout de 5 s (demande du fondateur)"),
         Allowance(path: "Features/Paywall/PaywallScreens.swift", max: 2, why: "voulu : Mika, le titre puis les bénéfices entrent l'un après l'autre à la fin du parcours"),
         Allowance(path: "Features/Paywall/PaywallPurchases.swift", max: 1, why: "réseau : nouvel essai de l'identification chez RevenueCat"),
         Allowance(path: "Features/Profile/SettingsSchoolSheet.swift", max: 1, why: "la recherche attend la fin de la frappe"),

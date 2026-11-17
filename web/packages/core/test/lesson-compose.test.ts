@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_COMPOSER_CHARACTERS,
   MAX_COMPOSER_IMAGES,
+  SUPPORT_KINDS,
   canSend,
   composeCreation,
   composerSource,
@@ -35,7 +36,9 @@ describe("la barre de Home", () => {
     expect(composerSource([support({ kind: "text" })])).toBe("text");
     expect(composerSource([support(), support({ id: "t", kind: "photo", images: ["data:image/jpeg;base64,x"], text: "" })])).toBe("mixed");
     expect(supportSource({ kind: "pdf", docKind: "docx" })).toBe("docx");
-    expect(supportSource({ kind: "youtube" })).toBe("youtube");
+    // L'import de vidéo YouTube est retiré (novembre 2026) : plus de pastille YouTube.
+    expect((SUPPORT_KINDS as readonly string[]).includes("youtube")).toBe(false);
+    expect(supportSource({ kind: "audio" })).toBe("audio");
     expect(hasRoom(Array.from({ length: 5 }, (_, index) => support({ id: String(index) })))).toBe(false);
   });
 

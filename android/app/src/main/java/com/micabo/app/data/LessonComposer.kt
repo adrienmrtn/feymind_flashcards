@@ -15,8 +15,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
 
-/** Une icône d'import sous la barre (`LessonComposer.Kind`). */
-enum class SupportKind { PDF, PHOTO, AUDIO, YOUTUBE, TEXT }
+/**
+ * Une icône d'import sous la barre (`LessonComposer.Kind`). L'import de vidéo YouTube est retiré
+ * (novembre 2026, la fonction d'IA la plus chère) : un lien collé dans le texte reste du texte.
+ */
+enum class SupportKind { PDF, PHOTO, AUDIO, TEXT }
 
 /** Un support déposé dans la barre : en lecture, prêt, ou illisible. */
 data class Support(
@@ -44,7 +47,6 @@ data class Support(
  */
 class LessonComposer(
     private val context: Context,
-    private val youtube: YouTubeImport,
     private val track: (String, Map<String, Any?>) -> Unit = { _, _ -> },
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -149,18 +151,6 @@ class LessonComposer(
         if (uris.isEmpty()) return
         val name = if (uris.size == 1) localized(R.string.ios_photo_courseName) else localized(R.string.ios_photo_scanName, uris.size.toString())
         read(SupportKind.PHOTO, name) { PhotoImport.read(context, uris, name) }
-    }
-
-    fun addYouTube(link: String) {
-        read(SupportKind.YOUTUBE, localized(R.string.lesson_import_youtube)) {
-            val video = youtube.transcript(link)
-            ImportedDocument(
-                text = video.text,
-                images = emptyList(),
-                name = video.title.ifBlank { localized(R.string.lesson_import_youtube) },
-                source = "youtube",
-            )
-        }
     }
 
     fun addText(text: String) {

@@ -275,7 +275,7 @@ export const appPl = {
       send: "Twoja darmowa lekcja jest gotowa: kolejna jest w Pro.",
       mika: "Twoje darmowe pytanie do Miki już padło: kolejne są w Pro.",
       extra: "Twój darmowy dodatek został wykorzystany: ćwiczenia i próbne egzaminy bez limitu w Pro.",
-      upgrade: "Bez limitu lekcji, a do tego Twoje PDF-y, zdjęcia, nagrania i filmy z YouTube.",
+      upgrade: "Bez limitu lekcji, a do tego Twoje PDF-y, zdjęcia i nagrania.",
     },
     checkoutClosed: "Subskrypcje nie są jeszcze otwarte.",
     storeTitle: "Subskrybuj w aplikacji",
@@ -289,7 +289,7 @@ export const appPl = {
     features: {
       cards: {
         title: "Fiszki AI bez limitu",
-        detail: "Import PDF, zdjęć, Worda i YouTube",
+        detail: "Import PDF, zdjęć i Worda",
       },
       sheet: {
         title: "Automatyczne notatki z kursu",
@@ -410,7 +410,7 @@ export const appPl = {
       },
       supports: {
         title: "Albo wrzuć materiał",
-        body: "PDF, zdjęcie notatek, nagranie, film z YouTube, wklejony tekst: do pięciu naraz.",
+        body: "PDF, zdjęcie notatek, nagranie, wklejony tekst: do pięciu naraz.",
       },
       numbers: {
         title: "Trzy liczby, zmierzone",

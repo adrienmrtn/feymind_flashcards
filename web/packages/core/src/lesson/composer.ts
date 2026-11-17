@@ -13,15 +13,15 @@ export const MAX_COMPOSER_CHARACTERS = 60_000;
 /** Les pages envoyées à la passe visuelle. */
 export const MAX_COMPOSER_IMAGES = 6;
 
-export type SupportKind = "pdf" | "photo" | "audio" | "youtube" | "text";
-export const SUPPORT_KINDS: readonly SupportKind[] = ["pdf", "photo", "audio", "youtube", "text"];
+/** L'import de vidéo YouTube est retiré (novembre 2026, la fonction d'IA la plus chère). */
+export type SupportKind = "pdf" | "photo" | "audio" | "text";
+export const SUPPORT_KINDS: readonly SupportKind[] = ["pdf", "photo", "audio", "text"];
 
 /** L'icône 3D de chaque support, sous la barre. */
 export const SUPPORT_ICONS: Record<SupportKind, string> = {
   pdf: "pdf",
   photo: "photo",
   audio: "audio",
-  youtube: "lien",
   text: "texte",
 };
 
@@ -49,8 +49,6 @@ export function supportSource(support: Pick<ComposerSupport, "kind" | "docKind">
       return "photo";
     case "audio":
       return "audio";
-    case "youtube":
-      return "youtube";
     case "text":
       return "text";
   }

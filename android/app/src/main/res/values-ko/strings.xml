@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">읽기는 휴대폰에서 이뤄져요.</string>
     <string name="ios_core13_home_ready">자료를 다 읽었어요.\n**레슨**으로 만들까요?</string>
     <string name="ios_core13_lesson_mock">이 레슨 모의고사</string>
-    <string name="ios_core13_lessons_emptyBody">주제, 사진, PDF, YouTube 영상, 녹음. Mika가 노트, 퀴즈, 카드, 모의고사를 써요.</string>
+    <string name="ios_core13_lessons_emptyBody">주제, 사진, PDF, 녹음. Mika가 노트, 퀴즈, 카드, 모의고사를 써요.</string>
     <string name="ios_core13_lessons_emptyTitle">첫 레슨을 학습 경로로</string>
     <string name="ios_core13_new_orSupport">또는 수업 자료로 시작</string>
     <string name="ios_core13_new_promise">수업 자료를 주면 Mika가 학습 경로로 만들어요.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">학생 각자의 **수준에 맞게** 돕도록 만들어졌어.</string>
     <string name="ios_onb14_lesson_ask">지금 골라 줘. 앱에 들어오자마자 써 줄게.</string>
     <string name="ios_onb14_lesson_import">필기를 가져올게</string>
-    <string name="ios_onb14_lesson_importHint">PDF, 사진, 오디오, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, 사진, 오디오…</string>
     <string name="ios_onb14_lesson_later">나중에 고를게</string>
     <string name="ios_onb14_lesson_q">**첫 수업**은 뭐로 할까?</string>
     <string name="ios_onb14_lesson_reactImport">좋아. 앱에 들어오면 가져오면 돼.</string>
-    <string name="ios_onb14_lesson_say">PDF, 녹음한 수업, 사진, YouTube, 텍스트: 가진 걸 가져와.</string>
+    <string name="ios_onb14_lesson_say">PDF, 녹음한 수업, 사진, 텍스트: 가진 걸 가져와.</string>
     <string name="ios_onb14_lesson_title">필기가 **수업**이 돼.</string>
     <string name="ios_onb14_lesson_topic">주제를 입력할게</string>
     <string name="ios_onb14_open_goal">이제 **목표**를 정하자.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">수업 이야기를 들려줘. **무엇이 발목을 잡는지** 알고 싶어.</string>
     <string name="ios_onb14_origin_play">더미 정리하기</string>
     <string name="ios_onb14_origin_title">나는 **산더미 같은 필기**를 한곳에 정리하고 싶었던 학생들이 만들었어.</string>
-    <string name="ios_onb14_story1">PDF, 오디오, 사진, YouTube: 전부 **수업**이 돼.</string>
+    <string name="ios_onb14_story1">PDF, 오디오, 사진: 전부 **수업**이 돼.</string>
     <string name="ios_onb14_story_ask_a">1791년 6월, 루이 16세는 나라 동쪽으로 가려 했어. 바렌에서 붙잡혀 국민의 신뢰를 잃었지.</string>
     <string name="ios_onb14_story_ask_q">왕은 왜 바렌으로 도망쳤을까?</string>
     <string name="ios_onb14_story_ask_title">그리고 더 나아가, **선생님을 놀라게 할** 만큼.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">계속하기</string>
     <string name="ios_pay10_cta_trial">무료로 체험하기</string>
     <string name="ios_pay10_hook_exportSheet">요약 노트를 **PDF로**? Pro로 만들어 줄게요.</string>
-    <string name="ios_pay10_hook_generateCourse">PDF, 사진, 영상을 Pro로 **레슨**으로 만들어요.</string>
+    <string name="ios_pay10_hook_generateCourse">PDF, 사진, 녹음을 Pro로 **레슨**으로 만들어요.</string>
     <string name="ios_pay10_hook_lessonReady">**레슨을 쓸 준비**가 됐어요. Pro로 잠금 해제하세요.</string>
     <string name="ios_pay10_hook_lockedSheet">**노트의 나머지**가 준비됐어요. Pro로 열어 줄게요.</string>
     <string name="ios_pay10_hook_mika">Pro라면 **모든 질문**에 답해 줄게요.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">구독하기 · 주 %1$s</string>
     <string name="ios_pay11_cta_year">구독하기 · 연 %1$s</string>
     <string name="ios_pay11_hook_exportSheet">**요약 노트를 PDF로**, 바로 인쇄할 수 있게. Pro로 만들어 줄게요.</string>
-    <string name="ios_pay11_hook_generateCourse">PDF, 사진, 영상을 Pro로 **레슨**으로 만들어 줄게요.</string>
+    <string name="ios_pay11_hook_generateCourse">PDF, 사진, 녹음을 Pro로 **레슨**으로 만들어 줄게요.</string>
     <string name="ios_pay11_hook_lessonReady">자료는 다 읽었어요. Pro가 되면 바로 **레슨**을 쓸게요.</string>
     <string name="ios_pay11_hook_lockedSheet">**이 노트의 나머지**는 이미 써 뒀어요. Pro로 열어 줄게요.</string>
     <string name="ios_pay11_hook_mika">무료 질문을 썼어요. **다음 질문부터**는 Pro로 답해 줄게요.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">최고 기록이에요. 놓치지 마세요.</string>
     <string name="ios_profile_streakStart">내일 다시 오면 연속 기록이 시작돼요.</string>
     <string name="ios_quiz_time_short">%1$s분</string>
-    <string name="ios_reminder_import1_body">사진, PDF, YouTube 영상. Mika가 몇 분 만에 레슨과 카드로 만들어요.</string>
+    <string name="ios_reminder_import1_body">사진, PDF. Mika가 몇 분 만에 레슨과 카드로 만들어요.</string>
     <string name="ios_reminder_import1_title">Mika와 첫 코스를 배워 봐요!</string>
     <string name="ios_reminder_import2_body">코스를 가져오면 Mika가 복습 준비를 해 줘요.</string>
     <string name="ios_reminder_import2_title">시험이 다가오나요?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">이미 본 문제와 다르게, 자주 틀리는 부분을 중심으로.</string>
     <string name="lesson_profile_contact">고객 지원 문의</string>
     <string name="lesson_profile_goPro">Pro로 업그레이드</string>
-    <string name="lesson_profile_goProBody">무제한 레슨, PDF, 사진, 녹음, YouTube 영상으로.</string>
+    <string name="lesson_profile_goProBody">무제한 레슨, PDF, 사진, 녹음으로.</string>
     <string name="lesson_profile_language">언어</string>
     <string name="lesson_profile_me">내 프로필</string>
     <string name="lesson_profile_privacy">개인정보 처리방침</string>

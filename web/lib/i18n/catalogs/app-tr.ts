@@ -264,7 +264,7 @@ export const appTr = {
       send: "Ücretsiz dersin hazır: bir sonraki Pro'da.",
       mika: "Mika'ya ücretsiz sorunu sordun: sonrakiler Pro'da.",
       extra: "Ücretsiz ekin kullanıldı: Pro'da sınırsız alıştırma ve deneme sınavı.",
-      upgrade: "Sınırsız ders, artı PDF'lerin, fotoğrafların, ses kayıtların ve YouTube videoların.",
+      upgrade: "Sınırsız ders, artı PDF'lerin, fotoğrafların ve ses kayıtların.",
     },
     checkoutClosed: "Abonelik henüz açılmadı.",
     storeTitle: "Uygulamada abone ol",
@@ -278,7 +278,7 @@ export const appTr = {
     features: {
       cards: {
         title: "Sınırsız yapay zekâ kartları",
-        detail: "PDF, fotoğraf, Word ve YouTube içe aktar",
+        detail: "PDF, fotoğraf ve Word içe aktar",
       },
       sheet: {
         title: "Otomatik ders özetleri",
@@ -404,7 +404,7 @@ export const appTr = {
       },
       supports: {
         title: "Ya da bir kaynak bırak",
-        body: "Bir PDF, not fotoğrafı, ses kaydı, YouTube videosu, yapıştırılmış metin: aynı anda beşe kadar.",
+        body: "Bir PDF, not fotoğrafı, ses kaydı, yapıştırılmış metin: aynı anda beşe kadar.",
       },
       numbers: {
         title: "Üç sayı, ölçülmüş",

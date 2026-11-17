@@ -309,7 +309,7 @@ export const lessonFr = {
   profile: {
     me: "Mon profil",
     goPro: "Passer en Pro",
-    goProBody: "Leçons illimitées, et tes PDF, photos, audios et vidéos YouTube.",
+    goProBody: "Leçons illimitées, et tes PDF, photos et audios.",
     settings: "Réglages",
     language: "Langue",
     rate: "Nous noter",

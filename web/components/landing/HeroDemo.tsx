@@ -94,7 +94,7 @@ export function HeroDemo() {
   const sources: { kind: SourceKind; name: string; meta: string }[] = [
     { kind: "pdf", name: t("landing.demoFile1"), meta: t("landing.demoFile1Meta") },
     { kind: "word", name: t("landing.demoFile2"), meta: t("landing.demoFile2Meta") },
-    { kind: "youtube", name: t("landing.demoFile3"), meta: t("landing.demoFile3Meta") },
+    { kind: "photo", name: t("landing.demoFile3"), meta: t("landing.demoFile3Meta") },
     { kind: "audio", name: t("landing.demoFile4"), meta: t("landing.demoFile4Meta") },
   ];
 

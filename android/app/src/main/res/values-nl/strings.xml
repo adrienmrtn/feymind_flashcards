@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Het lezen gebeurt op je telefoon.</string>
     <string name="ios_core13_home_ready">Ik heb je lesstof gelezen.\nZal ik er **je les** van maken?</string>
     <string name="ios_core13_lesson_mock">Oefenexamen over deze les</string>
-    <string name="ios_core13_lessons_emptyBody">Een onderwerp, een foto, een pdf, een YouTube-video of een opname: Mika schrijft de aantekeningen, quizzen, kaarten en het oefenexamen.</string>
+    <string name="ios_core13_lessons_emptyBody">Een onderwerp, een foto, een pdf of een opname: Mika schrijft de aantekeningen, quizzen, kaarten en het oefenexamen.</string>
     <string name="ios_core13_lessons_emptyTitle">Je eerste les, als pad</string>
     <string name="ios_core13_new_orSupport">Of begin met je eigen lesstof</string>
     <string name="ios_core13_new_promise">Geef je lesstof: Mika maakt er een pad van.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Ik ben gemaakt om leerlingen en studenten **op hun niveau** te helpen.</string>
     <string name="ios_onb14_lesson_ask">Kies hem nu: ik schrijf hem zodra je in de app bent.</string>
     <string name="ios_onb14_lesson_import">Ik importeer mijn lesstof</string>
-    <string name="ios_onb14_lesson_importHint">Pdf, foto\'s, audio, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">Pdf, foto\'s, audio…</string>
     <string name="ios_onb14_lesson_later">Ik kies later</string>
     <string name="ios_onb14_lesson_q">Wat wordt je **eerste les**?</string>
     <string name="ios_onb14_lesson_reactImport">Perfect: je importeert het zodra je in de app bent.</string>
-    <string name="ios_onb14_lesson_say">Pdf, opgenomen les, foto\'s, YouTube of tekst: neem mee wat je hebt.</string>
+    <string name="ios_onb14_lesson_say">Pdf, opgenomen les, foto\'s of tekst: neem mee wat je hebt.</string>
     <string name="ios_onb14_lesson_title">Je lesstof wordt **lessen**.</string>
     <string name="ios_onb14_lesson_topic">Ik typ een onderwerp</string>
     <string name="ios_onb14_open_goal">Laten we nu **je doel** vastleggen.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Vertel me over je lessen: ik wil weten **wat je tegenhoudt**.</string>
     <string name="ios_onb14_origin_play">Stapel opruimen</string>
     <string name="ios_onb14_origin_title">Ik ben gemaakt door scholieren die **hun stapel lesstof** op één plek wilden ordenen.</string>
-    <string name="ios_onb14_story1">Pdf, audio, foto\'s, YouTube: alles wordt een **les**.</string>
+    <string name="ios_onb14_story1">Pdf, audio, foto\'s: alles wordt een **les**.</string>
     <string name="ios_onb14_story_ask_a">In juni 1791 probeert Lodewijk XVI het oosten van het land te bereiken. Opgepakt in Varennes verliest hij het vertrouwen van het volk.</string>
     <string name="ios_onb14_story_ask_q">Waarom vlucht de koning naar Varennes?</string>
     <string name="ios_onb14_story_ask_title">En je gaat verder, genoeg om **je leraren te verrassen**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Doorgaan</string>
     <string name="ios_pay10_cta_trial">Gratis proberen</string>
     <string name="ios_pay10_hook_exportSheet">Je **samenvatting als pdf**? Die maak ik met Pro.</string>
-    <string name="ios_pay10_hook_generateCourse">Je pdf’s, foto’s en video’s: ik maak er **lessen** van met Pro.</string>
+    <string name="ios_pay10_hook_generateCourse">Je pdf’s, foto’s en opnames: ik maak er **lessen** van met Pro.</string>
     <string name="ios_pay10_hook_lessonReady">**Je les is klaar** om geschreven te worden. Ontgrendel hem met Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**De rest van je samenvatting** is klaar. Ik open hem met Pro.</string>
     <string name="ios_pay10_hook_mika">Met Pro beantwoord ik **al je vragen**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Abonneren · %1$s per week</string>
     <string name="ios_pay11_cta_year">Abonneren · %1$s per jaar</string>
     <string name="ios_pay11_hook_exportSheet">**Je samenvatting als pdf**, klaar om te printen: die maak ik met Pro.</string>
-    <string name="ios_pay11_hook_generateCourse">Je pdf, je foto’s, je video: ik maak er **een les** van met Pro.</string>
+    <string name="ios_pay11_hook_generateCourse">Je pdf, je foto’s, je opname: ik maak er **een les** van met Pro.</string>
     <string name="ios_pay11_hook_lessonReady">Ik heb je documenten gelezen. **Je les** schrijf ik zodra je Pro neemt.</string>
     <string name="ios_pay11_hook_lockedSheet">**De rest van deze samenvatting** is geschreven. Ik open hem voor je met Pro.</string>
     <string name="ios_pay11_hook_mika">Je gratis vraag is gesteld. **De volgende** beantwoord ik met Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">Dat is je record. Hou vol.</string>
     <string name="ios_profile_streakStart">Kom morgen terug en je reeks begint.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">Een foto, een pdf of een YouTube-video: Mika maakt er in een paar minuten een les en kaarten van.</string>
+    <string name="ios_reminder_import1_body">Een foto of een pdf: Mika maakt er in een paar minuten een les en kaarten van.</string>
     <string name="ios_reminder_import1_title">Leer je eerste cursus samen met Mika!</string>
     <string name="ios_reminder_import2_body">Importeer je cursus, dan zet Mika alles klaar om te herhalen.</string>
     <string name="ios_reminder_import2_title">Komt er een examen aan?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Anders dan die je al hebt gezien, gericht op waar je de mist in gaat.</string>
     <string name="lesson_profile_contact">Contact met support</string>
     <string name="lesson_profile_goPro">Neem Pro</string>
-    <string name="lesson_profile_goProBody">Onbeperkt lessen, uit je PDF’s, foto’s, opnames en YouTube-video’s.</string>
+    <string name="lesson_profile_goProBody">Onbeperkt lessen, uit je PDF’s, foto’s en opnames.</string>
     <string name="lesson_profile_language">Taal</string>
     <string name="lesson_profile_me">Mijn profiel</string>
     <string name="lesson_profile_privacy">Privacybeleid</string>

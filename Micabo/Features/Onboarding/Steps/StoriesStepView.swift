@@ -7,7 +7,8 @@ import SwiftUI
 /// produit. C'est le « story mapping » des fonctionnalités : la Home n'a plus à l'expliquer.
 ///
 /// Lot 16 (demande du fondateur) : la première page dit **« Tous tes cours, simplifiés. »** ;
-/// « PDF, audio, photos, YouTube : tout devient une leçon » passe en deuxième.
+/// « PDF, audio, photos : tout devient une leçon » passe en deuxième (YouTube retiré en
+/// novembre 2026).
 enum OnboardingStory: Int, CaseIterable, Identifiable {
     /// Tous tes cours, simplifiés : Mika et tes matières, rangées.
     case intro
@@ -28,7 +29,7 @@ enum OnboardingStory: Int, CaseIterable, Identifiable {
     var titleKey: String {
         switch self {
         case .intro: "ios.onb16.story.intro"
-        // Lot 14 : tous les cours, pas une seule photo (« dire aussi PDF, micro, YouTube »).
+        // Lot 14 : tous les cours, pas une seule photo (« dire aussi PDF, micro »).
         case .lesson: "ios.onb14.story1"
         case .quiz: "ios.onb10.story2"
         case .scan: "ios.onb16.scan.title"

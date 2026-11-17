@@ -308,7 +308,7 @@ export const lessonPt = {
   profile: {
     me: "O meu perfil",
     goPro: "Mudar para Pro",
-    goProBody: "Lições ilimitadas, a partir dos teus PDF, fotos, gravações e vídeos do YouTube.",
+    goProBody: "Lições ilimitadas, a partir dos teus PDF, fotos e gravações.",
     settings: "Definições",
     language: "Língua",
     rate: "Avaliar o Micabo",

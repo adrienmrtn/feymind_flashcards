@@ -98,7 +98,7 @@
     <string name="ios_core13_home_readingCaption">Branje poteka na tvojem telefonu.</string>
     <string name="ios_core13_home_ready">Snov je prebrana.\nNaredim iz nje **tvojo lekcijo**?</string>
     <string name="ios_core13_lesson_mock">Poskusni izpit iz te lekcije</string>
-    <string name="ios_core13_lessons_emptyBody">Tema, fotografija, PDF, video z YouTuba ali posnetek: Mika napiše zapiske, kvize, kartice in poskusni izpit.</string>
+    <string name="ios_core13_lessons_emptyBody">Tema, fotografija, PDF ali posnetek: Mika napiše zapiske, kvize, kartice in poskusni izpit.</string>
     <string name="ios_core13_lessons_emptyTitle">Tvoja prva lekcija kot pot</string>
     <string name="ios_core13_new_orSupport">Ali začni s svojo snovjo</string>
     <string name="ios_core13_new_promise">Daj Miki svojo snov: iz nje naredi pot.</string>
@@ -519,11 +519,11 @@
     <string name="ios_onb14_chat_trainedAny">Zasnovan sem za pomoč učencem in študentom **na njihovi ravni**.</string>
     <string name="ios_onb14_lesson_ask">Izberi jo zdaj: napisal jo bom takoj, ko boš v aplikaciji.</string>
     <string name="ios_onb14_lesson_import">Uvozim svoje zapiske</string>
-    <string name="ios_onb14_lesson_importHint">PDF, fotografije, zvok, YouTube…</string>
+    <string name="ios_onb14_lesson_importHint">PDF, fotografije, zvok…</string>
     <string name="ios_onb14_lesson_later">Izbral bom pozneje</string>
     <string name="ios_onb14_lesson_q">Katera bo tvoja **prva lekcija**?</string>
     <string name="ios_onb14_lesson_reactImport">Odlično: uvozil jo boš, ko boš v aplikaciji.</string>
-    <string name="ios_onb14_lesson_say">PDF, posneta ura, fotografije, YouTube ali besedilo: prinesi, kar imaš.</string>
+    <string name="ios_onb14_lesson_say">PDF, posneta ura, fotografije ali besedilo: prinesi, kar imaš.</string>
     <string name="ios_onb14_lesson_title">Tvoji zapiski postanejo **lekcije**.</string>
     <string name="ios_onb14_lesson_topic">Vpišem temo</string>
     <string name="ios_onb14_open_goal">Zdaj pa si postaviva **tvoj cilj**.</string>
@@ -533,7 +533,7 @@
     <string name="ios_onb14_open_study">Povej mi o svojih urah: želim vedeti, **kaj te zavira**.</string>
     <string name="ios_onb14_origin_play">Uredi kup</string>
     <string name="ios_onb14_origin_title">Ustvarili so me dijaki, ki so potrebovali **urediti kup zapiskov** na enem mestu.</string>
-    <string name="ios_onb14_story1">PDF, zvok, fotografije, YouTube: vse postane **lekcija**.</string>
+    <string name="ios_onb14_story1">PDF, zvok, fotografije: vse postane **lekcija**.</string>
     <string name="ios_onb14_story_ask_a">Junija 1791 skuša Ludvik XVI. priti na vzhod države. Prijet v Varennesu izgubi zaupanje ljudstva.</string>
     <string name="ios_onb14_story_ask_q">Zakaj kralj pobegne v Varennes?</string>
     <string name="ios_onb14_story_ask_title">In greš dlje, dovolj, da **navdušiš učitelje**.</string>
@@ -780,7 +780,7 @@
     <string name="ios_pay10_cta_continue">Nadaljuj</string>
     <string name="ios_pay10_cta_trial">Preizkusi brezplačno</string>
     <string name="ios_pay10_hook_exportSheet">Tvoj povzetek **v PDF-ju**? S Pro ti ga pripravim.</string>
-    <string name="ios_pay10_hook_generateCourse">Tvoji PDF-ji, fotografije in videi: s Pro iz njih naredim **lekcije**.</string>
+    <string name="ios_pay10_hook_generateCourse">Tvoji PDF-ji, fotografije in posnetki: s Pro iz njih naredim **lekcije**.</string>
     <string name="ios_pay10_hook_lessonReady">**Tvoja lekcija je pripravljena** za pisanje. Odkleni jo s Pro.</string>
     <string name="ios_pay10_hook_lockedSheet">**Nadaljevanje povzetka** je pripravljeno. S Pro ti ga odprem.</string>
     <string name="ios_pay10_hook_mika">S Pro odgovorim na **vsa tvoja vprašanja**.</string>
@@ -823,7 +823,7 @@
     <string name="ios_pay11_cta_week">Naroči se · %1$s na teden</string>
     <string name="ios_pay11_cta_year">Naroči se · %1$s na leto</string>
     <string name="ios_pay11_hook_exportSheet">**Tvoj povzetek v PDF-ju**, pripravljen za tisk: s Pro ti ga naredim.</string>
-    <string name="ios_pay11_hook_generateCourse">Tvoj PDF, fotografije, video: s Pro iz njih naredim **lekcijo**.</string>
+    <string name="ios_pay11_hook_generateCourse">Tvoj PDF, fotografije, posnetek: s Pro iz njih naredim **lekcijo**.</string>
     <string name="ios_pay11_hook_lessonReady">Prebral sem tvoje dokumente. **Tvojo lekcijo** napišem, takoj ko preideš na Pro.</string>
     <string name="ios_pay11_hook_lockedSheet">**Nadaljevanje tega povzetka** je napisano. S Pro ti ga odprem.</string>
     <string name="ios_pay11_hook_mika">Brezplačno vprašanje je postavljeno. **Na naslednja** odgovorim s Pro.</string>
@@ -871,7 +871,7 @@
     <string name="ios_profile_streakBest">To je tvoj rekord. Ne popusti.</string>
     <string name="ios_profile_streakStart">Vrni se jutri in niz se začne.</string>
     <string name="ios_quiz_time_short">%1$s min</string>
-    <string name="ios_reminder_import1_body">Fotografija, PDF ali videoposnetek z YouTuba: Mika iz tega v nekaj minutah naredi lekcijo in kartice.</string>
+    <string name="ios_reminder_import1_body">Fotografija ali PDF: Mika iz tega v nekaj minutah naredi lekcijo in kartice.</string>
     <string name="ios_reminder_import1_title">Pridi se naučit svojega prvega tečaja z Mikom!</string>
     <string name="ios_reminder_import2_body">Uvozi svoj tečaj in Mika ti bo pripravil vse za ponavljanje.</string>
     <string name="ios_reminder_import2_title">Se bliža izpit?</string>
@@ -1185,7 +1185,7 @@
     <string name="lesson_practice_writingSub">Drugačna od tistih, ki jih že poznaš, osredotočena na tvoje šibke točke.</string>
     <string name="lesson_profile_contact">Piši podpori</string>
     <string name="lesson_profile_goPro">Nadgradi na Pro</string>
-    <string name="lesson_profile_goProBody">Neomejeno lekcij iz tvojih PDF-jev, fotografij, posnetkov in videov YouTube.</string>
+    <string name="lesson_profile_goProBody">Neomejeno lekcij iz tvojih PDF-jev, fotografij in posnetkov.</string>
     <string name="lesson_profile_language">Jezik</string>
     <string name="lesson_profile_me">Moj profil</string>
     <string name="lesson_profile_privacy">Pravilnik o zasebnosti</string>

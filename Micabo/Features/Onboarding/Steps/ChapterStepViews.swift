@@ -140,13 +140,13 @@ struct ChapterOpenerStepView: View {
 
 // MARK: - Les sources d'une leçon
 
-/// **Les cinq façons d'apporter un cours** (lot 14 : « dire aussi PDF, micro, photo, YouTube,
-/// texte »), celles du compositeur de leçon de l'app (`LessonComposer.Kind`).
+/// **Les quatre façons d'apporter un cours** (lot 14 : « dire aussi PDF, micro, photo, texte » ;
+/// YouTube est retiré en novembre 2026), celles du compositeur de leçon de l'app
+/// (`LessonComposer.Kind`).
 enum OnbSource: CaseIterable, Identifiable {
     case pdf
     case lecture
     case photo
-    case youtube
     case text
 
     var id: Self { self }
@@ -156,7 +156,6 @@ enum OnbSource: CaseIterable, Identifiable {
         case .pdf: .pdf
         case .lecture: .lecture
         case .photo: .photo
-        case .youtube: .youtube
         case .text: .text
         }
     }
@@ -166,7 +165,6 @@ enum OnbSource: CaseIterable, Identifiable {
         case .pdf: V3Color.iconOrange
         case .lecture: V3Color.iconPink
         case .photo: V3Color.iconBlue
-        case .youtube: V3Color.iconYellow
         case .text: V3Color.iconGreen
         }
     }
@@ -176,7 +174,7 @@ enum OnbSource: CaseIterable, Identifiable {
     }
 }
 
-/// **Le bandeau des sources** : cinq tuiles d'icône, leur nom dessous. Dans les stories, la
+/// **Le bandeau des sources** : quatre tuiles d'icône, leur nom dessous. Dans les stories, la
 /// démo de la leçon et le récit final.
 struct OnbSourceStrip: View {
     var tile: CGFloat = 46

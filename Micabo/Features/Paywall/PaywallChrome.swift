@@ -107,6 +107,11 @@ enum PaywallStyle {
 
     /// La croix : son dessin, et la zone qu'on touche.
     static let closeSize: CGFloat = V3Metric.backSize
+    /// **Le temps avant la croix du paywall de fin de parcours**, en secondes (demande du
+    /// fondateur) : l'élève qui vient de finir l'accueil lit l'offre avant de pouvoir la
+    /// refermer. Derrière une porte de l'app, et sur l'offre de réduction, la croix est là
+    /// d'emblée (`PaywallFlowView.closeDelay(for:)`).
+    static let closeDelay: Double = 5
     static let touch: CGFloat = 44
     /// L'icône d'une rangée, et la colonne qui la porte.
     static let glyph: CGFloat = V3Metric.optionIcon
@@ -182,10 +187,11 @@ enum PaywallStyle {
 
 /// **La croix** : 36 points, dessinée à même la page.
 ///
-/// Elle est **toujours là, et elle ne se fait pas attendre**. Un paywall dont la sortie
-/// apparaît au bout de cinq secondes fait fermer l'app au lieu de la faire refuser : on perd
-/// l'utilisateur au lieu de perdre l'abonnement. Elle réagit au premier appui ; pendant un
-/// achat seulement, elle s'éteint — on ne quitte pas un paiement en cours.
+/// Derrière une porte de l'app et sur l'offre de réduction, elle est là d'emblée. **Sur le
+/// paywall de fin de parcours, elle n'arrive qu'au bout de `PaywallStyle.closeDelay`**, en
+/// fondu, à sa place (`PaywallTopBar.showsClose`) ; avant, elle n'est ni touchable ni lue par
+/// VoiceOver. Elle réagit au premier appui ; pendant un achat, elle s'éteint — on ne quitte
+/// pas un paiement en cours.
 struct PaywallCloseButton: View {
     /// La couleur de la croix.
     var tint: Color = V3Color.ink
@@ -262,6 +268,9 @@ struct PaywallBrand: View {
 struct PaywallTopBar: View {
     var name: String? = nil
     var isBusy: Bool
+    /// Faux pendant le délai du paywall de fin de parcours : la croix garde sa place, mais
+    /// ne se voit pas, ne se touche pas et ne se lit pas.
+    var showsClose: Bool = true
     var onClose: () -> Void
 
     var body: some View {
@@ -271,6 +280,9 @@ struct PaywallTopBar: View {
             // La croix est là, discrète : la couleur secondaire du texte.
             PaywallCloseButton(tint: V3Color.ink2, action: onClose)
                 .disabled(isBusy)
+                .opacity(showsClose ? 1 : 0)
+                .allowsHitTesting(showsClose)
+                .accessibilityHidden(!showsClose)
                 .padding(.trailing, closeOverhang)
         }
         .padding(.horizontal, V3Metric.screenMargin)

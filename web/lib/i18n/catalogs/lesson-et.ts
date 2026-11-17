@@ -305,7 +305,7 @@ export const lessonEt = {
   profile: {
     me: "Minu profiil",
     goPro: "Võta Pro",
-    goProBody: "Piiramatult tunde sinu PDF-idest, fotodest, salvestistest ja YouTube'i videotest.",
+    goProBody: "Piiramatult tunde sinu PDF-idest, fotodest ja salvestistest.",
     settings: "Seaded",
     language: "Keel",
     rate: "Hinda Micabot",

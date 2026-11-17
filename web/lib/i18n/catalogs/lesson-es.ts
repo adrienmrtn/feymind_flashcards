@@ -309,7 +309,7 @@ export const lessonEs = {
   profile: {
     me: "Mi perfil",
     goPro: "Hazte Pro",
-    goProBody: "Lecciones ilimitadas, con tus PDF, fotos, audios y vídeos de YouTube.",
+    goProBody: "Lecciones ilimitadas, con tus PDF, fotos y audios.",
     settings: "Ajustes",
     language: "Idioma",
     rate: "Valorar Micabo",
