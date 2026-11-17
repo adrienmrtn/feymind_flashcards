@@ -204,11 +204,9 @@ final class LessonSession {
             XPStore.shared.award(.circleCompleted)
             Analytics.track(.lessonStepDone, [
                 "kind": .text(circle.kind.analyticsName),
-                "title": .name(course.title),
             ])
             if case .final = circle.kind, progress.finishedAt == nil {
                 Analytics.track(.lessonFinished, [
-                    "title": .name(course.title),
                     "subject": .name(course.subject ?? ""),
                 ])
             }
@@ -282,7 +280,6 @@ final class LessonSession {
         Analytics.track(.quizFinished, [
             "right": .number(Double(right)),
             "total": .number(Double(total)),
-            "title": .name(course.title),
         ])
         try? context.save()
         progress = course.progress
@@ -291,7 +288,6 @@ final class LessonSession {
     func markOpened(in context: ModelContext) {
         course.lastOpenedAt = Date()
         Analytics.track(.lessonOpened, [
-            "title": .name(course.title),
             "subject": .name(course.subject ?? ""),
         ])
         try? context.save()

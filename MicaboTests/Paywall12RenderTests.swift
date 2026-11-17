@@ -91,6 +91,8 @@ final class Paywall12RenderTests: XCTestCase {
             context: context
         )
         .environment(\.mikaStill, true)
+        // Le titre et les bénéfices entrent en 0,4 s : un rendu les prend posés.
+        .environment(\.onboardingStill, true)
         .environment(\.layoutDirection, rtl ? .rightToLeft : .leftToRight)
     }
 

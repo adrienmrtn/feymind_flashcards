@@ -179,7 +179,6 @@ enum DeckBuilder {
             "deck": .flag(true),
             "generated": .flag(setup.source == .generated),
             "cards": .number(Double(cardCount)),
-            "title": .name(course.title),
             "subject": .name(course.subject ?? ""),
             "language": .text(setup.language.rawValue),
         ])
