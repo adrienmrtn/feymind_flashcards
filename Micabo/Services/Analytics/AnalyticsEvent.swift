@@ -42,15 +42,15 @@ enum AnalyticsEvent: String, Sendable, CaseIterable {
 
     /// Un onglet de la barre du bas, ouvert : `tab` (home, lessons, calendar, focus, profile).
     case tabViewed = "tab_viewed"
-    /// Une leçon ouverte : `title`, le nom du cours, et `subject`. Jamais son contenu.
+    /// Une leçon ouverte : `subject`. Jamais le nom du cours ni son contenu.
     case lessonOpened = "lesson_opened"
-    /// Une étape du chemin terminée : `kind` (intro, notes, quiz, final), `title`.
+    /// Une étape du chemin terminée : `kind` (intro, notes, quiz, final).
     case lessonStepDone = "lesson_step_done"
-    /// Le Quiz final réussi une première fois : la leçon est apprise. `title`, `subject`.
+    /// Le Quiz final réussi une première fois : la leçon est apprise. `subject`.
     case lessonFinished = "lesson_finished"
     /// Une question répondue : `kind` (choice, order…), `right`, `difficulty`.
     case questionAnswered = "question_answered"
-    /// Un quiz terminé : `right`, `total`, `title`.
+    /// Un quiz terminé : `right`, `total`.
     case quizFinished = "quiz_finished"
     /// Une page des stories du premier écran, vue : `index` de 1 à 4. Une fois par page.
     case onboardingStoryViewed = "onboarding_story_viewed"

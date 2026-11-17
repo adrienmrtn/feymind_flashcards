@@ -169,9 +169,8 @@ final class LessonGeneration {
                 XPStore.shared.award(.lessonCreated)
                 guard !Task.isCancelled else { return }
                 Haptics.success()
-                // Le nom du cours, et lui seul : ni le texte importé ni les cartes.
+                // La matière, et elle seule : jamais le nom du cours (souvent tapé par l'élève), ni le texte importé, ni les cartes.
                 var imported = properties
-                imported["title"] = .name(course.title)
                 imported["subject"] = .name(course.subject ?? "")
                 Analytics.track(.courseImported, imported)
                 self?.finish(with: course)
